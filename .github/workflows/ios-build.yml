@@ -71,6 +71,32 @@ jobs:
             -resultBundlePath TestResults.xcresult \
             test 2>&1 | xcbeautify --renderer github-actions
 
+      - name: Archive (Release, unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -archivePath build/Tick.xcarchive \
+            $XCARGS \
+            archive 2>&1 | xcbeautify --renderer github-actions
+
+      - name: Package unsigned IPA
+        run: |
+          # 免签名 ipa：从 xcarchive 提取 .app，按 Payload 目录结构打包
+          # （CI 无开发者证书，ipa 未签名；安装前需经 AltStore/Sideloadly/爱思助手等工具自签）
+          mkdir -p build/Payload
+          cp -R "build/Tick.xcarchive/Products/Applications/Tick.app" build/Payload/
+          (cd build && zip -qry "Tick-unsigned.ipa" Payload)
+          ls -lh build/Tick-unsigned.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tick-unsigned-ipa-${{ github.run_number }}
+          path: build/Tick-unsigned.ipa
+          retention-days: 30
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
