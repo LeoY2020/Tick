@@ -8,6 +8,11 @@ struct TickApp: App {
     /// CloudKit 同步管理器：iCloud 开关切换时重建 ModelContainer
     @StateObject private var cloudSync = CloudSyncManager.shared
 
+    init() {
+        // 启动即设置通知代理：冷启动（点击通知拉起 App）时 didReceive 回调可达
+        NotificationService.shared.setDelegate()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

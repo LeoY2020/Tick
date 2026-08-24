@@ -1,6 +1,67 @@
 import SwiftUI
 import SwiftData
 
+/// 图标候选（供 ForEach 稳定标识，元组不支持 keypath）
+private struct IconOption: Identifiable {
+    let symbol: String
+    let name: String
+    var id: String { symbol }
+}
+
+/// 色板条目（供 ForEach 稳定标识）
+private struct PaletteSwatch: Identifiable {
+    let name: String
+    let hex: String
+    var id: String { hex }
+}
+
+/// 任务属性快照（编辑前备份，取消时恢复）
+private struct TaskSnapshot {
+    let name: String
+    let colorHex: String?
+    let iconSystemName: String?
+    let typeRaw: String
+    let statusRaw: String
+    let totalAmount: Double
+    let currentAmount: Double
+    let startDate: Date?
+    let endDate: Date?
+    let reminderDate: Date?
+    let repeatRuleRaw: String?
+    let customWeekdaysRaw: String?
+
+    init(task: TaskItem) {
+        self.name = task.name
+        self.colorHex = task.colorHex
+        self.iconSystemName = task.iconSystemName
+        self.typeRaw = task.typeRaw
+        self.statusRaw = task.statusRaw
+        self.totalAmount = task.totalAmount
+        self.currentAmount = task.currentAmount
+        self.startDate = task.startDate
+        self.endDate = task.endDate
+        self.reminderDate = task.reminderDate
+        self.repeatRuleRaw = task.repeatRuleRaw
+        self.customWeekdaysRaw = task.customWeekdaysRaw
+    }
+
+    /// 恢复快照到任务（取消编辑时调用）
+    func apply(to task: TaskItem) {
+        task.name = name
+        task.colorHex = colorHex
+        task.iconSystemName = iconSystemName
+        task.typeRaw = typeRaw
+        task.statusRaw = statusRaw
+        task.totalAmount = totalAmount
+        task.currentAmount = currentAmount
+        task.startDate = startDate
+        task.endDate = endDate
+        task.reminderDate = reminderDate
+        task.repeatRuleRaw = repeatRuleRaw
+        task.customWeekdaysRaw = customWeekdaysRaw
+    }
+}
+
 /// 任务编辑表单：完整属性编辑（名称/类型/状态/进度/提醒/颜色/图标/日期覆盖）。
 /// 接管机制：有子任务时状态/进度控件只读，由子任务计算/汇总。
 struct TaskEditorView: View {
@@ -13,6 +74,8 @@ struct TaskEditorView: View {
 
     // MARK: - 本地编辑状态
 
+    /// 编辑前属性快照（取消时恢复）
+    @State private var snapshot: TaskSnapshot?
     /// 提醒开关
     @State private var reminderOn = false
     /// 重复规则（nil = 不重复）
@@ -27,16 +90,43 @@ struct TaskEditorView: View {
     @State private var totalText = ""
 
     /// 图标候选（与 GoalEditorView 保持一致）
-    private static let iconSymbols: [(symbol: String, name: String)] = [
-        ("target", "目标"), ("flag", "旗帜"), ("star", "星标"), ("heart", "爱心"),
-        ("book", "书本"), ("briefcase", "公文包"), ("figure.run", "跑步"), ("dumbbell", "健身"),
-        ("pencil", "铅笔"), ("paintbrush", "画笔"), ("music.note", "音乐"), ("camera", "相机"),
-        ("airplane", "飞机"), ("car", "汽车"), ("cart", "购物"), ("creditcard", "银行卡"),
-        ("gift", "礼物"), ("graduationcap", "学业"), ("leaf", "自然"), ("moon", "月亮"),
-        ("sun", "太阳"), ("clock", "时钟"), ("calendar", "日程"), ("house", "家庭"),
-        ("phone", "电话"), ("envelope", "邮件"), ("gamecontroller", "游戏"), ("wineglass", "酒杯"),
-        ("cup.and.saucer", "咖啡"), ("fork.knife", "餐饮"),
+    private static let iconOptions: [IconOption] = [
+        IconOption(symbol: "target", name: "目标"),
+        IconOption(symbol: "flag", name: "旗帜"),
+        IconOption(symbol: "star", name: "星标"),
+        IconOption(symbol: "heart", name: "爱心"),
+        IconOption(symbol: "book", name: "书本"),
+        IconOption(symbol: "briefcase", name: "公文包"),
+        IconOption(symbol: "figure.run", name: "跑步"),
+        IconOption(symbol: "dumbbell", name: "健身"),
+        IconOption(symbol: "pencil", name: "铅笔"),
+        IconOption(symbol: "paintbrush", name: "画笔"),
+        IconOption(symbol: "music.note", name: "音乐"),
+        IconOption(symbol: "camera", name: "相机"),
+        IconOption(symbol: "airplane", name: "飞机"),
+        IconOption(symbol: "car", name: "汽车"),
+        IconOption(symbol: "cart", name: "购物"),
+        IconOption(symbol: "creditcard", name: "银行卡"),
+        IconOption(symbol: "gift", name: "礼物"),
+        IconOption(symbol: "graduationcap", name: "学业"),
+        IconOption(symbol: "leaf", name: "自然"),
+        IconOption(symbol: "moon", name: "月亮"),
+        IconOption(symbol: "sun", name: "太阳"),
+        IconOption(symbol: "clock", name: "时钟"),
+        IconOption(symbol: "calendar", name: "日程"),
+        IconOption(symbol: "house", name: "家庭"),
+        IconOption(symbol: "phone", name: "电话"),
+        IconOption(symbol: "envelope", name: "邮件"),
+        IconOption(symbol: "gamecontroller", name: "游戏"),
+        IconOption(symbol: "wineglass", name: "酒杯"),
+        IconOption(symbol: "cup.and.saucer", name: "咖啡"),
+        IconOption(symbol: "fork.knife", name: "餐饮"),
     ]
+
+    /// 预设色板（HexColor.palette 12 色，包装为可标识结构体）
+    private static let swatches: [PaletteSwatch] = HexColor.palette.map {
+        PaletteSwatch(name: $0.name, hex: $0.hex)
+    }
 
     private static let colorColumns: [GridItem] = Array(
         repeating: GridItem(.flexible(), spacing: 0), count: 6
@@ -56,11 +146,8 @@ struct TaskEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
-                        try? context.save()
-                        onFinished()
-                    }
-                    .accessibilityLabel("取消编辑")
+                    Button("取消", action: cancel)
+                        .accessibilityLabel("取消编辑")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存", action: save)
@@ -70,7 +157,11 @@ struct TaskEditorView: View {
             }
         }
         .interactiveDismissDisabled()
-        .onAppear(perform: syncLocalStates)
+        .onAppear {
+            // 记录编辑前快照（取消时恢复）
+            snapshot = TaskSnapshot(task: task)
+            syncLocalStates()
+        }
     }
 
     // MARK: - Section
@@ -232,7 +323,7 @@ struct TaskEditorView: View {
                 }
             if overrideColor {
                 LazyVGrid(columns: Self.colorColumns, spacing: 0) {
-                    ForEach(HexColor.palette, id: \.hex) { swatch in
+                    ForEach(Self.swatches) { swatch in
                         paletteButton(swatch.hex, name: swatch.name)
                     }
                 }
@@ -249,7 +340,7 @@ struct TaskEditorView: View {
                 Menu {
                     Picker("图标", selection: iconSelection) {
                         Text("无图标").tag("")
-                        ForEach(Self.iconSymbols, id: \.symbol) { icon in
+                        ForEach(Self.iconOptions) { icon in
                             Label(icon.name, systemImage: icon.symbol).tag(icon.symbol)
                         }
                     }
@@ -361,7 +452,7 @@ struct TaskEditorView: View {
     }
 
     private func iconDisplayName(_ symbol: String) -> String {
-        Self.iconSymbols.first { $0.symbol == symbol }?.name ?? symbol
+        Self.iconOptions.first { $0.symbol == symbol }?.name ?? symbol
     }
 
     // MARK: - Binding 桥接
@@ -415,7 +506,27 @@ struct TaskEditorView: View {
         )
     }
 
-    // MARK: - 保存
+    // MARK: - 保存 / 取消
+
+    /// 取消：恢复编辑前快照并持久化，提醒按快照状态重新同步
+    private func cancel() {
+        if let snap = snapshot {
+            snap.apply(to: task)
+        }
+        try? context.save()
+        DataBackupManager.shared.backupAppData(context: context)
+
+        // 提醒以快照恢复结果为准：清除编辑期注册的通知，有提醒则重新注册
+        NotificationService.shared.cancelReminders(taskID: task.id)
+        if task.reminderDate != nil, let goal = ProgressEngine.rootGoal(of: task) {
+            let task = self.task
+            let goalName = goal.name
+            Task { @MainActor in
+                await NotificationService.shared.scheduleReminder(for: task, goalName: goalName)
+            }
+        }
+        onFinished()
+    }
 
     private func save() {
         task.name = task.name.trimmingCharacters(in: .whitespacesAndNewlines)

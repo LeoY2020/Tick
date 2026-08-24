@@ -134,6 +134,8 @@ struct GoalSidebarView: View {
         }
         modelContext.delete(goal) // tasks 关系为 cascade，级联删除任务
         try? modelContext.save()
+        // 数据变更 → 同步 Keychain 备份
+        DataBackupManager.shared.backupAppData(context: modelContext)
         goalToDelete = nil
     }
 

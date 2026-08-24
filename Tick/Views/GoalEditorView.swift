@@ -312,10 +312,11 @@ struct GoalEditorView: View {
         onFinished()
     }
 
-    /// 保存：名称去除首尾空白后持久化
+    /// 保存：名称去除首尾空白后持久化；数据变更 → 同步 Keychain 备份
     private func save() {
         goal.name = goal.name.trimmingCharacters(in: .whitespacesAndNewlines)
         try? modelContext.save()
+        DataBackupManager.shared.backupAppData(context: modelContext)
         onFinished()
     }
 }

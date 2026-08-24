@@ -72,6 +72,13 @@ struct TaskRowView: View {
             .accessibilityLabel("添加子任务")
         }
         .swipeActions(edge: .trailing) {
+            Button {
+                showEditor = true
+            } label: {
+                Label("编辑", systemImage: "pencil")
+            }
+            .tint(.blue)
+            .accessibilityLabel("编辑任务")
             Button(role: .destructive) {
                 taskToDelete = task
             } label: {
@@ -80,6 +87,11 @@ struct TaskRowView: View {
             .accessibilityLabel("删除任务")
         }
         .contextMenu {
+            Button {
+                showEditor = true
+            } label: {
+                Label("编辑任务", systemImage: "pencil")
+            }
             Button {
                 showAddSubtask = true
             } label: {

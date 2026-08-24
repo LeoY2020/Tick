@@ -20,6 +20,11 @@ final class Goal {
     @Relationship(deleteRule: .cascade, inverse: \TaskItem.goal)
     var tasks: [TaskItem] = []
 
+    /// 无参初始化（新建目标占位、视图兜底场景；其余属性取默认值）
+    init() {
+        self.name = ""
+    }
+
     init(name: String,
          colorHex: String = "#000000",
          iconSystemName: String? = nil,
