@@ -82,3 +82,40 @@
 "开启 iCloud 同步" = "Enable iCloud Sync";
 "开启后数据通过 CloudKit 在设备间同步，云端合并按最后写入优先" = "When enabled, data syncs across devices via CloudKit; cloud merges follow last-write-wins";
 "通知权限已被拒绝，请前往系统设置开启" = "Notifications are blocked. Please enable them in system Settings.";
+
+/* Task editor / accessibility strings */
+"请输入名称" = "Enter a name";
+"编辑目标" = "Edit Goal";
+"编辑任务" = "Edit Task";
+"目标列表" = "Goal List";
+"状态由子任务计算" = "Status is calculated from subtasks";
+"进度由子任务汇总（总量 = 子任务总量之和）" = "Progress rolls up from subtasks (total = sum of subtask totals)";
+"开启提醒" = "Enable Reminder";
+"覆盖颜色" = "Override Color";
+"覆盖图标" = "Override Icon";
+"调整进度" = "Adjust Progress";
+"删除任务" = "Delete Task";
+"取消编辑" = "Cancel Editing";
+"保存任务" = "Save Task";
+"任务名称" = "Task Name";
+"任务类型" = "Task Type";
+"任务状态" = "Task Status";
+"进度总量" = "Progress Total";
+"选择图标" = "Choose Icon";
+"目标名称" = "Goal Name";
+"保存目标" = "Save Goal";
+"启用开始日期" = "Enable Start Date";
+"启用截止日期" = "Enable Due Date";
+"进度统计" = "Progress Tracking";
+"统计方式" = "Counting Mode";
+"进度统计方式" = "Progress Counting Mode";
+"全部任务" = "All Tasks";
+"仅叶子任务" = "Leaf Tasks Only";
+"全部任务：所有层级任务均计入总量与进度；仅叶子任务：只统计任务树末端节点" = "All Tasks: every task at all levels counts toward the total and progress. Leaf Tasks Only: only the end nodes of the task tree are counted.";
+"轻点两下切换到该目标" = "Double tap to switch to this goal";
+
+/* Interpolated format keys (%lld = numeric placeholder, order adjustable) */
+"已完成 %lld " = "%lld completed ";
+"共 %lld 项" = "%lld items";
+"总进度：已完成 %lld，共 %lld 项" = "Overall progress: %lld completed, %lld items";
+"当前进度 %lld" = "Current progress: %lld";

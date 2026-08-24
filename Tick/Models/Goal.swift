@@ -15,6 +15,8 @@ final class Goal {
     /// 截止日期（nil = 未设置）
     var endDate: Date? = nil
     var createdAt: Date = Date()
+    /// 进度统计模式：全部任务（父任务折算计入）/ 仅叶子任务（任务树末端节点）
+    var progressCountingMode: ProgressCountingMode = .allTasks
 
     /// 目标下的一级任务（删除目标时级联删除全部任务）
     @Relationship(deleteRule: .cascade, inverse: \TaskItem.goal)
@@ -29,11 +31,13 @@ final class Goal {
          colorHex: String = "auto",
          iconSystemName: String? = nil,
          startDate: Date? = nil,
-         endDate: Date? = nil) {
+         endDate: Date? = nil,
+         progressCountingMode: ProgressCountingMode = .allTasks) {
         self.name = name
         self.colorHex = colorHex
         self.iconSystemName = iconSystemName
         self.startDate = startDate
         self.endDate = endDate
+        self.progressCountingMode = progressCountingMode
     }
 }

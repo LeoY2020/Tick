@@ -63,21 +63,15 @@ enum ProgressEngine {
 
     // MARK: - 目标总进度
 
-    /// 目标总进度：遍历一级任务，删除态单项不计入总量与进度
+    /// 目标总进度：按目标设置的统计模式递归统计整棵任务树，删除态任务整棵子树不计入
+    /// - allTasks：所有层级任务均计入总量与进度（父任务按有效状态/进度折算）
+    /// - leafTasks：仅统计任务树末端节点（无有效子任务的节点）
     static func goalProgress(of goal: Goal) -> GoalProgress {
         var totalItems = 0
         var completedWeight = 0.0
         for task in goal.tasks {
-            // 跳过删除态单项
-            if isDeleted(task) { continue }
-            totalItems += 1
-            if task.type == .single {
-                // 单项：状态权重（被接管时为折算状态）
-                completedWeight += statusWeight(of: effectiveStatus(of: task))
-            } else {
-                // 进度：有效比率
-                completedWeight += effectiveRatio(of: task)
-            }
+            accumulate(task, mode: goal.progressCountingMode,
+                       totalItems: &totalItems, completedWeight: &completedWeight)
         }
         return GoalProgress(totalItems: totalItems, completedWeight: completedWeight)
     }
@@ -150,6 +144,43 @@ enum ProgressEngine {
     }
 
     // MARK: - 私有辅助
+
+    /// 按统计模式递归累计任务树（goalProgress 的核心递归）
+    private static func accumulate(_ task: TaskItem,
+                                   mode: ProgressCountingMode,
+                                   totalItems: inout Int,
+                                   completedWeight: inout Double) {
+        // 删除态：整棵子树不计入总量与进度（与一级过滤语义一致）
+        if isDeleted(task) { return }
+
+        switch mode {
+        case .allTasks:
+            // 当前节点计入（父任务按有效状态/进度折算），再递归全部子任务
+            totalItems += 1
+            completedWeight += taskWeight(of: task)
+            for sub in task.subtasks {
+                accumulate(sub, mode: mode, totalItems: &totalItems, completedWeight: &completedWeight)
+            }
+        case .leafTasks:
+            // 有效（非删除）子任务为空 → 叶子节点计入；否则只递归子任务
+            let activeSubtasks = task.subtasks.filter { !isDeleted($0) }
+            if activeSubtasks.isEmpty {
+                totalItems += 1
+                completedWeight += taskWeight(of: task)
+            } else {
+                for sub in activeSubtasks {
+                    accumulate(sub, mode: mode, totalItems: &totalItems, completedWeight: &completedWeight)
+                }
+            }
+        }
+    }
+
+    /// 单个任务节点的权重：单项 → 有效状态权重；进度 → 有效比率
+    private static func taskWeight(of task: TaskItem) -> Double {
+        task.type == .single
+            ? statusWeight(of: effectiveStatus(of: task))
+            : effectiveRatio(of: task)
+    }
 
     /// 删除态判定：单项且状态为删除（spec：任何层级均不计入总量和进度）
     private static func isDeleted(_ task: TaskItem) -> Bool {

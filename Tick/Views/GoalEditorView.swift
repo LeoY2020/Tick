@@ -22,6 +22,7 @@ private struct GoalSnapshot {
     let iconSystemName: String?
     let startDate: Date?
     let endDate: Date?
+    let progressCountingMode: ProgressCountingMode
 
     init(goal: Goal) {
         self.name = goal.name
@@ -29,6 +30,7 @@ private struct GoalSnapshot {
         self.iconSystemName = goal.iconSystemName
         self.startDate = goal.startDate
         self.endDate = goal.endDate
+        self.progressCountingMode = goal.progressCountingMode
     }
 }
 
@@ -148,6 +150,21 @@ struct GoalEditorView: View {
                         DatePicker("截止日期", selection: endDate, displayedComponents: .date)
                             .datePickerStyle(.compact)
                     }
+                }
+
+                // MARK: 进度统计
+                Section {
+                    Picker("统计方式", selection: $goal.progressCountingMode) {
+                        ForEach(ProgressCountingMode.allCases, id: \.self) { mode in
+                            Text(mode.displayName).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.inline)
+                    .accessibilityLabel("进度统计方式")
+                } header: {
+                    Text("进度统计")
+                } footer: {
+                    Text("全部任务：所有层级任务均计入总量与进度；仅叶子任务：只统计任务树末端节点")
                 }
             }
             .navigationTitle(isNew ? "新建目标" : "编辑目标")
@@ -348,6 +365,7 @@ struct GoalEditorView: View {
             goal.iconSystemName = snap.iconSystemName
             goal.startDate = snap.startDate
             goal.endDate = snap.endDate
+            goal.progressCountingMode = snap.progressCountingMode
         }
         try? modelContext.save()
         onFinished()

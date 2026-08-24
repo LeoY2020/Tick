@@ -119,13 +119,17 @@ struct ContentView: View {
                     Text("共 \(progress.totalItems) 项")
                         .foregroundStyle(.secondary)
                     Spacer()
+                    // 最右侧百分比（精确到小数点后 1 位）
+                    Text("\(min(progress.fraction, 1) * 100, specifier: "%.1f")%")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
                 }
                 .font(.footnote)
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("总进度：已完成 \(Int(progress.completedWeight.rounded()))，共 \(progress.totalItems) 项")
+            .accessibilityLabel("总进度：已完成 \(Int(progress.completedWeight.rounded()))，共 \(progress.totalItems) 项，\(String(format: "%.1f", min(progress.fraction, 1) * 100))%")
 
             // 任务列表（无限层级）
             List {

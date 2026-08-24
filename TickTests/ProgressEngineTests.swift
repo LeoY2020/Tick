@@ -171,11 +171,18 @@ final class ProgressEngineTests: XCTestCase {
         XCTAssertEqual(progress.total, 15, "总量=子任务总量之和，忽略父手动总量")
         XCTAssertEqual(progress.current, 7.5, accuracy: 0.000001, "当前=子任务当前之和")
 
-        // 目标进度按有效比率 7.5 / 15 = 0.5
+        // 目标进度（默认全部任务模式）：父(0.5) + 子1(3/6=0.5) + 子2(4.5/9=0.5) = 1.5 / 3
         let goalProgress = ProgressEngine.goalProgress(of: goal)
-        XCTAssertEqual(goalProgress.totalItems, 1)
-        XCTAssertEqual(goalProgress.completedWeight, 0.5, accuracy: 0.000001)
+        XCTAssertEqual(goalProgress.totalItems, 3, "全部任务模式：父与子均计入")
+        XCTAssertEqual(goalProgress.completedWeight, 1.5, accuracy: 0.000001)
         XCTAssertEqual(goalProgress.fraction, 0.5, accuracy: 0.000001)
+
+        // 仅叶子任务模式：只计子1 + 子2 = 1.0 / 2
+        goal.progressCountingMode = .leafTasks
+        let leafProgress = ProgressEngine.goalProgress(of: goal)
+        XCTAssertEqual(leafProgress.totalItems, 2, "仅叶子任务模式：父不计入")
+        XCTAssertEqual(leafProgress.completedWeight, 1.0, accuracy: 0.000001)
+        XCTAssertEqual(leafProgress.fraction, 0.5, accuracy: 0.000001)
     }
 
     // MARK: - f) 深层递归
@@ -206,11 +213,18 @@ final class ProgressEngineTests: XCTestCase {
         XCTAssertEqual(ProgressEngine.effectiveStatus(of: b), .halfDone)
         XCTAssertEqual(ProgressEngine.effectiveStatus(of: a), .halfDone)
 
-        // 目标：唯一一级任务 A，比率 5/10
+        // 目标（默认全部任务模式）：A(0.5) + B(5/9) + C1(0.5) + C2(1) + S(0) = 41/18 ≈ 2.2778，共 5 项
         let goalProgress = ProgressEngine.goalProgress(of: goal)
-        XCTAssertEqual(goalProgress.totalItems, 1)
-        XCTAssertEqual(goalProgress.completedWeight, 0.5, accuracy: 0.000001)
-        XCTAssertEqual(goalProgress.fraction, 0.5, accuracy: 0.000001)
+        XCTAssertEqual(goalProgress.totalItems, 5, "全部任务模式：A/B/C1/C2/S 全部计入")
+        XCTAssertEqual(goalProgress.completedWeight, 0.5 + 5.0 / 9.0 + 0.5 + 1 + 0, accuracy: 0.000001)
+        XCTAssertEqual(goalProgress.fraction, (0.5 + 5.0 / 9.0 + 0.5 + 1) / 5, accuracy: 0.000001)
+
+        // 仅叶子任务模式：只计 C1(0.5) + C2(1) + S(0) = 1.5 / 3
+        goal.progressCountingMode = .leafTasks
+        let leafProgress = ProgressEngine.goalProgress(of: goal)
+        XCTAssertEqual(leafProgress.totalItems, 3, "仅叶子任务模式：A/B 中间层不计")
+        XCTAssertEqual(leafProgress.completedWeight, 1.5, accuracy: 0.000001)
+        XCTAssertEqual(leafProgress.fraction, 0.5, accuracy: 0.000001)
     }
 
     // MARK: - g) 单项子任务挂进度父任务
@@ -265,6 +279,68 @@ final class ProgressEngineTests: XCTestCase {
         parentProgress = ProgressEngine.effectiveProgress(of: progressParent)
         XCTAssertEqual(parentProgress.current, 3, "恢复删除前手动当前值")
         XCTAssertEqual(parentProgress.total, 10, "恢复删除前手动总量")
+    }
+
+    // MARK: - i) 进度统计模式
+
+    /// 全部任务模式（默认）：所有层级节点均计入总量与进度，父任务按折算权重
+    func testAllTasksCountingModeCountsEveryLevel() throws {
+        let goal = Goal(name: "目标")
+        context.insert(goal)
+
+        // 单项父（2 子：done + notDone → 折算 halfDone = 0.5）+ 独立叶子（done = 1）
+        let parent = insert(TaskItem(name: "父"), into: goal)
+        insert(TaskItem(name: "子1", status: .done), under: parent)
+        insert(TaskItem(name: "子2", status: .notDone), under: parent)
+        insert(TaskItem(name: "叶子", status: .done), into: goal)
+        try context.save()
+
+        XCTAssertEqual(goal.progressCountingMode, .allTasks, "默认为全部任务模式")
+        let progress = ProgressEngine.goalProgress(of: goal)
+        XCTAssertEqual(progress.totalItems, 4, "父 + 2 子 + 独立叶子均计入")
+        XCTAssertEqual(progress.completedWeight, 2.5, accuracy: 0.000001, "父折算 0.5 + 子 1 + 0 + 叶子 1")
+        XCTAssertEqual(progress.fraction, 0.625, accuracy: 0.000001)
+    }
+
+    /// 仅叶子任务模式：中间层不计入，只统计任务树末端节点
+    func testLeafTasksCountingModeCountsOnlyLeaves() throws {
+        let goal = Goal(name: "目标", progressCountingMode: .leafTasks)
+        context.insert(goal)
+
+        let parent = insert(TaskItem(name: "父"), into: goal)
+        insert(TaskItem(name: "子1", status: .done), under: parent)
+        insert(TaskItem(name: "子2", status: .notDone), under: parent)
+        insert(TaskItem(name: "叶子", status: .done), into: goal)
+        try context.save()
+
+        let progress = ProgressEngine.goalProgress(of: goal)
+        XCTAssertEqual(progress.totalItems, 3, "父不计入，只计 2 子 + 独立叶子")
+        XCTAssertEqual(progress.completedWeight, 2, accuracy: 0.000001)
+        XCTAssertEqual(progress.fraction, 2.0 / 3.0, accuracy: 0.000001)
+    }
+
+    /// 删除态处理（两种模式一致）：删除态父任务整棵子树不计入；
+    /// 有效子任务全部为删除态的父任务接管解除，视为叶子按手动状态计入
+    func testDeletedSubtreeExcludedInBothModes() throws {
+        let goal = Goal(name: "目标", progressCountingMode: .leafTasks)
+        context.insert(goal)
+
+        // 删除态父 + 子任务（子任务虽 done，但整棵子树不计入）
+        let deletedParent = insert(TaskItem(name: "删除父", status: .deleted), into: goal)
+        insert(TaskItem(name: "不应计入", status: .done), under: deletedParent)
+        // 有效子任务全部删除 → 接管解除，父任务视为叶子，按手动 halfDone 计 0.5
+        let released = insert(TaskItem(name: "接管解除父", status: .halfDone), into: goal)
+        insert(TaskItem(name: "删除子", status: .deleted), under: released)
+        try context.save()
+
+        let leafProgress = ProgressEngine.goalProgress(of: goal)
+        XCTAssertEqual(leafProgress.totalItems, 1, "仅叶子模式：删除父子树排除，接管解除父计为叶子")
+        XCTAssertEqual(leafProgress.completedWeight, 0.5, accuracy: 0.000001)
+
+        goal.progressCountingMode = .allTasks
+        let allProgress = ProgressEngine.goalProgress(of: goal)
+        XCTAssertEqual(allProgress.totalItems, 1, "全部任务模式：删除父整棵子树同样排除")
+        XCTAssertEqual(allProgress.completedWeight, 0.5, accuracy: 0.000001)
     }
 
     // MARK: - 子任务贡献

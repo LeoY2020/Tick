@@ -38,6 +38,22 @@ enum TaskStatus: String, Codable, CaseIterable {
     }
 }
 
+/// 目标进度统计模式
+enum ProgressCountingMode: String, Codable, CaseIterable {
+    /// 统计父任务：所有层级任务均计入总量与进度（父任务按其有效状态/进度折算）
+    case allTasks
+    /// 统计叶子任务：只统计任务树末端（无有效子任务）的节点
+    case leafTasks
+
+    /// 中文显示名
+    var displayName: String {
+        switch self {
+        case .allTasks: return "全部任务"
+        case .leafTasks: return "仅叶子任务"
+        }
+    }
+}
+
 /// 提醒重复规则
 enum RepeatRule: String, Codable, CaseIterable {
     /// 不重复
