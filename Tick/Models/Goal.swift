@@ -15,9 +15,15 @@ final class Goal {
     /// 截止日期（nil = 未设置）
     var endDate: Date? = nil
     var createdAt: Date = Date()
-    /// 进度统计模式：全部任务（父任务折算计入）/ 仅叶子任务（任务树末端节点）
-    /// 注意：SwiftData 宏要求默认值使用全限定枚举名（ProgressCountingMode.allTasks）
-    var progressCountingMode: ProgressCountingMode = ProgressCountingMode.allTasks
+    /// 进度统计模式原始值（String? 存储，nil=未设置=>回退 allTasks。
+    /// 与 TaskItem.typeRaw 同款思路，但用 Optional：以字符串且可选方式入库，
+    /// 避免 Codable 枚举列在 SwiftData/CloudKit 已有数据的迁移/解码崩溃）
+    var progressCountingModeRaw: String? = nil
+    /// 进度统计模式（读写映射枚举，unknow/未设置 回退 allTasks）
+    var progressCountingMode: ProgressCountingMode {
+        get { ProgressCountingMode(rawValue: progressCountingModeRaw ?? ProgressCountingMode.allTasks.rawValue) ?? .allTasks }
+        set { progressCountingModeRaw = newValue.rawValue }
+    }
 
     /// 目标下的一级任务（删除目标时级联删除全部任务）
     @Relationship(deleteRule: .cascade, inverse: \TaskItem.goal)
@@ -39,6 +45,7 @@ final class Goal {
         self.iconSystemName = iconSystemName
         self.startDate = startDate
         self.endDate = endDate
-        self.progressCountingMode = progressCountingMode
+        // 直接写原始值字符串，避免 init 阶段经由计算属性 setter
+        self.progressCountingModeRaw = progressCountingMode.rawValue
     }
 }
