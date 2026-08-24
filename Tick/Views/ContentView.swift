@@ -71,10 +71,12 @@ struct ContentView: View {
     private var detail: some View {
         if let goal = selectedGoal {
             goalDetail(goal)
-        } else if goals.isEmpty {
-            emptyState
+        } else if let first = goals.first {
+            // 兜底：selectedGoal 短暂为 nil（如视图树重建）时直接渲染第一个目标，
+            // 避免卡在加载指示器（goals 非空时 onChange 不触发，ProgressView 会无限转圈）
+            goalDetail(first)
         } else {
-            ProgressView() // 短暂过渡
+            emptyState
         }
     }
 

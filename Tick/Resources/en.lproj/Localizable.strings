@@ -22,7 +22,10 @@
 "暗色" = "Dark";
 "语言" = "Language";
 "简体中文" = "Simplified Chinese";
+"繁體中文" = "Traditional Chinese";
 "English" = "English";
+"日本語" = "Japanese";
+"한국어" = "Korean";
 "iCloud 同步" = "iCloud Sync";
 "数据备份" = "Data Backup";
 "备份成功" = "Backup Successful";

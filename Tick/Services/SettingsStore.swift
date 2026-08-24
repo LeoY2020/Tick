@@ -22,16 +22,20 @@ enum ColorSchemeSetting: String, CaseIterable, Codable, Identifiable {
 
 /// 语言设置
 enum LanguageSetting: String, CaseIterable, Codable, Identifiable {
-    case system, zhHans, en
+    case system, zhHans, zhHant, en, ja, ko
 
     var id: String { rawValue }
 
-    /// 显示名称（视图中作为 LocalizedStringKey 本地化）
+    /// 显示名称（语言原生名称，视图中作为 LocalizedStringKey 本地化；
+    /// 原生名称在所有语言下保持不译，"跟随系统"由各语言 strings 翻译）
     var displayName: String {
         switch self {
         case .system: return "跟随系统"
         case .zhHans: return "简体中文"
+        case .zhHant: return "繁體中文"
         case .en: return "English"
+        case .ja: return "日本語"
+        case .ko: return "한국어"
         }
     }
 
@@ -40,7 +44,10 @@ enum LanguageSetting: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .system: return nil
         case .zhHans: return "zh-Hans"
+        case .zhHant: return "zh-Hant"
         case .en: return "en"
+        case .ja: return "ja"
+        case .ko: return "ko"
         }
     }
 }

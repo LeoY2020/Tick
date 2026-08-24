@@ -25,15 +25,15 @@ struct TickApp: App {
     }
 }
 
-/// 语言环境修饰器：locale 非 nil 时覆盖环境（切换立即生效），nil 时跟随系统
+/// 语言环境修饰器：locale 非 nil 时覆盖环境（切换立即生效），nil 时跟随系统。
+/// 注意结构恒定：不能使用 if/else 分支——"跟随系统"(nil) ↔ 具体语言切换时
+/// 分支切换会改变子树结构性 identity，导致 ContentView 的 @State 被销毁重建
+/// （selectedGoal 归 nil → 界面无限转圈）。故 nil 时以环境当前 locale 等值回写。
 private struct LocaleModifier: ViewModifier {
     let locale: Locale?
+    @Environment(\.locale) private var systemLocale
 
     func body(content: Content) -> some View {
-        if let locale {
-            content.environment(\.locale, locale)
-        } else {
-            content
-        }
+        content.environment(\.locale, locale ?? systemLocale)
     }
 }
