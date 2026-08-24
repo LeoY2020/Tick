@@ -109,10 +109,10 @@ struct ContentView: View {
         return VStack(spacing: 0) {
             // 目标总进度区域
             VStack(spacing: 6) {
-                // 进度条更新：线性 0.5s 内完成（无缓入缓出的渐显/渐隐效果）
+                // 进度条更新：贝塞尔曲线 0.5s 内完成
                 ProgressView(value: progress.fraction)
                     .tint(goalColor)
-                    .animation(reduceMotion ? nil : .linear(duration: 0.5), value: progress.fraction)
+                    .animation(reduceMotion ? nil : .timingCurve(0.4, 0, 0.2, 1, duration: 0.5), value: progress.fraction)
                 HStack {
                     Text("已完成 \(Int(progress.completedWeight.rounded())) ")
                         .foregroundStyle(.secondary)
@@ -172,7 +172,8 @@ struct ContentView: View {
             } label: {
                 Image(systemName: "plus")
                     .font(.title2.weight(.semibold))
-                    .foregroundStyle(.white)
+                    // 随系统外观自适应：浅色模式黑加号 / 深色模式白加号
+                    .foregroundStyle(.primary)
                     .frame(width: 56, height: 56)
             }
             .glassEffect()

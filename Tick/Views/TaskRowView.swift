@@ -185,10 +185,10 @@ struct TaskRowView: View {
             Text("\(Int(progress.current))/\(Int(progress.total))")
                 .font(.footnote.monospacedDigit())
                 .foregroundStyle(.secondary)
-            // 进度条更新：线性 0.5s 内完成（无缓入缓出的渐显/渐隐效果）
+            // 进度条更新：贝塞尔曲线 0.5s 内完成
             ProgressView(value: progress.total > 0 ? progress.current / progress.total : 0)
                 .frame(width: 60)
-                .animation(reduceMotion ? nil : .linear(duration: 0.5), value: progress.current)
+                .animation(reduceMotion ? nil : .timingCurve(0.4, 0, 0.2, 1, duration: 0.5), value: progress.current)
             if !task.hasSubtasks {
                 // 手动调整（接管时 Stepper 只读，显示汇总值）
                 Stepper(
