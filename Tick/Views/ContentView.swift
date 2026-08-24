@@ -109,9 +109,10 @@ struct ContentView: View {
         return VStack(spacing: 0) {
             // 目标总进度区域
             VStack(spacing: 6) {
+                // 进度条更新：线性 0.5s 内完成（无缓入缓出的渐显/渐隐效果）
                 ProgressView(value: progress.fraction)
                     .tint(goalColor)
-                    .animation(reduceMotion ? nil : .easeInOut, value: progress.fraction)
+                    .animation(reduceMotion ? nil : .linear(duration: 0.5), value: progress.fraction)
                 HStack {
                     Text("已完成 \(Int(progress.completedWeight.rounded())) ")
                         .foregroundStyle(.secondary)
