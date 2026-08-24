@@ -12,6 +12,7 @@ struct TaskRowView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var showAddSubtask = false
+    @State private var showEditor = false
     @State private var taskToDelete: TaskItem?
 
     var body: some View {
@@ -111,6 +112,11 @@ struct TaskRowView: View {
                 goal: ProgressEngine.rootGoal(of: task) ?? parentGoalFallback,
                 parent: task
             )
+        }
+        .sheet(isPresented: $showEditor) {
+            TaskEditorView(task: task) {
+                showEditor = false
+            }
         }
     }
 
