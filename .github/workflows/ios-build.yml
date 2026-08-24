@@ -57,7 +57,7 @@ jobs:
             -destination "$DESTINATION" \
             -configuration Debug \
             $XCARGS \
-            build 2>&1 | xcbeautify --renderer github
+            build 2>&1 | xcbeautify --renderer github-actions
 
       - name: Test
         run: |
@@ -69,7 +69,7 @@ jobs:
             $XCARGS \
             -enableCodeCoverage YES \
             -resultBundlePath TestResults.xcresult \
-            test 2>&1 | xcbeautify --renderer github
+            test 2>&1 | xcbeautify --renderer github-actions
 
       - name: Upload test results
         if: always()
