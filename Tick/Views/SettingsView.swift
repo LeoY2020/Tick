@@ -61,11 +61,14 @@ struct SettingsView: View {
 
     // MARK: - iCloud 同步
 
-    /// iCloud 同步开关（持久化由 SettingsStore 的 didSet 自动处理）
+    /// iCloud 同步开关：切换时经 CloudSyncManager 重建 ModelContainer（含设置持久化）
     private var iCloudSection: some View {
         Section {
-            Toggle("iCloud 同步", isOn: $settings.iCloudSyncEnabled)
-                .accessibilityLabel("iCloud 同步")
+            Toggle("iCloud 同步", isOn: Binding(
+                get: { settings.iCloudSyncEnabled },
+                set: { CloudSyncManager.shared.applySyncSetting(enabled: $0) }
+            ))
+            .accessibilityLabel("iCloud 同步")
         } header: {
             Text("iCloud")
         } footer: {
@@ -109,7 +112,7 @@ struct SettingsView: View {
                               systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Button("开启 iCloud 同步") {
-                            settings.iCloudSyncEnabled = true
+                            CloudSyncManager.shared.applySyncSetting(enabled: true)
                         }
                         .buttonStyle(.borderless)
                         .accessibilityLabel("开启 iCloud 同步")
