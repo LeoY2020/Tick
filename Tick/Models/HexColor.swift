@@ -3,6 +3,9 @@ import UIKit
 
 /// HEX 颜色工具
 enum HexColor {
+    /// 自动颜色标识：深色模式解析为白色、浅色模式解析为黑色
+    static let autoHex = "auto"
+
     /// 预设色板（12 色）
     static let palette: [(name: String, hex: String)] = [
         ("黑色", "#000000"),
@@ -18,6 +21,14 @@ enum HexColor {
         ("粉色", "#FF2D55"),
         ("棕色", "#A2845E"),
     ]
+
+    /// 解析为最终颜色："auto" 按色彩方案适配（深色白 / 浅色黑），其余按 HEX 解析
+    static func resolvedColor(from hex: String, colorScheme: ColorScheme) -> Color {
+        if hex.caseInsensitiveCompare(autoHex) == .orderedSame {
+            return colorScheme == .dark ? .white : .black
+        }
+        return color(from: hex)
+    }
 
     /// 解析 HEX 字符串为 Color：支持 "#RRGGBB"、"RRGGBB" 与 3 位缩写（如 "F00"），无效返回黑色
     static func color(from hex: String) -> Color {
@@ -49,5 +60,19 @@ enum HexColor {
                       Int(round(r * 255)),
                       Int(round(g * 255)),
                       Int(round(b * 255)))
+    }
+}
+
+/// 颜色圆点：HEX 为 "auto" 时按系统外观自适应（深色白 / 浅色黑），其余按 HEX 解析
+struct AdaptiveColorDot: View {
+    let hex: String
+    var diameter: CGFloat = 12
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Circle()
+            .fill(HexColor.resolvedColor(from: hex, colorScheme: colorScheme))
+            .frame(width: diameter, height: diameter)
     }
 }

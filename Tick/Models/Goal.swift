@@ -6,8 +6,8 @@ import SwiftData
 final class Goal {
     var id: UUID = UUID()
     var name: String = ""
-    /// 颜色 HEX 字符串（如 "#000000"）
-    var colorHex: String = "#000000"
+    /// 颜色 HEX 字符串（如 "#000000"；"auto" = 自动：深色模式白 / 浅色模式黑）
+    var colorHex: String = "auto"
     /// SF Symbols 图标名（nil = 未设置）
     var iconSystemName: String? = nil
     /// 开始日期（nil = 未设置）
@@ -26,7 +26,7 @@ final class Goal {
     }
 
     init(name: String,
-         colorHex: String = "#000000",
+         colorHex: String = "auto",
          iconSystemName: String? = nil,
          startDate: Date? = nil,
          endDate: Date? = nil) {

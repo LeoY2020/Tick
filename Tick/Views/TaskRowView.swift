@@ -35,10 +35,8 @@ struct TaskRowView: View {
 
     private var rowContent: some View {
         HStack(spacing: 10) {
-            // 颜色标识（继承链解析）
-            Circle()
-                .fill(HexColor.color(from: ProgressEngine.effectiveColor(of: task)))
-                .frame(width: 12, height: 12)
+            // 颜色标识（继承链解析，"auto" 随系统外观自适应）
+            AdaptiveColorDot(hex: ProgressEngine.effectiveColor(of: task))
 
             // 图标（继承链解析）
             if let icon = ProgressEngine.effectiveIcon(of: task) {
@@ -148,17 +146,12 @@ struct TaskRowView: View {
         }
     }
 
-    /// 单项任务：状态菜单（有子任务时只读，状态由子任务计算）
+    /// 单项任务：点击循环切换状态（未完成 → 完成 → 半完成 → 删除 → 未完成；有子任务时只读，状态由子任务计算）
     private var singleControl: some View {
         let effective = ProgressEngine.effectiveStatus(of: task)
-        return Menu {
-            ForEach(TaskStatus.allCases, id: \.self) { status in
-                Button {
-                    task.status = status
-                    persistAndBackup()
-                } label: {
-                    Label(status.displayName, systemImage: statusIcon(status).name)
-                }
+        return Button {
+            withAnimation(reduceMotion ? nil : .easeInOut) {
+                cycleStatus()
             }
         } label: {
             Image(systemName: statusIcon(effective).name)
@@ -166,10 +159,22 @@ struct TaskRowView: View {
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .disabled(task.hasSubtasks)
         .accessibilityLabel(task.hasSubtasks
             ? "状态由子任务计算：\(effective.displayName)"
             : "切换状态，当前\(effective.displayName)")
+    }
+
+    /// 状态循环：未完成 → 完成 → 半完成 → 删除 → 未完成
+    private func cycleStatus() {
+        switch task.status {
+        case .notDone: task.status = .done
+        case .done: task.status = .halfDone
+        case .halfDone: task.status = .deleted
+        case .deleted: task.status = .notDone
+        }
+        persistAndBackup()
     }
 
     /// 进度任务：数值 + 进度条 + 步进器（有子任务时只读，进度由子任务汇总）

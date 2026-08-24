@@ -101,8 +101,9 @@ struct GoalEditorView: View {
 
                 // MARK: 颜色
                 Section("颜色") {
-                    // 预设 12 色板：固定 44×44 触控目标，适配动态字体
+                    // 自动 + 预设 12 色板：固定 44×44 触控目标，适配动态字体
                     LazyVGrid(columns: Self.colorColumns, spacing: 0) {
+                        autoColorButton
                         ForEach(Self.swatches) { swatch in
                             paletteButton(swatch)
                         }
@@ -174,6 +175,46 @@ struct GoalEditorView: View {
     }
 
     // MARK: - 子视图
+
+    /// 自动颜色按钮：半黑半白圆形（左黑右白），选中显示描边环与勾选徽章；
+    /// "auto" 语义 = 深色模式白 / 浅色模式黑
+    private var autoColorButton: some View {
+        let isSelected = isSelectedColor(HexColor.autoHex)
+        return Button {
+            goal.colorHex = HexColor.autoHex
+        } label: {
+            ZStack {
+                if isSelected {
+                    Circle() // 选中描边环（primary 随外观自适应，黑白背景均可见）
+                        .strokeBorder(Color.primary.opacity(0.55), lineWidth: 2.5)
+                        .frame(width: 34, height: 34)
+                }
+                // 半黑半白圆形（左黑右白）
+                HStack(spacing: 0) {
+                    Rectangle().fill(Color.black)
+                    Rectangle().fill(Color.white)
+                }
+                .frame(width: 26, height: 26)
+                .clipShape(Circle())
+                .overlay(
+                    Circle().strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5)
+                )
+                if isSelected {
+                    // 勾选徽章（白底黑勾，在黑白两半上均清晰）
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.black)
+                        .padding(2)
+                        .background(Circle().fill(.white))
+                }
+            }
+            .frame(width: 44, height: 44) // 固定触控目标
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("自动颜色")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
 
     /// 色板圆形按钮：选中时显示勾选与描边环
     private func paletteButton(_ swatch: PaletteSwatch) -> some View {

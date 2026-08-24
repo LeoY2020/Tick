@@ -27,6 +27,8 @@ struct ContentView: View {
     @ObservedObject private var backup = DataBackupManager.shared
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// 系统色彩方案（目标颜色 "auto" 适配：深色白 / 浅色黑）
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -102,7 +104,7 @@ struct ContentView: View {
     /// 目标详情：总进度 + 任务列表 + 底部添加按钮
     private func goalDetail(_ goal: Goal) -> some View {
         let progress = ProgressEngine.goalProgress(of: goal)
-        let goalColor = HexColor.color(from: goal.colorHex)
+        let goalColor = HexColor.resolvedColor(from: goal.colorHex, colorScheme: colorScheme)
 
         return VStack(spacing: 0) {
             // 目标总进度区域

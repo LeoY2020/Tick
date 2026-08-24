@@ -67,10 +67,8 @@ struct GoalSidebarView: View {
             selectedGoal = goal
         } label: {
             HStack(spacing: 10) {
-                // 颜色圆点（直径 12）
-                Circle()
-                    .fill(HexColor.color(from: goal.colorHex))
-                    .frame(width: 12, height: 12)
+                // 颜色圆点（直径 12，"auto" 随系统外观自适应）
+                AdaptiveColorDot(hex: goal.colorHex)
                     .accessibilityHidden(true)
                 // 目标图标（未设置时不显示）
                 if let iconName = goal.iconSystemName {
