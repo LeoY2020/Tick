@@ -20,22 +20,79 @@ enum ColorSchemeSetting: String, CaseIterable, Codable, Identifiable {
 
 // MARK: - 语言设置
 
-/// 语言设置
+/// 语言设置（50 种，displayName 用各语言原生名称，所有语言下不译）
 enum LanguageSetting: String, CaseIterable, Codable, Identifiable {
-    case system, zhHans, zhHant, en, ja, ko
+    case system
+    // 东亚
+    case zhHans, zhHant, ja, ko
+    // 欧洲
+    case en, fr, de, es, it, pt, ptBR, ca, nl, tr, da, sv, nb
+    case ru, uk, pl, cs, sk, hu, ro, bg, el, sr, hr, sl, fi
+    // 中东
+    case ar, he, fa
+    // 南亚
+    case hi, bn, ta, te, mr, gu, kn, ml, pa, ur, si
+    // 东南亚
+    case th, vi, id, ms, tl
+    // 非洲
+    case sw
 
     var id: String { rawValue }
 
-    /// 显示名称（语言原生名称，视图中作为 LocalizedStringKey 本地化；
-    /// 原生名称在所有语言下保持不译，"跟随系统"由各语言 strings 翻译）
+    /// 显示名称（语言原生名称；"跟随系统"由各语言 strings 翻译，其余原生名不译）
     var displayName: String {
         switch self {
         case .system: return "跟随系统"
         case .zhHans: return "简体中文"
         case .zhHant: return "繁體中文"
-        case .en: return "English"
         case .ja: return "日本語"
         case .ko: return "한국어"
+        case .en: return "English"
+        case .fr: return "Français"
+        case .de: return "Deutsch"
+        case .es: return "Español"
+        case .it: return "Italiano"
+        case .pt: return "Português"
+        case .ptBR: return "Português (Brasil)"
+        case .ca: return "Català"
+        case .nl: return "Nederlands"
+        case .tr: return "Türkçe"
+        case .da: return "Dansk"
+        case .sv: return "Svenska"
+        case .nb: return "Norsk"
+        case .ru: return "Русский"
+        case .uk: return "Українська"
+        case .pl: return "Polski"
+        case .cs: return "Čeština"
+        case .sk: return "Slovenčina"
+        case .hu: return "Magyar"
+        case .ro: return "Română"
+        case .bg: return "Български"
+        case .el: return "Ελληνικά"
+        case .sr: return "Српски"
+        case .hr: return "Hrvatski"
+        case .sl: return "Slovenščina"
+        case .fi: return "Suomi"
+        case .ar: return "العربية"
+        case .he: return "עברית"
+        case .fa: return "فارسی"
+        case .hi: return "हिन्दी"
+        case .bn: return "বাংলা"
+        case .ta: return "தமிழ்"
+        case .te: return "తెలుగు"
+        case .mr: return "मराठी"
+        case .gu: return "ગુજરાતી"
+        case .kn: return "ಕನ್ನಡ"
+        case .ml: return "മലയാളം"
+        case .pa: return "ਪੰਜਾਬੀ"
+        case .ur: return "اردو"
+        case .si: return "සිංහල"
+        case .th: return "ไทย"
+        case .vi: return "Tiếng Việt"
+        case .id: return "Bahasa Indonesia"
+        case .ms: return "Bahasa Melayu"
+        case .tl: return "Filipino"
+        case .sw: return "Kiswahili"
         }
     }
 
@@ -45,9 +102,54 @@ enum LanguageSetting: String, CaseIterable, Codable, Identifiable {
         case .system: return nil
         case .zhHans: return "zh-Hans"
         case .zhHant: return "zh-Hant"
-        case .en: return "en"
         case .ja: return "ja"
         case .ko: return "ko"
+        case .en: return "en"
+        case .fr: return "fr"
+        case .de: return "de"
+        case .es: return "es"
+        case .it: return "it"
+        case .pt: return "pt"
+        case .ptBR: return "pt-BR"
+        case .ca: return "ca"
+        case .nl: return "nl"
+        case .tr: return "tr"
+        case .da: return "da"
+        case .sv: return "sv"
+        case .nb: return "nb"
+        case .ru: return "ru"
+        case .uk: return "uk"
+        case .pl: return "pl"
+        case .cs: return "cs"
+        case .sk: return "sk"
+        case .hu: return "hu"
+        case .ro: return "ro"
+        case .bg: return "bg"
+        case .el: return "el"
+        case .sr: return "sr"
+        case .hr: return "hr"
+        case .sl: return "sl"
+        case .fi: return "fi"
+        case .ar: return "ar"
+        case .he: return "he"
+        case .fa: return "fa"
+        case .hi: return "hi"
+        case .bn: return "bn"
+        case .ta: return "ta"
+        case .te: return "te"
+        case .mr: return "mr"
+        case .gu: return "gu"
+        case .kn: return "kn"
+        case .ml: return "ml"
+        case .pa: return "pa"
+        case .ur: return "ur"
+        case .si: return "si"
+        case .th: return "th"
+        case .vi: return "vi"
+        case .id: return "id"
+        case .ms: return "ms"
+        case .tl: return "tl"
+        case .sw: return "sw"
         }
     }
 }
