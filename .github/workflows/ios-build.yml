@@ -50,16 +50,7 @@ jobs:
           echo "使用模拟器: $DEVICE"
           echo "DESTINATION=platform=iOS Simulator,name=$DEVICE" >> "$GITHUB_ENV"
 
-      - name: Build
-        run: |
-          set -o pipefail
-          xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
-            -destination "$DESTINATION" \
-            -configuration Debug \
-            $XCARGS \
-            build 2>&1 | xcbeautify --renderer github-actions
-
-      - name: Test
+      - name: Test (includes build)
         run: |
           set -o pipefail
           rm -rf TestResults.xcresult
