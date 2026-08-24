@@ -16,7 +16,8 @@ final class Goal {
     var endDate: Date? = nil
     var createdAt: Date = Date()
     /// 进度统计模式：全部任务（父任务折算计入）/ 仅叶子任务（任务树末端节点）
-    var progressCountingMode: ProgressCountingMode = .allTasks
+    /// 注意：SwiftData 宏要求默认值使用全限定枚举名（ProgressCountingMode.allTasks）
+    var progressCountingMode: ProgressCountingMode = ProgressCountingMode.allTasks
 
     /// 目标下的一级任务（删除目标时级联删除全部任务）
     @Relationship(deleteRule: .cascade, inverse: \TaskItem.goal)
