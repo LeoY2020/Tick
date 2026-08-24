@@ -18,6 +18,10 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var showAddTask = false
 
+    /// 水平尺寸类：侧边栏手动切换按钮仅在窄屏（iPhone 等）显示，
+    /// iPad regular 宽度下系统自动提供切换按钮
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     @StateObject private var expandedState = ExpandedTaskState()
     @ObservedObject private var notifications = NotificationService.shared
     @ObservedObject private var backup = DataBackupManager.shared
@@ -29,6 +33,22 @@ struct ContentView: View {
             GoalSidebarView(selectedGoal: $selectedGoal)
         } detail: {
             detail
+                // 设置按钮挂载在主视图层：无目标（空态）与目标详情均可达
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gearshape")
+                        }
+                        .accessibilityLabel("设置")
+                    }
+                }
+        }
+        .sheet(isPresented: $showSettings) {
+            NavigationStack {
+                SettingsView(settings: SettingsStore.shared)
+            }
         }
         .task {
             // 首次启动空库检测与恢复（Keychain / CloudKit 双轨）
@@ -114,12 +134,16 @@ struct ContentView: View {
         .navigationTitle(goal.name)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    columnVisibility = columnVisibility == .all ? .detailOnly : .all
-                } label: {
-                    Image(systemName: "sidebar.leading")
+                // 侧边栏切换按钮：仅 iPhone 等窄屏（compact）显示；
+                // iPad regular 宽度下系统自动提供切换按钮，手动添加会重复
+                if horizontalSizeClass == .compact {
+                    Button {
+                        columnVisibility = columnVisibility == .all ? .detailOnly : .all
+                    } label: {
+                        Image(systemName: "sidebar.leading")
+                    }
+                    .accessibilityLabel("目标列表")
                 }
-                .accessibilityLabel("目标列表")
             }
             ToolbarItem(placement: .principal) {
                 HStack(spacing: 6) {
@@ -134,14 +158,6 @@ struct ContentView: View {
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("目标：\(goal.name)")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showSettings = true
-                } label: {
-                    Image(systemName: "gearshape")
-                }
-                .accessibilityLabel("设置")
             }
         }
         // 底部浮动添加任务按钮（Liquid Glass 中间层）
@@ -161,11 +177,6 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showAddTask) {
             QuickAddTaskView(goal: goal, parent: nil)
-        }
-        .sheet(isPresented: $showSettings) {
-            NavigationStack {
-                SettingsView(settings: SettingsStore.shared)
-            }
         }
         // 恢复中遮罩
         .overlay {
