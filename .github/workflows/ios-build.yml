@@ -1,0 +1,84 @@
+name: iOS Build & Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test (Xcode 27)
+    runs-on: macos-26
+    env:
+      PROJECT: Tick.xcodeproj
+      SCHEME: Tick
+      # 免签名构建（CI 不配置开发者证书）
+      XCARGS: >-
+        CODE_SIGNING_ALLOWED=NO
+        CODE_SIGN_IDENTITY=
+        CODE_SIGNING_REQUIRED=NO
+        CODE_SIGN_ENTITLEMENTS=
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 27
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "27"
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i ios || true
+
+      - name: Install xcbeautify (if missing)
+        run: which xcbeautify || brew install xcbeautify
+
+      - name: Resolve iOS Simulator
+        run: |
+          # 自动选择一个可用的 iPhone 模拟器（避免运行时镜像差异）
+          DEVICE=$(xcrun simctl list devices available | grep -oE "iPhone [0-9]+ (Pro Max|Pro)?" | head -n 1)
+          if [ -z "$DEVICE" ]; then
+            DEVICE=$(xcrun simctl list devices available | grep -oE "iPhone [0-9]+.*" | head -n 1 | cut -d '(' -f 1 | xargs)
+          fi
+          if [ -z "$DEVICE" ]; then
+            echo "未找到可用的 iPhone 模拟器"; exit 1
+          fi
+          echo "使用模拟器: $DEVICE"
+          echo "DESTINATION=platform=iOS Simulator,name=$DEVICE" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+            -destination "$DESTINATION" \
+            -configuration Debug \
+            $XCARGS \
+            build 2>&1 | xcbeautify --renderer github
+
+      - name: Test
+        run: |
+          set -o pipefail
+          rm -rf TestResults.xcresult
+          xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+            -destination "$DESTINATION" \
+            -configuration Debug \
+            $XCARGS \
+            -enableCodeCoverage YES \
+            -resultBundlePath TestResults.xcresult \
+            test 2>&1 | xcbeautify --renderer github
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcresult
+          path: TestResults.xcresult
+          retention-days: 7
