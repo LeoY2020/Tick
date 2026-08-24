@@ -63,13 +63,13 @@ final class KeychainBackupTests: XCTestCase {
                         endDate: Date(timeIntervalSince1970: 2000))
         let parent = TaskItem(name: "跑步", type: .progress, colorHex: "#FF3B30",
                               totalAmount: 10, currentAmount: 4, sortOrder: 0)
-        let childA = TaskItem(name: "晨跑", type: .single, status: .done,
-                              iconSystemName: "sunrise", sortOrder: 0)
+        let childA = TaskItem(name: "晨跑", type: .single,
+                              iconSystemName: "sunrise", status: .done, sortOrder: 0)
         let childB = TaskItem(name: "夜跑", type: .progress,
+                              totalAmount: 5, currentAmount: 2,
                               startDate: Date(timeIntervalSince1970: 3000),
                               reminderDate: Date(timeIntervalSince1970: 4000),
-                              repeatRule: .daily, customWeekdaysRaw: "1,3,5",
-                              totalAmount: 5, currentAmount: 2, sortOrder: 1)
+                              repeatRule: .daily, customWeekdaysRaw: "1,3,5", sortOrder: 1)
         let reading = TaskItem(name: "阅读", type: .single, status: .halfDone, sortOrder: 1)
 
         context.insert(goal)
