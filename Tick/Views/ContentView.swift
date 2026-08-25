@@ -122,16 +122,29 @@ struct ContentView: View {
                 Spacer(minLength: 12)
                 if let endDate = goal.endDate {
                     TimelineView(.periodic(from: .now, by: 60)) { context in
-                        if let countdown = CountdownFormatter.countdown(
-                            to: endDate,
-                            preciseToHour: goal.endDatePreciseToHour,
-                            now: context.date
-                        ) {
-                            Text(countdown)
-                                .font(.footnote)
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("剩余时间")
+                                .font(.caption2)
                                 .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                                .accessibilityLabel("截止倒计时：\(countdown)")
+                            if let countdown = CountdownFormatter.countdown(
+                                to: endDate,
+                                preciseToHour: goal.endDatePreciseToHour,
+                                now: context.date
+                            ) {
+                                Text(countdown)
+                                    .font(.callout.weight(.semibold))
+                                    .monospacedDigit()
+                                    .accessibilityLabel("剩余时间：\(countdown)")
+                            }
+                            Text(
+                                endDate,
+                                format: goal.endDatePreciseToHour
+                                    ? .dateTime.year().month().day().hour().minute()
+                                    : .dateTime.year().month().day()
+                            )
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
                         }
                     }
                 }
