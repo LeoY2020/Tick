@@ -184,24 +184,26 @@ enum DocumentTextExtractor {
 
     /// 用 libz 按裸 deflate（windowBits = -15）解压
     private static func rawInflate(_ source: [UInt8], expectedSize: Int) -> Data? {
-        source.withUnsafeBytes { srcPtr -> Data? in
+        guard expectedSize > 0, expectedSize < 100_000_000, !source.isEmpty else { return nil }
+        // 用堆分配的裸指针作为输出缓冲，避免 Swift 数组与逃逸指针重叠访问（#ExclusivityViolation）
+        return source.withUnsafeBytes { srcPtr -> Data? in
             guard let srcBase = srcPtr.baseAddress else { return nil }
-            var dst = [UInt8](repeating: 0, count: expectedSize)
             var stream = z_stream()
             stream.next_in = UnsafeMutablePointer(mutating: srcBase.assumingMemoryBound(to: UInt8.self))
             stream.avail_in = uInt(source.count)
-            return dst.withUnsafeMutableBytes { dstPtr -> Data? in
-                guard let dstBase = dstPtr.baseAddress else { return nil }
-                stream.next_out = dstBase.assumingMemoryBound(to: UInt8.self)
-                stream.avail_out = uInt(dst.count)
-                let initResult = inflateInit2_(&stream, -15, "1.2.11", Int32(MemoryLayout<z_stream>.size))
-                guard initResult == Z_OK else { return nil }
-                let status = zlib.inflate(&stream, Z_FINISH)
-                let _ = inflateEnd(&stream)
-                guard status == Z_STREAM_END else { return nil }
-                let outCount = dst.count - Int(stream.avail_out)
-                return Data(dst[0..<outCount])
-            }
+
+            let dst = UnsafeMutablePointer<UInt8>.allocate(capacity: expectedSize)
+            defer { dst.deallocate() }
+            stream.next_out = dst
+            stream.avail_out = uInt(expectedSize)
+
+            let initResult = inflateInit2_(&stream, -15, "1.2.11", Int32(MemoryLayout<z_stream>.size))
+            guard initResult == Z_OK else { return nil }
+            let status = zlib.inflate(&stream, Z_FINISH)
+            let _ = inflateEnd(&stream)
+            guard status == Z_STREAM_END else { return nil }
+            let outCount = expectedSize - Int(stream.avail_out)
+            return Data(bytes: dst, count: outCount)
         }
     }
 
