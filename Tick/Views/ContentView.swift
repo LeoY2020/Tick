@@ -17,8 +17,14 @@ struct ContentView: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .detailOnly
     @State private var showSettings = false
     @State private var showAddTask = false
+    /// 是否为窄窗口：尺寸类 compact（iPhone）或窗口宽度偏窄（iPad 台前调度窄窗）。
+    /// 台前调度的窄窗有时仍报 regular，仅靠 horizontalSizeClass 判断会漏，故叠加宽度判断。
+    @State private var isNarrowWindow = false
 
-    /// 水平尺寸类：侧边栏手动切换按钮仅在窄屏（iPhone 等）显示，
+    /// 窄窗口宽度阈值：小于该宽度按窄屏处理（单个分栏无法舒适并排）
+    private static let narrowWindowWidth: CGFloat = 800
+
+    /// 水平尺寸类：侧边栏手动切换按钮仅在窄屏显示，
     /// iPad regular 宽度下系统自动提供切换按钮
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -31,47 +37,61 @@ struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columnVisibility) {
-            GoalSidebarView(selectedGoal: $selectedGoal)
-        } detail: {
-            detail
-                // 设置按钮挂载在主视图层：无目标（空态）与目标详情均可达
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Image(systemName: "gearshape")
+        GeometryReader { proxy in
+            NavigationSplitView(columnVisibility: $columnVisibility) {
+                GoalSidebarView(selectedGoal: $selectedGoal)
+            } detail: {
+                detail
+                    // 设置按钮挂载在主视图层：无目标（空态）与目标详情均可达
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button {
+                                showSettings = true
+                            } label: {
+                                Image(systemName: "gearshape")
+                            }
+                            .accessibilityLabel("设置")
                         }
-                        .accessibilityLabel("设置")
                     }
+            }
+            .sheet(isPresented: $showSettings) {
+                NavigationStack {
+                    SettingsView(settings: SettingsStore.shared)
                 }
-        }
-        .sheet(isPresented: $showSettings) {
-            NavigationStack {
-                SettingsView(settings: SettingsStore.shared)
+            }
+            .task {
+                // 首次启动空库检测与恢复（Keychain / CloudKit 双轨）
+                DataBackupManager.shared.restoreIfNeeded(context: context)
+            }
+            .onChange(of: goals) { _, newGoals in
+                // 目标列表变化后保证有选中项
+                if selectedGoal == nil || !newGoals.contains(where: { $0.id == selectedGoal?.id }) {
+                    selectedGoal = newGoals.first
+                }
+            }
+            .onChange(of: selectedGoal) { _, newGoal in
+                // 窄窗口（iPhone compact / iPad 台前调度窄窗）下选中目标后自动收起侧边栏、
+                // 切回详情，否则点击目标后仍停留在目标列表，看不到目标界面。
+                // 注意：compact 下 List(selection:) 已自动推入详情，此处 detailOnly 是双重保障；
+                // 台前调度窄窗（仍报 regular）依赖此处的强制塌缩。
+                if newGoal != nil && isNarrowWindow {
+                    columnVisibility = .detailOnly
+                }
+            }
+            .onChange(of: notifications.pendingTarget) { _, target in
+                handleNotificationTap(target)
+            }
+            // 依据窗口实际宽度判定窄窗口（含 iPad 台前调度窄窗）
+            .onAppear { isNarrowWindow = Self.isNarrow(proxy.size.width, horizontalSizeClass: horizontalSizeClass) }
+            .onChange(of: proxy.size.width) { _, w in
+                isNarrowWindow = Self.isNarrow(w, horizontalSizeClass: horizontalSizeClass)
             }
         }
-        .task {
-            // 首次启动空库检测与恢复（Keychain / CloudKit 双轨）
-            DataBackupManager.shared.restoreIfNeeded(context: context)
-        }
-        .onChange(of: goals) { _, newGoals in
-            // 目标列表变化后保证有选中项
-            if selectedGoal == nil || !newGoals.contains(where: { $0.id == selectedGoal?.id }) {
-                selectedGoal = newGoals.first
-            }
-        }
-        .onChange(of: selectedGoal) { _, newGoal in
-            // 窄屏（iPhone 等 compact）下选中目标后自动收起侧边栏、切回详情，
-            // 否则点击目标后仍停留在目标列表，看不到目标界面
-            if newGoal != nil, horizontalSizeClass == .compact {
-                columnVisibility = .detailOnly
-            }
-        }
-        .onChange(of: notifications.pendingTarget) { _, target in
-            handleNotificationTap(target)
-        }
+    }
+
+    /// 窄窗口判定：尺寸类 compact，或窗口宽度低于阈值
+    private static func isNarrow(_ width: CGFloat, horizontalSizeClass: UserInterfaceSizeClass?) -> Bool {
+        horizontalSizeClass == .compact || width < narrowWindowWidth
     }
 
     // MARK: - 详情区
@@ -187,9 +207,9 @@ struct ContentView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                // 侧边栏切换按钮：仅 iPhone 等窄屏（compact）显示；
+                // 侧边栏切换按钮：仅窄窗口（iPhone compact / iPad 台前调度窄窗）显示；
                 // iPad regular 宽度下系统自动提供切换按钮，手动添加会重复
-                if horizontalSizeClass == .compact {
+                if isNarrowWindow {
                     Button {
                         columnVisibility = columnVisibility == .all ? .detailOnly : .all
                     } label: {
