@@ -62,6 +62,13 @@ struct ContentView: View {
                 selectedGoal = newGoals.first
             }
         }
+        .onChange(of: selectedGoal) { _, newGoal in
+            // 窄屏（iPhone 等 compact）下选中目标后自动收起侧边栏、切回详情，
+            // 否则点击目标后仍停留在目标列表，看不到目标界面
+            if newGoal != nil, horizontalSizeClass == .compact {
+                columnVisibility = .detailOnly
+            }
+        }
         .onChange(of: notifications.pendingTarget) { _, target in
             handleNotificationTap(target)
         }
