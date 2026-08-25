@@ -8,11 +8,15 @@ struct SettingsView: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    /// 当前所选模型的 API Key 输入（加载自 Keychain，变更即写回）
+    @State private var apiKeyText = ""
+
     var body: some View {
         NavigationStack {
             Form {
                 appearanceSection
                 languageSection
+                aiModelSection
                 iCloudSection
                 backupSection
                 reminderSection
@@ -27,6 +31,9 @@ struct SettingsView: View {
         }
         // 打开设置页时刷新通知权限状态（用户可能刚从系统设置返回）
         .task { await notifications.refreshAuthorizationStatus() }
+        .onAppear { reloadAPIKey() }
+        // 切换模型时加载该模型已保存的 API Key
+        .onChange(of: settings.selectedModel) { _, _ in reloadAPIKey() }
     }
 
     // MARK: - 外观
@@ -57,6 +64,75 @@ struct SettingsView: View {
             .pickerStyle(.menu)
             .accessibilityLabel("语言")
         }
+    }
+
+    // MARK: - AI 模型
+
+    /// AI 模型：选择导入文档生成任务清单所用的模型，并为云模型配置 API Key
+    @ViewBuilder
+    private var aiModelSection: some View {
+        Section {
+            Picker("使用模型", selection: $settings.selectedModel) {
+                ForEach(AIModel.allCases) { model in
+                    Text(model.displayName).tag(model)
+                }
+            }
+            .pickerStyle(.menu)
+            .accessibilityLabel("AI 模型")
+        } header: {
+            Text("AI 模型")
+        } footer: {
+            Text("导入文档自动生成任务清单时使用所选模型。Apple Intelligence 为设备端模型，无需 API Key。")
+        }
+
+        if settings.selectedModel.requiresAPIKey {
+            Section {
+                if settings.selectedModel == .custom {
+                    TextField("接口地址（Base URL）", text: $settings.customBaseURL)
+                        .keyboardType(.URL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    TextField("模型名", text: $settings.customModel)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                }
+                SecureField("API Key", text: apiKeyBinding)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .accessibilityLabel("\(settings.selectedModel.displayName) API Key")
+                if apiKeyText.isEmpty {
+                    Text("未配置密钥，导入文档时将提示配置")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text(settings.selectedModel == .custom ? "自定义模型" : "API Key")
+            } footer: {
+                Text("API Key 仅保存在本机钥匙串中，卸载重装后仍保留。")
+            }
+        }
+    }
+
+    /// API Key 输入绑定：从 Keychain 读写（空串删除）
+    private var apiKeyBinding: Binding<String> {
+        Binding(
+            get: { apiKeyText },
+            set: { newValue in
+                apiKeyText = newValue
+                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                let store = KeychainBackupService.shared
+                if trimmed.isEmpty {
+                    store.deleteAPIKey(modelRawValue: settings.selectedModel.rawValue)
+                } else {
+                    try? store.saveAPIKey(trimmed, modelRawValue: settings.selectedModel.rawValue)
+                }
+            }
+        )
+    }
+
+    /// 从 Keychain 加载当前模型的 API Key
+    private func reloadAPIKey() {
+        apiKeyText = KeychainBackupService.shared.loadAPIKey(modelRawValue: settings.selectedModel.rawValue) ?? ""
     }
 
     // MARK: - iCloud 同步

@@ -78,6 +78,30 @@ final class KeychainBackupService {
     func loadSettings() -> Data? {
         try? load(account: settingsKey)
     }
+
+    // MARK: - 模型 API Key
+
+    /// AI 模型 API Key 的 Keychain 账号名（service + "aiKey" + 模型原始值）
+    private func aiKey(accountFor model: String) -> String {
+        service + "aiKey" + model
+    }
+
+    /// 写入指定模型的 API Key（Apple Intelligence 不需要）
+    func saveAPIKey(_ key: String, modelRawValue: String) throws {
+        guard let data = key.data(using: .utf8) else { return }
+        try save(data, account: aiKey(accountFor: modelRawValue))
+    }
+
+    /// 读取指定模型的 API Key；未配置或读取失败返回 nil
+    func loadAPIKey(modelRawValue: String) -> String? {
+        guard let data = try? load(account: aiKey(accountFor: modelRawValue)) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    /// 删除指定模型的 API Key（条目不存在视为成功）
+    func deleteAPIKey(modelRawValue: String) {
+        try? delete(account: aiKey(accountFor: modelRawValue))
+    }
 }
 
 // MARK: - 通用读写

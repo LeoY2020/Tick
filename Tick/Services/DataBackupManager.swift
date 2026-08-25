@@ -58,13 +58,25 @@ struct SettingsSnapshot: Codable {
     var languageRaw: String
     /// iCloud 同步开关（同时作为"曾开启同步"的恢复标记）
     var iCloudSyncEnabled: Bool
+    /// 所选 AI 模型原始值（nil = 旧快照兼容，回退 Apple Intelligence）
+    var selectedModelRaw: String?
+    /// 自定义模型地址（nil = 旧快照兼容，回退空）
+    var customBaseURL: String?
+    /// 自定义模型名（nil = 旧快照兼容，回退空）
+    var customModel: String?
 
     init(colorSchemeRaw: String = "system",
          languageRaw: String = "system",
-         iCloudSyncEnabled: Bool = false) {
+         iCloudSyncEnabled: Bool = false,
+         selectedModelRaw: String? = nil,
+         customBaseURL: String? = nil,
+         customModel: String? = nil) {
         self.colorSchemeRaw = colorSchemeRaw
         self.languageRaw = languageRaw
         self.iCloudSyncEnabled = iCloudSyncEnabled
+        self.selectedModelRaw = selectedModelRaw
+        self.customBaseURL = customBaseURL
+        self.customModel = customModel
     }
 }
 

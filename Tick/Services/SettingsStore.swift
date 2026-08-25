@@ -167,6 +167,9 @@ final class SettingsStore: ObservableObject {
     private static let colorSchemeKey = "colorScheme"
     private static let languageKey = "language"
     private static let iCloudSyncKey = "iCloudSyncEnabled"
+    private static let selectedModelKey = "aiSelectedModel"
+    private static let customBaseURLKey = "aiCustomBaseURL"
+    private static let customModelKey = "aiCustomModel"
 
     /// 配色方案（变更即持久化）
     @Published var colorScheme: ColorSchemeSetting {
@@ -180,6 +183,21 @@ final class SettingsStore: ObservableObject {
 
     /// iCloud 同步开关（变更即持久化）
     @Published var iCloudSyncEnabled: Bool {
+        didSet { persist() }
+    }
+
+    /// 所选 AI 模型（变更即持久化）
+    @Published var selectedModel: AIModel {
+        didSet { persist() }
+    }
+
+    /// 自定义模型地址（含协议与主机，如 https://api.example.com/v1）
+    @Published var customBaseURL: String {
+        didSet { persist() }
+    }
+
+    /// 自定义模型名
+    @Published var customModel: String {
         didSet { persist() }
     }
 
@@ -202,12 +220,20 @@ final class SettingsStore: ObservableObject {
         var scheme = ColorSchemeSetting.system
         var lang = LanguageSetting.system
         var syncEnabled = false
+        var model = AIModel.appleIntelligence
+        var customBaseURL = ""
+        var customModel = ""
 
         if let snapshot = DataBackupManager.shared.loadSettingsSnapshot() {
             // Keychain 快照优先：卸载重装后 UserDefaults 已清空，仍可恢复设置
             scheme = ColorSchemeSetting(rawValue: snapshot.colorSchemeRaw) ?? scheme
             lang = LanguageSetting(rawValue: snapshot.languageRaw) ?? lang
             syncEnabled = snapshot.iCloudSyncEnabled
+            if let raw = snapshot.selectedModelRaw {
+                model = AIModel(rawValue: raw) ?? model
+            }
+            customBaseURL = snapshot.customBaseURL ?? ""
+            customModel = snapshot.customModel ?? ""
         } else {
             // 无 Keychain 快照 → 回退 UserDefaults
             let defaults = UserDefaults.standard
@@ -218,6 +244,11 @@ final class SettingsStore: ObservableObject {
                 lang = LanguageSetting(rawValue: raw) ?? lang
             }
             syncEnabled = defaults.bool(forKey: Self.iCloudSyncKey)
+            if let raw = defaults.string(forKey: Self.selectedModelKey) {
+                model = AIModel(rawValue: raw) ?? model
+            }
+            customBaseURL = defaults.string(forKey: Self.customBaseURLKey) ?? ""
+            customModel = defaults.string(forKey: Self.customModelKey) ?? ""
         }
 
         // 曾开启 iCloud 同步且 KVS 有值 → 以 KVS 为准（设备间同步的最新设置）
@@ -233,11 +264,19 @@ final class SettingsStore: ObservableObject {
             if let enabled = kvs.object(forKey: Self.iCloudSyncKey) as? Bool {
                 syncEnabled = enabled
             }
+            if let raw = kvs.string(forKey: Self.selectedModelKey) {
+                model = AIModel(rawValue: raw) ?? model
+            }
+            if let raw = kvs.string(forKey: Self.customBaseURLKey) { customBaseURL = raw }
+            if let raw = kvs.string(forKey: Self.customModelKey) { customModel = raw }
         }
 
         colorScheme = scheme
         language = lang
         iCloudSyncEnabled = syncEnabled
+        selectedModel = model
+        self.customBaseURL = customBaseURL
+        self.customModel = customModel
     }
 
     /// 持久化当前设置：UserDefaults + Keychain 备份（+ 开启同步时写入 iCloud KVS）
@@ -247,12 +286,18 @@ final class SettingsStore: ObservableObject {
         defaults.set(colorScheme.rawValue, forKey: Self.colorSchemeKey)
         defaults.set(language.rawValue, forKey: Self.languageKey)
         defaults.set(iCloudSyncEnabled, forKey: Self.iCloudSyncKey)
+        defaults.set(selectedModel.rawValue, forKey: Self.selectedModelKey)
+        defaults.set(customBaseURL, forKey: Self.customBaseURLKey)
+        defaults.set(customModel, forKey: Self.customModelKey)
 
         // Keychain 防删除备份（卸载重装可恢复；iCloudSyncEnabled 兼作"曾开启同步"标记）
         DataBackupManager.shared.backupSettings(
             SettingsSnapshot(colorSchemeRaw: colorScheme.rawValue,
                              languageRaw: language.rawValue,
-                             iCloudSyncEnabled: iCloudSyncEnabled))
+                             iCloudSyncEnabled: iCloudSyncEnabled,
+                             selectedModelRaw: selectedModel.rawValue,
+                             customBaseURL: customBaseURL,
+                             customModel: customModel))
 
         // 开启同步时写入 iCloud KVS，设备间同步设置
         if iCloudSyncEnabled {
@@ -260,6 +305,9 @@ final class SettingsStore: ObservableObject {
             kvs.set(colorScheme.rawValue, forKey: Self.colorSchemeKey)
             kvs.set(language.rawValue, forKey: Self.languageKey)
             kvs.set(iCloudSyncEnabled, forKey: Self.iCloudSyncKey)
+            kvs.set(selectedModel.rawValue, forKey: Self.selectedModelKey)
+            kvs.set(customBaseURL, forKey: Self.customBaseURLKey)
+            kvs.set(customModel, forKey: Self.customModelKey)
             kvs.synchronize()
         }
     }
