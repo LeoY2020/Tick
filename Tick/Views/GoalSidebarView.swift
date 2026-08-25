@@ -22,11 +22,9 @@ struct GoalSidebarView: View {
         // 使用 List(selection:) 驱动：窄屏（compact）下点击行会自动隐藏侧边栏并把详情推入置顶，
         // iPad regular 宽度下仅切换选中、侧边栏保留。比手动改 columnVisibility 更可靠。
         List(selection: $selectedGoal) {
-            Section("目标") {
-                ForEach(goals) { goal in
-                    goalRow(goal)
-                        .tag(goal)
-                }
+            ForEach(goals) { goal in
+                goalRow(goal)
+                    .tag(goal)
             }
 
             Section {
@@ -38,6 +36,8 @@ struct GoalSidebarView: View {
             }
         }
         .listStyle(.sidebar)
+        // 侧边栏（目标切换界面）标题：使用 SwiftUI 自带导航标题样式（顶部大字）
+        .navigationTitle("目标")
         // 目标编辑 sheet（新建 / 编辑复用）
         .sheet(item: $editingGoal) { goal in
             GoalEditorView(goal: goal, isNew: editingIsNew) {
