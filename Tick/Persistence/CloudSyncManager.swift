@@ -75,7 +75,7 @@ final class CloudSyncManager: ObservableObject {
 
     /// 统一容器构建：按 enabled 创建；失败（无 entitlement / 容器不可用等）回退本地配置重试；仍失败 fatalError
     private static func buildContainer(enabled: Bool) -> ModelContainer {
-        let schema = Schema([Goal.self, TaskItem.self])
+        let schema = Schema([Goal.self, TaskItem.self, AIChatSession.self])
         do {
             return try ModelContainer(for: schema, configurations: [makeConfiguration(enabled: enabled)])
         } catch {

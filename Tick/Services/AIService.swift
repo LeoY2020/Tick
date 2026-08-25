@@ -2,19 +2,30 @@ import Foundation
 import FoundationModels
 import zlib
 
-/// 一条对话消息（AI 聊天 / 生成任务 共用）
-struct ChatMessage: Sendable, Identifiable {
-    enum Role: String { case user, assistant }
+/// 一条对话消息（AI 聊天 / 生成任务 共用）。
+/// Codable：持久化到 AIChatSession 供历史记录恢复
+struct ChatMessage: Sendable, Codable, Identifiable {
+    enum Role: String, Codable { case user, assistant }
 
     let id: UUID
     let role: Role
     let text: String
+    let createdAt: Date
 
-    init(id: UUID = UUID(), role: Role, text: String) {
+    init(id: UUID = UUID(), role: Role, text: String, createdAt: Date = .now) {
         self.id = id
         self.role = role
         self.text = text
+        self.createdAt = createdAt
     }
+}
+
+/// 一次聊天回复的结构化结果：是否生成任务、生成的任务树、以及展示给用户看的文字。
+/// 由模型输出 JSON envelope 解析而来：generate=true 时 tasks 写入当前目标（不展示），message 展示
+struct ChatReply: Sendable {
+    var shouldGenerateTasks: Bool = false
+    var tasks: [TaskNode] = []
+    var message: String = ""
 }
 
 /// AI 生成的任务树节点（宽容解码：缺字段不失败）
@@ -61,53 +72,32 @@ enum AIServiceError: LocalizedError {
 /// AI 服务：根据所选模型（Apple Intelligence 本地 / 云模型）进行多轮对话与任务树生成。
 enum AIService {
 
-    /// 聊天系统提示词（要求自然回答，不出 JSON）
+    /// 聊天系统提示词：要求输出 JSON envelope（任务入库 + 展示文字），由 AI 自行判断是否生成任务
     private static let chatSystemPrompt = """
     你是一个耐心、简洁的中文助手，帮助用户整理任务与计划。
-    根据对话上下文与可选的附件内容自然回答；需要整理成清单时，用清晰的标题和列表。
-    不要用 markdown 代码块包裹 JSON 输出。
+    你必须严格只输出一个 JSON 对象，不要输出 markdown 代码块，也不要输出 JSON 以外的任何文字。格式如下：
+    1. 当用户要求生成或整理任务清单时，输出：
+    {"generate": true, "tasks": [{"name":"任务名","children":[{"name":"子任务名"}]}], "message": "给用户看的一句话中文说明"}
+    tasks 依据对话与附件内容，把待办、要点按层级组织成任务树（一级任务与子任务嵌套）。
+    2. 其他普通对话时，输出：
+    {"generate": false, "message": "你的回复文字"}
     """
 
-    /// 任务生成系统提示词：要求模型只输出 JSON
-    private static let taskSystemPrompt = """
-    你是一个任务清单生成助手。你会收到一份对话记录和可选的文档附件内容，请把它解析成一棵嵌套的任务清单。
-    严格只输出一个 JSON 数组，不要输出任何其他文字、注释或解释。
-    数组元素的格式为 {"name":"任务名","children":[{"name":"子任务名"}]}。
-    层级规则：一级标题对应顶层任务，二级标题对应其子任务，标题层级越深嵌套越深；
-    普通的待办行或段落作为叶子任务，放入合适的父任务下；如果没有标题结构，把每一行当作一个顶层任务。
-    """
-
-    /// 生成一句对话回复（多轮上下文携带在 history 中）
+    /// 与 AI 聊天，返回结构化结果（AI 自行判断是否生成任务）
     static func chatReply(history: [ChatMessage],
                           attachmentText: String?,
                           model: AIModel,
                           apiKey: String?,
                           customBaseURL: String?,
-                          customModel: String?) async throws -> String {
+                          customModel: String?) async throws -> ChatReply {
         let merged = try mergedHistory(history, attachmentText: attachmentText)
-        return try await requestText(systemPrompt: chatSystemPrompt,
-                                     history: merged,
-                                     model: model,
-                                     apiKey: apiKey,
-                                     customBaseURL: customBaseURL,
-                                     customModel: customModel)
-    }
-
-    /// 根据对话记录 + 可选附件生成嵌套任务树
-    static func generateTaskTree(from history: [ChatMessage],
-                                 attachmentText: String?,
-                                 model: AIModel,
-                                 apiKey: String?,
-                                 customBaseURL: String?,
-                                 customModel: String?) async throws -> [TaskNode] {
-        let merged = try mergedHistory(history, attachmentText: attachmentText)
-        let response = try await requestText(systemPrompt: taskSystemPrompt,
+        let response = try await requestText(systemPrompt: chatSystemPrompt,
                                              history: merged,
                                              model: model,
                                              apiKey: apiKey,
                                              customBaseURL: customBaseURL,
                                              customModel: customModel)
-        return try parseTaskNodes(from: response)
+        return parseChatReply(response)
     }
 
     // MARK: - 请求分发
@@ -421,23 +411,47 @@ enum AIService {
         return result
     }
 
-    /// 从模型返回文本中抽取出 JSON 数组并解析为任务树
-    private static func parseTaskNodes(from rawText: String) throws -> [TaskNode] {
-        let text = stripCodeFences(rawText)
-        // 抽取第一个 '[' 到最后一个 ']'
-        guard let start = text.firstIndex(of: "["),
-              let end = text.lastIndex(of: "]"), start < end else {
-            throw AIServiceError.invalidJSON
+    /// 解析 chatReply 的 JSON envelope。
+    /// 解析失败或非 generate 时，把原文当普通文字回复展示，不强制生成任务（宽容回退）。
+    private static func parseChatReply(_ raw: String) -> ChatReply {
+        let cleaned = stripCodeFences(raw).trimmingCharacters(in: .whitespacesAndNewlines)
+        if let object = jsonObject(from: cleaned),
+           let data = object.data(using: .utf8),
+           let env = try? JSONDecoder().decode(ChatEnvelope.self, from: data) {
+            if env.generate {
+                let nodes = env.tasks.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                return ChatReply(shouldGenerateTasks: true,
+                                 tasks: nodes,
+                                 message: env.message.isEmpty ? "已为你生成 \(nodes.count) 个任务。" : env.message)
+            }
+            if !env.message.isEmpty {
+                return ChatReply(message: env.message)
+            }
         }
-        let json = text[start...end]
-        guard let data = json.data(using: .utf8) else { throw AIServiceError.invalidJSON }
-        guard let nodes = try? JSONDecoder().decode([TaskNode].self, from: data) else {
-            throw AIServiceError.invalidJSON
+        return ChatReply(message: raw)
+    }
+
+    /// envelope 的宽容解码模型（缺字段不失败）
+    private struct ChatEnvelope: Decodable {
+        var generate: Bool = false
+        var tasks: [TaskNode] = []
+        var message: String = ""
+
+        private enum Keys: String, CodingKey { case generate, tasks, message }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: Keys.self)
+            generate = (try? c.decode(Bool.self, forKey: .generate)) ?? false
+            tasks = (try? c.decode([TaskNode].self, forKey: .tasks)) ?? []
+            message = (try? c.decode(String.self, forKey: .message)) ?? ""
         }
-        // 过滤空名节点
-        let cleaned = nodes.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-        guard !cleaned.isEmpty else { throw AIServiceError.emptyResult }
-        return cleaned
+    }
+
+    /// 抽取文本中第一个 '{' 到最后一个 '}' 的 JSON 对象子串（容忍模型附加的零散文字）
+    private static func jsonObject(from text: String) -> String? {
+        guard let start = text.firstIndex(of: "{"),
+              let end = text.lastIndex(of: "}"), start < end else { return nil }
+        return String(text[start...end])
     }
 
     /// 去掉 ``` 代码围栏（模型有时会把 JSON 包进 Markdown 代码块）

@@ -2,20 +2,26 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 
-/// 与 AI 对话 + 可选附件 + 一键生成任务清单的对话框。
-/// 点 AI 按钮打开：会话内多轮对话；可通过附件上传文档（可选）；右上「生成任务」把对话/附件转成任务树写入目标。
+/// 与 AI 对话的对话框：会话内多轮对话，可上传附件（可选），并由 AI 自行判断是否生成任务。
+/// - AI 输出 JSON envelope：generate=true 时把 tasks 写入当前目标（不展示），只展示 message 文字。
+/// - 支持「只有文件、无文字生成」：附件上传后直接点发送即可。
+/// - 提供「新建聊天」与「AI 历史记录」（AIChatSession 持久化）。
 struct AIChatView: View {
     let goal: Goal
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
 
+    @Query(sort: \AIChatSession.updatedAt, order: .reverse) private var sessions: [AIChatSession]
+
     @State private var messages: [ChatMessage] = []
+    @State private var currentSession: AIChatSession?
     @State private var inputText = ""
     @State private var isBusy = false
     @State private var attachmentText: String?
     @State private var attachmentName: String?
     @State private var showFileImporter = false
+    @State private var showHistory = false
     @State private var errorMessage: String?
     @State private var resultMessage: String?
 
@@ -27,9 +33,10 @@ struct AIChatView: View {
         UTType(filenameExtension: "doc") ?? .plainText
     ]
 
-    /// 是否有内容可生成任务（有对话或附件）
-    private var canGenerate: Bool {
-        !messages.isEmpty || attachmentText != nil
+    /// 有输入文字或有附件才可发送（支持“只有文件、无文字生成”）
+    private var canSend: Bool {
+        guard !isBusy else { return false }
+        return !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || attachmentText != nil
     }
 
     var body: some View {
@@ -46,16 +53,23 @@ struct AIChatView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("关闭") { dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(action: generateTasks) {
-                        Text(isBusy ? "生成中…" : "生成任务")
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button(action: newChat) {
+                        Image(systemName: "square.and.pencil")
                     }
-                    .disabled(!canGenerate || isBusy)
+                    .accessibilityLabel("新建聊天")
+                    .disabled(isBusy)
+
+                    Button { showHistory = true } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    .accessibilityLabel("AI 历史")
                 }
             }
             .fileImporter(isPresented: $showFileImporter, allowedContentTypes: Self.documentTypes) { result in
                 handleAttachmentResult(result)
             }
+            .sheet(isPresented: $showHistory) { historySheet }
             .alert("错误", isPresented: errorAlertBinding) {
                 Button("好", role: .cancel) {}
             } message: {
@@ -66,6 +80,7 @@ struct AIChatView: View {
             } message: {
                 Text(resultMessage ?? "")
             }
+            .onDisappear { persistMessages() }
         }
     }
 
@@ -162,7 +177,7 @@ struct AIChatView: View {
                 attachmentText = text
                 if !text.isEmpty {
                     messages.append(ChatMessage(role: .assistant,
-                                                text: "已读取附件「\(url.lastPathComponent)」，你可以继续跟我讨论，或点右上「生成任务」转成清单。"))
+                                                text: "已读取附件「\(url.lastPathComponent)」，你可以继续跟我讨论，或直接点发送让我生成任务清单。"))
                 }
             } catch {
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -192,7 +207,7 @@ struct AIChatView: View {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.title2)
             }
-            .disabled(isBusy || inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(!canSend)
             .accessibilityLabel("发送")
         }
         .padding(.horizontal, 12)
@@ -200,11 +215,15 @@ struct AIChatView: View {
     }
 
     private func send() {
-        let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !isBusy else { return }
+        guard canSend else { return }
+        let raw = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // 有附件但没输入文字：以隐式指令让 AI 据此生成任务（“只有文件、无文字生成”）
+        let userText = raw.isEmpty ? "（仅使用附件）请据此生成任务清单" : raw
+
         inputText = ""
-        messages.append(ChatMessage(role: .user, text: trimmed))
         isBusy = true
+        messages.append(ChatMessage(role: .user, text: userText))
 
         // 主线程读取设置与密钥快照，供后台任务使用（避免跨隔离访问）
         let settings = SettingsStore.shared
@@ -212,18 +231,25 @@ struct AIChatView: View {
         let key = KeychainBackupService.shared.loadAPIKey(modelRawValue: model.rawValue)
         let customBaseURL = settings.customBaseURL
         let customModel = settings.customModel
+        let history = messages
+        let currentAttachment = attachmentText
 
         Task {
             do {
-                let reply = try await AIService.chatReply(history: messages,
-                                                          attachmentText: attachmentText,
+                let reply = try await AIService.chatReply(history: history,
+                                                          attachmentText: currentAttachment,
                                                           model: model,
                                                           apiKey: key,
                                                           customBaseURL: customBaseURL,
                                                           customModel: customModel)
                 await MainActor.run {
-                    messages.append(ChatMessage(role: .assistant, text: reply))
+                    messages.append(ChatMessage(role: .assistant, text: reply.message))
+                    if reply.shouldGenerateTasks && !reply.tasks.isEmpty {
+                        insertTaskTree(reply.tasks)
+                        resultMessage = "已为「\(goal.name)」生成 \(reply.tasks.count) 个任务"
+                    }
                     isBusy = false
+                    persistMessages()
                 }
             } catch {
                 await MainActor.run {
@@ -234,40 +260,7 @@ struct AIChatView: View {
         }
     }
 
-    // MARK: - 生成任务
-
-    private func generateTasks() {
-        guard canGenerate, !isBusy else { return }
-        isBusy = true
-
-        let settings = SettingsStore.shared
-        let model = settings.selectedModel
-        let key = KeychainBackupService.shared.loadAPIKey(modelRawValue: model.rawValue)
-        let customBaseURL = settings.customBaseURL
-        let customModel = settings.customModel
-        let history = messages
-
-        Task {
-            do {
-                let nodes = try await AIService.generateTaskTree(from: history,
-                                                                 attachmentText: attachmentText,
-                                                                 model: model,
-                                                                 apiKey: key,
-                                                                 customBaseURL: customBaseURL,
-                                                                 customModel: customModel)
-                await MainActor.run {
-                    insertTaskTree(nodes)
-                    isBusy = false
-                    resultMessage = "已为「\(goal.name)」生成 \(nodes.count) 个任务"
-                }
-            } catch {
-                await MainActor.run {
-                    isBusy = false
-                    errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                }
-            }
-        }
-    }
+    // MARK: - 任务树写入
 
     /// 递归把任务树写入当前目标
     private func insertTaskTree(_ nodes: [TaskNode], parent: TaskItem? = nil) {
@@ -292,6 +285,78 @@ struct AIChatView: View {
             try? context.save()
             DataBackupManager.shared.backupAppData(context: context)
         }
+    }
+
+    // MARK: - 历史记录与新建
+
+    private var historySheet: some View {
+        NavigationStack {
+            List {
+                ForEach(sessions) { session in
+                    Button {
+                        load(session)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(session.title.isEmpty ? "对话" : session.title)
+                            Text("\(session.messageCount) 条消息")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .onDelete(perform: deleteSessions)
+            }
+            .navigationTitle("AI 历史")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") { showHistory = false }
+                }
+            }
+        }
+    }
+
+    private func newChat() {
+        persistMessages()
+        currentSession = nil
+        messages = []
+        attachmentText = nil
+        attachmentName = nil
+        inputText = ""
+    }
+
+    private func load(_ session: AIChatSession) {
+        currentSession = session
+        messages = AIChatSession.decodeMessages(session.messagesData)
+        attachmentName = session.attachmentName
+        attachmentText = session.attachmentText
+        inputText = ""
+        showHistory = false
+    }
+
+    private func deleteSessions(at offsets: IndexSet) {
+        for index in offsets {
+            context.delete(sessions[index])
+        }
+        try? context.save()
+    }
+
+    /// 把当前消息持久化到 AIChatSession（无消息则不产生空会话）
+    private func persistMessages() {
+        guard !messages.isEmpty else { return }
+        let session = currentSession ?? {
+            let new = AIChatSession()
+            context.insert(new)
+            currentSession = new
+            return new
+        }()
+        session.messagesData = AIChatSession.encode(messages)
+        session.messageCount = messages.count
+        session.title = messages.first(where: { $0.role == .user })?.text.replacingOccurrences(of: "\n", with: " ") ?? "对话"
+        session.attachmentName = attachmentName
+        session.attachmentText = attachmentText
+        session.updatedAt = .now
+        try? context.save()
     }
 
     // MARK: - 弹窗绑定
