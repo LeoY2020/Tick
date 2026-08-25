@@ -131,6 +131,11 @@ enum AIService {
         let kind: ProviderKind
         let url: URL
         let apiKeyHeaderField: String?  // nil = 放到 URL query（Gemini）
+
+        /// OpenAI 兼容版 ProviderSpec 便捷构造（供顶层 switch 的 `.oa(...)` 上下文类型推断匹配本类型）
+        static func oa(_ urlString: String) -> ProviderSpec {
+            ProviderSpec(kind: .openAICompatible, url: URL(string: urlString)!, apiKeyHeaderField: "Authorization")
+        }
     }
 
     private static func providerSpec(for model: AIModel,
@@ -182,10 +187,6 @@ enum AIService {
                                 url: URL(string: url) ?? URL(string: "https://example.invalid")!,
                                 apiKeyHeaderField: "Authorization")
         }
-    }
-
-    private static func oa(_ urlString: String) -> ProviderSpec {
-        ProviderSpec(kind: .openAICompatible, url: URL(string: urlString)!, apiKeyHeaderField: "Authorization")
     }
 
     /// 模型标识（OpenAI 兼容 / Anthropic 用）
