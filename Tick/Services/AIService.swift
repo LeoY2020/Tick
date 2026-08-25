@@ -150,8 +150,21 @@ enum AIService {
         }
 
         let session = LanguageModelSession(instructions: systemPrompt)
-        let response = try await session.respond(to: transcript(history))
-        return response.content
+        // Apple Intelligence 可能由设备端或云端执行：云端上下文较大、设备端较小。
+        // 先用完整上下文尝试，仅当模型判定「上下文超限」时，从大到小降低输入预算重试，
+        // 避免在云端本可容纳的场景下过早截断。
+        var attempt = 0
+        while true {
+            do {
+                let response = try await session.respond(
+                    to: transcript(history, budget: deviceTranscriptBudgets[min(attempt, deviceTranscriptBudgets.count - 1)])
+                )
+                return response.content
+            } catch {
+                guard isContextOverflow(error), attempt + 1 < deviceTranscriptBudgets.count else { throw error }
+                attempt += 1
+            }
+        }
     }
 
     // MARK: - 云模型
@@ -379,15 +392,19 @@ enum AIService {
         return result
     }
 
-    /// 设备端模型上下文较小，且需为生成的 JSON 输出预留空间。
-    /// 输入（含附件）超预算即丢弃最早对话并截断最新一条，避免「transcript exceeded context size」。
-    private static let transcriptCharBudget = 3_000
+    /// Apple Intelligence 可能由设备端或云端执行：云端上下文较大、设备端较小。
+    /// 采用从大往小的预算数组，仅当模型判定「context 超限」时逐级回退减少输入重试。
+    private static let deviceTranscriptBudgets = [24_000, 12_000, 6_000, 3_000]
+
+    /// 判断是否为「上下文超限」类错误（FoundationModels 返回该描述），以便回退重试
+    private static func isContextOverflow(_ error: Error) -> Bool {
+        error.localizedDescription.lowercased().contains("context")
+    }
 
     /// 将多轮对话折叠为单一 transcript（设备端模型是单轮 API，用文本拼接保留上下文）。
-    /// 设备端模型上下文有限：保留最新的对话，逐条累计直至预算用尽即停止丢弃更旧的；
-    /// 最新一条即便超预算也截断保留，保证总有内容可回复。
-    private static func transcript(_ history: [ChatMessage]) -> String {
-        let budget = transcriptCharBudget
+    /// 保留最新对话，逐条累计直至预算用尽即丢弃更旧的；最新一条即便超预算也截断保留，
+    /// 保证总有内容可回复。
+    private static func transcript(_ history: [ChatMessage], budget: Int) -> String {
         var result = ""
         // 从最新向旧遍历，prepend 累加，最终保持时间顺序（最新在末尾）
         for msg in history.reversed() {
