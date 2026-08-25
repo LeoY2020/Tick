@@ -379,9 +379,29 @@ enum AIService {
         return result
     }
 
-    /// 将多轮对话折叠为单一 transcript（设备端模型是单轮 API，用文本拼接保留上下文）
+    /// 设备端模型上下文较小，且需为生成的 JSON 输出预留空间。
+    /// 输入（含附件）超预算即丢弃最早对话并截断最新一条，避免「transcript exceeded context size」。
+    private static let transcriptCharBudget = 3_000
+
+    /// 将多轮对话折叠为单一 transcript（设备端模型是单轮 API，用文本拼接保留上下文）。
+    /// 设备端模型上下文有限：保留最新的对话，逐条累计直至预算用尽即停止丢弃更旧的；
+    /// 最新一条即便超预算也截断保留，保证总有内容可回复。
     private static func transcript(_ history: [ChatMessage]) -> String {
-        history.map { "\($0.role == .user ? "用户" : "助手")：\($0.text)" }.joined(separator: "\n")
+        let budget = transcriptCharBudget
+        var result = ""
+        // 从最新向旧遍历，prepend 累加，最终保持时间顺序（最新在末尾）
+        for msg in history.reversed() {
+            let line = "\(msg.role == .user ? "用户" : "助手")：\(msg.text)"
+            if result.isEmpty {
+                // 最新一条：必保，超预算则截断到预算内
+                result = String(line.prefix(budget))
+            } else if result.count + line.count > budget {
+                break // 更旧的对话丢弃
+            } else {
+                result = line + "\n" + result
+            }
+        }
+        return result
     }
 
     /// 从模型返回文本中抽取出 JSON 数组并解析为任务树
