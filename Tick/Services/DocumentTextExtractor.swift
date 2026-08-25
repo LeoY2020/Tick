@@ -196,7 +196,7 @@ enum DocumentTextExtractor {
                 stream.avail_out = uInt(dst.count)
                 let initResult = inflateInit2_(&stream, -15, "1.2.11", Int32(MemoryLayout<z_stream>.size))
                 guard initResult == Z_OK else { return nil }
-                let status = inflate(&stream, Z_FINISH)
+                let status = zlib.inflate(&stream, Z_FINISH)
                 let _ = inflateEnd(&stream)
                 guard status == Z_STREAM_END else { return nil }
                 let outCount = dst.count - Int(stream.avail_out)
