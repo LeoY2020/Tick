@@ -5,11 +5,15 @@ import SwiftData
 struct GoalSidebarView: View {
     /// 当前选中的目标（与主内容区双向绑定）
     @Binding var selectedGoal: Goal?
+    /// 侧边栏列可见性（窄屏点击目标后收起侧边栏并展示详情）
+    @Binding var columnVisibility: NavigationSplitViewVisibility
 
     /// 全部目标（按创建时间升序）
     @Query(sort: \Goal.createdAt) private var goals: [Goal]
     /// 数据上下文（插入 / 删除目标）
     @Environment(\.modelContext) private var modelContext
+    /// 水平尺寸类：窄屏（iPhone 等 compact）点击目标后收起侧边栏
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     /// 正在编辑的目标（非 nil 时呈现编辑 sheet）
     @State private var editingGoal: Goal?
@@ -67,6 +71,11 @@ struct GoalSidebarView: View {
         let isSelected = selectedGoal == goal
         return Button {
             selectedGoal = goal
+            // 窄屏（iPhone 等 compact）下：点击目标后自动收起侧边栏、展示目标详情。
+            // 直接在此处理而非依赖 onChange，避免"点击已选中目标"时 selection 不变而不触发。
+            if horizontalSizeClass == .compact {
+                columnVisibility = .detailOnly
+            }
         } label: {
             HStack(spacing: 10) {
                 // 颜色圆点（直径 12，"auto" 随系统外观自适应）
