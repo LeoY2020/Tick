@@ -2,6 +2,7 @@ import Foundation
 import PDFKit
 import Compression
 import UniformTypeIdentifiers
+import zlib
 
 /// 从导入文档抽取纯文本（供 AI 生成任务清单），支持：
 /// - 纯文本 / Markdown（.txt / .md / .markdown）
@@ -19,9 +20,9 @@ enum DocumentTextExtractor {
         var errorDescription: String? {
             switch self {
             case .unsupportedType: return "暂不支持该文件类型，请使用文本、Markdown、PDF 或 Word 文档"
-            case .cannotReadText: return "无法读取文本内容"
-            case .cannotReadPDF: return "无法解析 PDF 内容"
-            case .cannotReadWord: return "无法解析 Word 文档"
+            case .cannotReadText: return "无法读取文本内容（请确认文件为文本 / Markdown 格式）"
+            case .cannotReadPDF: return "无法解析 PDF 内容（可能是扫描件，无文字层可提取）"
+            case .cannotReadWord: return "无法解析该 Word 文档（旧版 .doc 暂不支持，请另存为 .docx 后重试）"
             }
         }
     }
@@ -36,7 +37,7 @@ enum DocumentTextExtractor {
 
         switch ext {
         case "txt", "md", "markdown", "text", "":
-            return try readAsUTF8(url).clamped(to: maxLength)
+            return try readAsText(url).clamped(to: maxLength)
         case "pdf":
             return try extractPDF(url).clamped(to: maxLength)
         case "doc", "docx":
@@ -48,12 +49,15 @@ enum DocumentTextExtractor {
 
     // MARK: - 各类型实现
 
-    private static func readAsUTF8(_ url: URL) throws -> String {
+    /// 按多种编码尝试解析文本（UTF-8 → UTF-16 → GB18030/GBK），中文 txt 常为 GBK/GB2312
+    private static func readAsText(_ url: URL) throws -> String {
         let data = try Data(contentsOf: url)
-        guard let text = String(data: data, encoding: .utf8) else {
-            throw ExtractionError.cannotReadText
-        }
-        return text
+        if let s = String(data: data, encoding: .utf8) { return s }
+        if let s = String(data: data, encoding: .utf16) { return s }
+        let encGB18030 = String.Encoding(
+            rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(CFStringEncodings.GB_18030_2000.rawValue)))
+        if let s = String(data: data, encoding: encGB18030) { return s }
+        throw ExtractionError.cannotReadText
     }
 
     private static func extractPDF(_ url: URL) throws -> String {
@@ -170,9 +174,39 @@ enum DocumentTextExtractor {
         return v
     }
 
-    /// 用系统的 Compression 框架解压 deflate 数据（兼容 ZIP 的 raw deflate / zlib）
+    /// 解压 deflate。ZIP 的 method 8 是裸 deflate（无 zlib 头），先用 libz 按 raw inflate 解；
+    /// 个别实现可能带 zlib 头，失败时回退到 Compression 框架的 zlib 解码。
     private static func inflate(_ source: [UInt8], expectedSize: Int) -> Data? {
-        // 防御：过大或过小都不合理
+        guard expectedSize > 0, expectedSize < 100_000_000, !source.isEmpty else { return nil }
+        if let raw = rawInflate(source, expectedSize: expectedSize) { return raw }
+        return zlibInflate(source, expectedSize: expectedSize)
+    }
+
+    /// 用 libz 按裸 deflate（windowBits = -15）解压
+    private static func rawInflate(_ source: [UInt8], expectedSize: Int) -> Data? {
+        source.withUnsafeBytes { srcPtr -> Data? in
+            guard let srcBase = srcPtr.baseAddress else { return nil }
+            var dst = [UInt8](repeating: 0, count: expectedSize)
+            var stream = z_stream()
+            stream.next_in = UnsafeMutablePointer(mutating: srcBase.assumingMemoryBound(to: UInt8.self))
+            stream.avail_in = uInt(source.count)
+            return dst.withUnsafeMutableBytes { dstPtr -> Data? in
+                guard let dstBase = dstPtr.baseAddress else { return nil }
+                stream.next_out = dstBase.assumingMemoryBound(to: UInt8.self)
+                stream.avail_out = uInt(dst.count)
+                let initResult = inflateInit2_(&stream, -15, "1.2.11", Int32(MemoryLayout<z_stream>.size))
+                guard initResult == Z_OK else { return nil }
+                let status = inflate(&stream, Z_FINISH)
+                let _ = inflateEnd(&stream)
+                guard status == Z_STREAM_END else { return nil }
+                let outCount = dst.count - Int(stream.avail_out)
+                return Data(dst[0..<outCount])
+            }
+        }
+    }
+
+    /// 用系统的 Compression 框架解压 zlib 帧（兼容少数带头的封装）
+    private static func zlibInflate(_ source: [UInt8], expectedSize: Int) -> Data? {
         guard expectedSize > 0, expectedSize < 100_000_000, !source.isEmpty else { return nil }
         var dst = [UInt8](repeating: 0, count: expectedSize)
         let written = dst.withUnsafeMutableBytes { dp -> Int in
@@ -191,7 +225,10 @@ enum DocumentTextExtractor {
 
     /// 从 document.xml 抽取文本：按 <w:p> 分段，段内拼接 <w:t> 内容
     private static func wordXMLText(_ data: Data) -> String {
-        guard let xml = String(data: data, encoding: .utf8) else { return "" }
+        let xml: String
+        if let s = String(data: data, encoding: .utf8) { xml = s }
+        else if let s = String(data: data, encoding: .utf16) { xml = s }
+        else { return "" }
         let paraPattern = try? NSRegularExpression(pattern: "<w:p\\b[^>]*>(.*?)</w:p>",
                                                    options: [.dotMatchesLineSeparators])
         let textPattern = try? NSRegularExpression(pattern: "<w:t\\b[^>]*>(.*?)</w:t>",

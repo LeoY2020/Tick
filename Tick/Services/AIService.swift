@@ -1,5 +1,21 @@
 import Foundation
 import FoundationModels
+import zlib
+
+/// 一条对话消息（AI 聊天 / 生成任务 共用）
+struct ChatMessage: Sendable, Identifiable {
+    enum Role: String { case user, assistant }
+
+    let id: UUID
+    let role: Role
+    let text: String
+
+    init(id: UUID = UUID(), role: Role, text: String) {
+        self.id = id
+        self.role = role
+        self.text = text
+    }
+}
 
 /// AI 生成的任务树节点（宽容解码：缺字段不失败）
 struct TaskNode: Decodable {
@@ -35,60 +51,94 @@ enum AIServiceError: LocalizedError {
         case .badResponse:
             return "模型服务返回了异常响应"
         case .emptyResult:
-            return "模型未生成有效的任务清单"
+            return "模型未生成有效内容"
         case .invalidJSON:
             return "无法解析模型返回的任务清单"
         }
     }
 }
 
-/// AI 服务：根据所选模型（Apple Intelligence 本地 / 云模型）把文档内容转成嵌套任务树
+/// AI 服务：根据所选模型（Apple Intelligence 本地 / 云模型）进行多轮对话与任务树生成。
 enum AIService {
 
-    /// 系统提示词：要求模型只输出 JSON
-    private static let systemPrompt = """
-    你是一个任务清单生成助手。你会收到一份文档内容，请把它解析成一棵嵌套的任务清单。
+    /// 聊天系统提示词（要求自然回答，不出 JSON）
+    private static let chatSystemPrompt = """
+    你是一个耐心、简洁的中文助手，帮助用户整理任务与计划。
+    根据对话上下文与可选的附件内容自然回答；需要整理成清单时，用清晰的标题和列表。
+    不要用 markdown 代码块包裹 JSON 输出。
+    """
+
+    /// 任务生成系统提示词：要求模型只输出 JSON
+    private static let taskSystemPrompt = """
+    你是一个任务清单生成助手。你会收到一份对话记录和可选的文档附件内容，请把它解析成一棵嵌套的任务清单。
     严格只输出一个 JSON 数组，不要输出任何其他文字、注释或解释。
     数组元素的格式为 {"name":"任务名","children":[{"name":"子任务名"}]}。
     层级规则：一级标题对应顶层任务，二级标题对应其子任务，标题层级越深嵌套越深；
     普通的待办行或段落作为叶子任务，放入合适的父任务下；如果没有标题结构，把每一行当作一个顶层任务。
     """
 
-    /// 生成嵌套任务树
-    /// - Parameters:
-    ///   - documentText: 从文档抽取的文本
-    ///   - model: 所选模型
-    ///   - apiKey: 云模型 API Key（Apple Intelligence 传 nil）
-    ///   - customBaseURL / customModel: 自定义模型的地址与模型名（其余模型忽略）
-    static func generateTaskTree(documentText: String,
+    /// 生成一句对话回复（多轮上下文携带在 history 中）
+    static func chatReply(history: [ChatMessage],
+                          attachmentText: String?,
+                          model: AIModel,
+                          apiKey: String?,
+                          customBaseURL: String?,
+                          customModel: String?) async throws -> String {
+        let merged = try mergedHistory(history, attachmentText: attachmentText)
+        return try await requestText(systemPrompt: chatSystemPrompt,
+                                     history: merged,
+                                     model: model,
+                                     apiKey: apiKey,
+                                     customBaseURL: customBaseURL,
+                                     customModel: customModel)
+    }
+
+    /// 根据对话记录 + 可选附件生成嵌套任务树
+    static func generateTaskTree(from history: [ChatMessage],
+                                 attachmentText: String?,
                                  model: AIModel,
                                  apiKey: String?,
                                  customBaseURL: String?,
                                  customModel: String?) async throws -> [TaskNode] {
+        let merged = try mergedHistory(history, attachmentText: attachmentText)
+        let response = try await requestText(systemPrompt: taskSystemPrompt,
+                                             history: merged,
+                                             model: model,
+                                             apiKey: apiKey,
+                                             customBaseURL: customBaseURL,
+                                             customModel: customModel)
+        return try parseTaskNodes(from: response)
+    }
+
+    // MARK: - 请求分发
+
+    private static func requestText(systemPrompt: String,
+                                    history: [ChatMessage],
+                                    model: AIModel,
+                                    apiKey: String?,
+                                    customBaseURL: String?,
+                                    customModel: String?) async throws -> String {
         switch model {
         case .appleIntelligence:
-            return try await generateOnDevice(documentText)
+            guard #available(iOS 26.0, macOS 26.0, *) else {
+                throw AIServiceError.appleIntelligenceUnavailable("需要 iOS 26 及以上系统")
+            }
+            return try await onDeviceRequest(systemPrompt: systemPrompt, history: history)
         default:
             guard let apiKey, !apiKey.isEmpty else { throw AIServiceError.missingAPIKey }
-            return try await generateViaCloud(documentText,
-                                              model: model,
-                                              apiKey: apiKey,
-                                              customBaseURL: customBaseURL,
-                                              customModel: customModel)
+            return try await cloudRequest(systemPrompt: systemPrompt,
+                                          history: history,
+                                          apiKey: apiKey,
+                                          model: model,
+                                          customBaseURL: customBaseURL,
+                                          customModel: customModel)
         }
     }
 
     // MARK: - Apple Intelligence（设备端）
 
-    private static func generateOnDevice(_ text: String) async throws -> [TaskNode] {
-        guard #available(iOS 26.0, macOS 26.0, *) else {
-            throw AIServiceError.appleIntelligenceUnavailable("需要 iOS 26 及以上系统")
-        }
-        return try await generateOnDevice26(text)
-    }
-
     @available(iOS 26.0, macOS 26.0, *)
-    private static func generateOnDevice26(_ text: String) async throws -> [TaskNode] {
+    private static func onDeviceRequest(systemPrompt: String, history: [ChatMessage]) async throws -> String {
         // 设备端模型可用性检查（不可用原因不细拆，避免各 SDK 版本子类型差异）
         switch SystemLanguageModel.default.availability {
         case .available:
@@ -100,17 +150,18 @@ enum AIService {
         }
 
         let session = LanguageModelSession(instructions: systemPrompt)
-        let response = try await session.respond(to: userPrompt(with: text))
-        return try parseTaskNodes(from: response.content)
+        let response = try await session.respond(to: transcript(history))
+        return response.content
     }
 
     // MARK: - 云模型
 
-    private static func generateViaCloud(_ text: String,
-                                         model: AIModel,
-                                         apiKey: String,
-                                         customBaseURL: String?,
-                                         customModel: String?) async throws -> [TaskNode] {
+    private static func cloudRequest(systemPrompt: String,
+                                     history: [ChatMessage],
+                                     apiKey: String,
+                                     model: AIModel,
+                                     customBaseURL: String?,
+                                     customModel: String?) async throws -> String {
         // 自定义模型地址必填
         if model == .custom {
             guard let customBaseURL, !customBaseURL.isEmpty else { throw AIServiceError.missingAPIKey }
@@ -118,8 +169,11 @@ enum AIService {
 
         let spec = providerSpec(for: model, customBaseURL: customBaseURL, customModel: customModel)
         let modelID = modelID(for: model, customModel: customModel)
-        let assistantText = try await sendCloudRequest(spec: spec, apiKey: apiKey, text: text, modelID: modelID)
-        return try parseTaskNodes(from: assistantText)
+        return try await sendCloudRequest(spec: spec,
+                                          apiKey: apiKey,
+                                          systemPrompt: systemPrompt,
+                                          history: history,
+                                          modelID: modelID)
     }
 
     // MARK: - 请求构造 / 发送
@@ -211,9 +265,9 @@ enum AIService {
 
     private static func sendCloudRequest(spec: ProviderSpec,
                                          apiKey: String,
-                                         text: String,
+                                         systemPrompt: String,
+                                         history: [ChatMessage],
                                          modelID: String) async throws -> String {
-        let userText = userPrompt(with: text)
         var request = URLRequest(url: spec.url)
         request.httpMethod = "POST"
         request.timeoutInterval = 60
@@ -230,7 +284,7 @@ enum AIService {
             break
         }
 
-        let body = try makeBody(kind: spec.kind, text: userText, modelID: modelID)
+        let body = try makeBody(kind: spec.kind, systemPrompt: systemPrompt, history: history, modelID: modelID)
         request.httpBody = body
 
         if spec.kind == .gemini {
@@ -249,28 +303,32 @@ enum AIService {
         return try parseCloudResponse(data, kind: spec.kind)
     }
 
-    private static func makeBody(kind: ProviderKind, text: String, modelID: String) throws -> Data {
+    private static func makeBody(kind: ProviderKind,
+                                 systemPrompt: String,
+                                 history: [ChatMessage],
+                                 modelID: String) throws -> Data {
         switch kind {
         case .openAICompatible:
-            let body: [String: Any] = [
-                "model": modelID,
-                "messages": [
-                    ["role": "system", "content": systemPrompt],
-                    ["role": "user", "content": text]
-                ]
-            ]
-            return try JSONSerialization.data(withJSONObject: body)
+            var messages: [[String: String]] = [["role": "system", "content": systemPrompt]]
+            for m in history {
+                messages.append(["role": m.role == .user ? "user" : "assistant", "content": m.text])
+            }
+            return try JSONSerialization.data(withJSONObject: ["model": modelID, "messages": messages])
         case .anthropic:
+            let msgs = history.map { ["role": $0.role == .user ? "user" : "assistant", "content": $0.text] }
             let body: [String: Any] = [
                 "model": modelID,
                 "system": systemPrompt,
-                "messages": [["role": "user", "content": text]],
+                "messages": msgs,
                 "max_tokens": 2000
             ]
             return try JSONSerialization.data(withJSONObject: body)
         case .gemini:
+            let full = systemPrompt + "\n\n" + history.map {
+                "\($0.role == .user ? "用户" : "助手")：\($0.text)"
+            }.joined(separator: "\n")
             let body: [String: Any] = [
-                "contents": [["parts": [["text": systemPrompt + "\n\n" + text]]]],
+                "contents": [["parts": [["text": full]]]],
                 "generationConfig": ["maxOutputTokens": 2000]
             ]
             return try JSONSerialization.data(withJSONObject: body)
@@ -308,8 +366,22 @@ enum AIService {
 
     // MARK: - 提示词 / 解析
 
-    private static func userPrompt(with text: String) -> String {
-        "文档内容如下：\n" + text
+    /// 把附件内容注入为对话首条"用户"消息（无对话、无附件时抛错）
+    private static func mergedHistory(_ history: [ChatMessage], attachmentText: String?) throws -> [ChatMessage] {
+        var result = history
+        if let attachmentText {
+            let trimmed = attachmentText.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                result.insert(ChatMessage(role: .user, text: "附件内容：\n" + trimmed), at: 0)
+            }
+        }
+        guard !result.isEmpty else { throw AIServiceError.emptyResult }
+        return result
+    }
+
+    /// 将多轮对话折叠为单一 transcript（设备端模型是单轮 API，用文本拼接保留上下文）
+    private static func transcript(_ history: [ChatMessage]) -> String {
+        history.map { "\($0.role == .user ? "用户" : "助手")：\($0.text)" }.joined(separator: "\n")
     }
 
     /// 从模型返回文本中抽取出 JSON 数组并解析为任务树

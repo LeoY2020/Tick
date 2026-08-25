@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import UniformTypeIdentifiers
 
 /// 展开状态（跨视图共享，供通知跳转时展开对应层级）
 @MainActor
@@ -18,10 +17,8 @@ struct ContentView: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .detailOnly
     @State private var showSettings = false
     @State private var showAddTask = false
-    /// AI 导入：文档选择器 / 生成中 / 结果提示
-    @State private var showAIImporter = false
-    @State private var isGenerating = false
-    @State private var aiAlert: AIImportAlert?
+    /// AI 对话：聊天 + 可选附件 + 生成任务
+    @State private var showAIChat = false
     /// 是否为窄窗口：尺寸类 compact（iPhone）或窗口宽度偏窄（iPad 台前调度窄窗）。
     /// 台前调度的窄窗有时仍报 regular，仅靠 horizontalSizeClass 判断会漏，故叠加宽度判断。
     @State private var isNarrowWindow = false
@@ -51,12 +48,12 @@ struct ContentView: View {
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
                             Button {
-                                showAIImporter = true
+                                showAIChat = true
                             } label: {
                                 Image(systemName: "sparkles")
                             }
-                            .accessibilityLabel("AI 导入文档生成任务")
-                            .disabled(isGenerating || selectedGoal == nil)
+                            .accessibilityLabel("AI 对话并生成任务")
+                            .disabled(selectedGoal == nil)
                         }
                         ToolbarItem(placement: .topBarTrailing) {
                             Button {
@@ -67,17 +64,11 @@ struct ContentView: View {
                             .accessibilityLabel("设置")
                         }
                     }
-                    // AI 文档选择器（支持文本/Markdown/PDF/Word）
-                    .fileImporter(isPresented: $showAIImporter,
-                                  allowedContentTypes: Self.aiDocumentTypes)
-                    { result in
-                        handleAIImportResult(result)
-                    }
-                    .alert(item: $aiAlert) { item in
-                        Alert(title: Text(item.title), message: Text(item.message), dismissButton: .default(Text("好")))
-                    }
-                    .overlay {
-                        if isGenerating { generatingOverlay }
+                    // AI 对话对话框（多轮对话 + 可选附件 + 生成任务）
+                    .sheet(isPresented: $showAIChat) {
+                        if let goal = selectedGoal {
+                            AIChatView(goal: goal)
+                        }
                     }
             }
             .sheet(isPresented: $showSettings) {
@@ -321,111 +312,5 @@ struct ContentView: View {
         return nil
     }
 
-    // MARK: - AI 导入文档生成任务
-
-    /// AI 导入允许的文档类型（文本 / Markdown / PDF / Word）
-    private static let aiDocumentTypes: [UTType] = [
-        .plainText, .text, .pdf,
-        UTType(filenameExtension: "md") ?? .plainText,
-        UTType(filenameExtension: "markdown") ?? .plainText,
-        UTType(filenameExtension: "docx") ?? .plainText,
-        UTType(filenameExtension: "doc") ?? .plainText
-    ]
-
-    /// 下载 / 生成中的遮罩
-    private var generatingOverlay: some View {
-        ProgressView("正在用 AI 生成任务清单…")
-            .padding(24)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .shadow(radius: 8)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .accessibilityLabel("正在生成任务清单")
-    }
-
-    /// 处理文档选择结果：抽取文本 → 调 AI → 插入任务
-    private func handleAIImportResult(_ result: Result<URL, Error>) {
-        switch result {
-        case .success(let url):
-            processAIImport(url)
-        case .failure(let error):
-            aiAlert = AIImportAlert(title: "无法读取文档", message: error.localizedDescription)
-        }
-    }
-
-    private func processAIImport(_ url: URL) {
-        guard let goal = selectedGoal else { return }
-        isGenerating = true
-
-        let settings = SettingsStore.shared
-        let model = settings.selectedModel
-        let apiKey = KeychainBackupService.shared.loadAPIKey(modelRawValue: model.rawValue)
-        // 主线程读取设置并捕捉副本，供后台 Task 使用（避免跨隔离访问 @MainActor 属性）
-        let customBaseURL = settings.customBaseURL
-        let customModel = settings.customModel
-
-        Task {
-            do {
-                // 1. 抽取文本（后台）
-                let text = try DocumentTextExtractor.extractText(from: url)
-                // 2. 调 AI 生成嵌套任务树（后台网络请求）
-                let nodes = try await AIService.generateTaskTree(
-                    documentText: text,
-                    model: model,
-                    apiKey: apiKey,
-                    customBaseURL: customBaseURL,
-                    customModel: customModel
-                )
-                // 3. 主线程写入 SwiftData 并保存、备份
-                await MainActor.run {
-                    let count = countNodes(nodes)
-                    insertTaskTree(nodes, into: goal)
-                    isGenerating = false
-                    aiAlert = AIImportAlert(title: "生成完成",
-                                            message: "已为「\(goal.name)」生成 \(count) 个任务")
-                }
-            } catch {
-                await MainActor.run {
-                    isGenerating = false
-                    aiAlert = AIImportAlert(title: "生成失败", message: error.localizedDescription)
-                }
-            }
-        }
-    }
-
-    /// 递归把任务树写入当前目标（镜像 QuickAddTaskView 的插入逻辑）
-    private func insertTaskTree(_ nodes: [TaskNode], into goal: Goal, parent: TaskItem? = nil) {
-        for node in nodes {
-            let name = node.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !name.isEmpty else { continue }
-            let task = TaskItem(name: name, type: .single, totalAmount: 1)
-            context.insert(task)
-            if let parent {
-                task.attach(to: parent)
-                task.sortOrder = (parent.subtasks.map(\.sortOrder).max() ?? -1) + 1
-            } else {
-                task.attach(to: goal)
-                task.sortOrder = (goal.tasks.map(\.sortOrder).max() ?? -1) + 1
-            }
-            if !node.children.isEmpty {
-                insertTaskTree(node.children, into: goal, parent: task)
-            }
-        }
-        // 全树插入完毕后再保存并备份
-        if parent == nil {
-            try? context.save()
-            DataBackupManager.shared.backupAppData(context: context)
-        }
-    }
-
-    /// 统计任务总数（含子任务）
-    private func countNodes(_ nodes: [TaskNode]) -> Int {
-        nodes.reduce(0) { $0 + 1 + countNodes($1.children) }
-    }
-}
-
-/// AI 导入结果提示
-private struct AIImportAlert: Identifiable {
-    let id = UUID()
-    let title: String
-    let message: String
+    // MARK: - AI 对话
 }
