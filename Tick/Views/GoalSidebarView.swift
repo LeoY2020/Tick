@@ -5,15 +5,11 @@ import SwiftData
 struct GoalSidebarView: View {
     /// 当前选中的目标（与主内容区双向绑定）
     @Binding var selectedGoal: Goal?
-    /// 侧边栏列可见性（窄屏点击目标后收起侧边栏并展示详情）
-    @Binding var columnVisibility: NavigationSplitViewVisibility
 
     /// 全部目标（按创建时间升序）
     @Query(sort: \Goal.createdAt) private var goals: [Goal]
     /// 数据上下文（插入 / 删除目标）
     @Environment(\.modelContext) private var modelContext
-    /// 水平尺寸类：窄屏（iPhone 等 compact）点击目标后收起侧边栏
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     /// 正在编辑的目标（非 nil 时呈现编辑 sheet）
     @State private var editingGoal: Goal?
@@ -23,10 +19,13 @@ struct GoalSidebarView: View {
     @State private var goalToDelete: Goal?
 
     var body: some View {
-        List {
+        // 使用 List(selection:) 驱动：窄屏（compact）下点击行会自动隐藏侧边栏并把详情推入置顶，
+        // iPad regular 宽度下仅切换选中、侧边栏保留。比手动改 columnVisibility 更可靠。
+        List(selection: $selectedGoal) {
             Section("目标") {
                 ForEach(goals) { goal in
                     goalRow(goal)
+                        .tag(goal)
                 }
             }
 
@@ -66,18 +65,10 @@ struct GoalSidebarView: View {
 
     // MARK: - 行视图
 
-    /// 单个目标行：颜色圆点 + 图标 + 名称，点击切换选中
+    /// 单个目标行：颜色圆点 + 图标 + 名称（选择驱动，由 List(selection:) 处理点击与窄屏跳转）
     private func goalRow(_ goal: Goal) -> some View {
         let isSelected = selectedGoal == goal
-        return Button {
-            selectedGoal = goal
-            // 窄屏（iPhone 等 compact）下：点击目标后自动收起侧边栏、展示目标详情。
-            // 直接在此处理而非依赖 onChange，避免"点击已选中目标"时 selection 不变而不触发。
-            if horizontalSizeClass == .compact {
-                columnVisibility = .detailOnly
-            }
-        } label: {
-            HStack(spacing: 10) {
+        return HStack(spacing: 10) {
                 // 颜色圆点（直径 12，"auto" 随系统外观自适应）
                 AdaptiveColorDot(hex: goal.colorHex)
                     .accessibilityHidden(true)
@@ -93,8 +84,6 @@ struct GoalSidebarView: View {
             }
             .frame(minHeight: 44) // 触控目标 ≥ 44pt
             .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
         // 选中行高亮背景
         .listRowBackground(
             Group {

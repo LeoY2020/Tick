@@ -32,7 +32,7 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
-            GoalSidebarView(selectedGoal: $selectedGoal, columnVisibility: $columnVisibility)
+            GoalSidebarView(selectedGoal: $selectedGoal)
         } detail: {
             detail
                 // 设置按钮挂载在主视图层：无目标（空态）与目标详情均可达
