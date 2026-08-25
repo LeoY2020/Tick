@@ -114,6 +114,31 @@ struct ContentView: View {
         let goalColor = HexColor.resolvedColor(from: goal.colorHex, colorScheme: colorScheme)
 
         return VStack(spacing: 0) {
+            // 标题行：目标名（左）+ 截止倒计时（右，同高度右对齐）
+            HStack(alignment: .center, spacing: 12) {
+                Text(goal.name)
+                    .font(.largeTitle.bold())
+                    .lineLimit(1)
+                Spacer(minLength: 12)
+                if let endDate = goal.endDate {
+                    TimelineView(.periodic(from: .now, by: 60)) { context in
+                        if let countdown = CountdownFormatter.countdown(
+                            to: endDate,
+                            preciseToHour: goal.endDatePreciseToHour,
+                            now: context.date
+                        ) {
+                            Text(countdown)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .accessibilityLabel("截止倒计时：\(countdown)")
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+
             // 目标总进度区域
             VStack(spacing: 6) {
                 // 进度条更新：贝塞尔曲线 0.5s 内完成
@@ -147,7 +172,6 @@ struct ContentView: View {
             .listStyle(.insetGrouped)
             .environmentObject(expandedState)
         }
-        .navigationTitle(goal.name)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 // 侧边栏切换按钮：仅 iPhone 等窄屏（compact）显示；
@@ -159,23 +183,6 @@ struct ContentView: View {
                         Image(systemName: "sidebar.leading")
                     }
                     .accessibilityLabel("目标列表")
-                }
-            }
-            // 标题右侧：截止日期倒计时（每分钟刷新）
-            ToolbarItem(placement: .topBarTrailing) {
-                TimelineView(.periodic(from: .now, by: 60)) { context in
-                    if let endDate = goal.endDate,
-                       let countdown = CountdownFormatter.countdown(
-                           to: endDate,
-                           preciseToHour: goal.endDatePreciseToHour,
-                           now: context.date
-                       ) {
-                        Text(countdown)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                            .accessibilityLabel("截止倒计时：\(countdown)")
-                    }
                 }
             }
         }
