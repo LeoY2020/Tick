@@ -35,6 +35,8 @@ struct GoalSidebarView: View {
             }
         }
         .listStyle(.sidebar)
+        // 侧边栏（目标切换界面）标题：使用 SwiftUI 自带导航标题样式
+        .navigationTitle("目标")
         // 目标编辑 sheet（新建 / 编辑复用）
         .sheet(item: $editingGoal) { goal in
             GoalEditorView(goal: goal, isNew: editingIsNew) {

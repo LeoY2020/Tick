@@ -161,20 +161,6 @@ struct ContentView: View {
                     .accessibilityLabel("目标列表")
                 }
             }
-            ToolbarItem(placement: .principal) {
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(goalColor)
-                        .frame(width: 10, height: 10)
-                    if let icon = goal.iconSystemName {
-                        Image(systemName: icon)
-                    }
-                    Text(goal.name)
-                        .lineLimit(1)
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("目标：\(goal.name)")
-            }
         }
         // 底部浮动添加任务按钮（Liquid Glass 中间层）
         .overlay(alignment: .bottom) {
