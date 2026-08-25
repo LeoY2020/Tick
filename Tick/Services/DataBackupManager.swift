@@ -19,6 +19,12 @@ struct GoalDTO: Codable {
     var iconSystemName: String?
     var startDate: Date?
     var endDate: Date?
+    /// 开始时间是否精确到小时（nil = 旧快照兼容，视为 false）
+    var startDatePreciseToHour: Bool?
+    /// 截止时间是否精确到小时（nil = 旧快照兼容，视为 false）
+    var endDatePreciseToHour: Bool?
+    /// 进度统计模式原始值（nil = 旧快照兼容，回退 allTasks）
+    var progressCountingModeRaw: String?
     var createdAt: Date
     /// 一级任务（更深层的子任务嵌套在 TaskDTO.subtasks）
     var tasks: [TaskDTO]
@@ -153,11 +159,16 @@ final class DataBackupManager: ObservableObject {
     /// 逐层创建 TaskItem 并 attach（一级任务挂 goal，子任务挂 parentTask），保持 sortOrder
     func restore(snapshot: AppDataSnapshot, into context: ModelContext) {
         for goalDTO in snapshot.goals {
+            let countingMode = goalDTO.progressCountingModeRaw
+                .flatMap { ProgressCountingMode(rawValue: $0) } ?? .allTasks
             let goal = Goal(name: goalDTO.name,
                             colorHex: goalDTO.colorHex,
                             iconSystemName: goalDTO.iconSystemName,
                             startDate: goalDTO.startDate,
-                            endDate: goalDTO.endDate)
+                            endDate: goalDTO.endDate,
+                            startDatePreciseToHour: goalDTO.startDatePreciseToHour ?? false,
+                            endDatePreciseToHour: goalDTO.endDatePreciseToHour ?? false,
+                            progressCountingMode: countingMode)
             goal.id = goalDTO.id
             goal.createdAt = goalDTO.createdAt
             context.insert(goal)
@@ -190,6 +201,9 @@ final class DataBackupManager: ObservableObject {
                         iconSystemName: goal.iconSystemName,
                         startDate: goal.startDate,
                         endDate: goal.endDate,
+                        startDatePreciseToHour: goal.startDatePreciseToHour,
+                        endDatePreciseToHour: goal.endDatePreciseToHour,
+                        progressCountingModeRaw: goal.progressCountingModeRaw,
                         createdAt: goal.createdAt,
                         tasks: sortedByOrder(topLevelTasks[goal.id] ?? []).map(makeTaskDTO))
             }

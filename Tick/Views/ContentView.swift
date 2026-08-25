@@ -161,6 +161,23 @@ struct ContentView: View {
                     .accessibilityLabel("目标列表")
                 }
             }
+            // 标题右侧：截止日期倒计时（每分钟刷新）
+            ToolbarItem(placement: .topBarTrailing) {
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    if let endDate = goal.endDate,
+                       let countdown = CountdownFormatter.countdown(
+                           to: endDate,
+                           preciseToHour: goal.endDatePreciseToHour,
+                           now: context.date
+                       ) {
+                        Text(countdown)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                            .accessibilityLabel("截止倒计时：\(countdown)")
+                    }
+                }
+            }
         }
         // 底部浮动添加任务按钮（Liquid Glass 中间层）
         .overlay(alignment: .bottom) {

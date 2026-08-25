@@ -14,6 +14,10 @@ final class Goal {
     var startDate: Date? = nil
     /// 截止日期（nil = 未设置）
     var endDate: Date? = nil
+    /// 开始时间是否精确到小时（编辑时 DatePicker 显示时分；未开启仅精确到日期）
+    var startDatePreciseToHour: Bool = false
+    /// 截止时间是否精确到小时（影响主界面倒计时是否显示"时"）
+    var endDatePreciseToHour: Bool = false
     var createdAt: Date = Date()
     /// 进度统计模式原始值（String? 存储，nil=未设置=>回退 allTasks。
     /// 与 TaskItem.typeRaw 同款思路，但用 Optional：以字符串且可选方式入库，
@@ -39,12 +43,16 @@ final class Goal {
          iconSystemName: String? = nil,
          startDate: Date? = nil,
          endDate: Date? = nil,
+         startDatePreciseToHour: Bool = false,
+         endDatePreciseToHour: Bool = false,
          progressCountingMode: ProgressCountingMode = .allTasks) {
         self.name = name
         self.colorHex = colorHex
         self.iconSystemName = iconSystemName
         self.startDate = startDate
         self.endDate = endDate
+        self.startDatePreciseToHour = startDatePreciseToHour
+        self.endDatePreciseToHour = endDatePreciseToHour
         // 直接写原始值字符串，避免 init 阶段经由计算属性 setter
         self.progressCountingModeRaw = progressCountingMode.rawValue
     }

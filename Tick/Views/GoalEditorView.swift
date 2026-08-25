@@ -22,6 +22,8 @@ private struct GoalSnapshot {
     let iconSystemName: String?
     let startDate: Date?
     let endDate: Date?
+    let startDatePreciseToHour: Bool
+    let endDatePreciseToHour: Bool
     let progressCountingMode: ProgressCountingMode
 
     init(goal: Goal) {
@@ -30,6 +32,8 @@ private struct GoalSnapshot {
         self.iconSystemName = goal.iconSystemName
         self.startDate = goal.startDate
         self.endDate = goal.endDate
+        self.startDatePreciseToHour = goal.startDatePreciseToHour
+        self.endDatePreciseToHour = goal.endDatePreciseToHour
         self.progressCountingMode = goal.progressCountingMode
     }
 }
@@ -141,14 +145,18 @@ struct GoalEditorView: View {
                     Toggle("开始日期", isOn: hasStartDate)
                         .accessibilityLabel("启用开始日期")
                     if goal.startDate != nil {
-                        DatePicker("开始日期", selection: startDate, displayedComponents: .date)
+                        DatePicker("开始日期", selection: startDate, displayedComponents: startDateDisplayedComponents)
                             .datePickerStyle(.compact)
+                        Toggle("精确到小时", isOn: $goal.startDatePreciseToHour)
+                            .accessibilityLabel("开始时间精确到小时")
                     }
                     Toggle("截止日期", isOn: hasEndDate)
                         .accessibilityLabel("启用截止日期")
                     if goal.endDate != nil {
-                        DatePicker("截止日期", selection: endDate, displayedComponents: .date)
+                        DatePicker("截止日期", selection: endDate, displayedComponents: endDateDisplayedComponents)
                             .datePickerStyle(.compact)
+                        Toggle("精确到小时", isOn: $goal.endDatePreciseToHour)
+                            .accessibilityLabel("截止时间精确到小时")
                     }
                 }
 
@@ -353,6 +361,16 @@ struct GoalEditorView: View {
         )
     }
 
+    /// 开始时间 DatePicker 显示组件（精确到小时时含时分）
+    private var startDateDisplayedComponents: DatePickerComponents {
+        goal.startDatePreciseToHour ? [.date, .hourAndMinute] : .date
+    }
+
+    /// 截止时间 DatePicker 显示组件（精确到小时时含时分）
+    private var endDateDisplayedComponents: DatePickerComponents {
+        goal.endDatePreciseToHour ? [.date, .hourAndMinute] : .date
+    }
+
     // MARK: - 操作
 
     /// 取消：新建目标删除回滚；编辑已有目标恢复编辑前快照
@@ -365,6 +383,8 @@ struct GoalEditorView: View {
             goal.iconSystemName = snap.iconSystemName
             goal.startDate = snap.startDate
             goal.endDate = snap.endDate
+            goal.startDatePreciseToHour = snap.startDatePreciseToHour
+            goal.endDatePreciseToHour = snap.endDatePreciseToHour
             goal.progressCountingMode = snap.progressCountingMode
         }
         try? modelContext.save()
