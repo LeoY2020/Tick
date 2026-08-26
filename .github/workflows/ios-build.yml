@@ -17,7 +17,7 @@ jobs:
     # GitHub 官方 Xcode 27 专用镜像（预览版，自带 Xcode 27）
     runs-on: xcode-27
     env:
-      PROJECT: Tick.xcodeproj
+      PROJECT: ios/Tick.xcodeproj
       SCHEME: Tick
       # 免签名构建（CI 不配置开发者证书）
       XCARGS: >-
