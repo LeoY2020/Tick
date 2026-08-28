@@ -13,6 +13,8 @@
     <UseWinUI>true</UseWinUI>
     <!-- 非打包部署：无需 MSIX 证书，便于直接运行；如需打包请改用 WindowsPackageType=MSIX 并启用 Package.appxmanifest -->
     <WindowsPackageType>None</WindowsPackageType>
+    <!-- 在无 Visual Studio 的 dotnet CLI 环境下提供 AppxPackage/Pri 打包任务（否则 MSB4062 ExpandPriContent） -->
+    <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
