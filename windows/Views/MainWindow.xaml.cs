@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -15,6 +16,10 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         Title = Localization.Tr("app.title");
+        // 与窗口融合：内容延伸到系统标题栏区域，顶部栏作为自定义拖拽区（类似 Microsoft Store）
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppTitleBar);
+        AppTitleText.Text = Title;
         AppServices.Main.DataChanged += OnDataChanged;
         Localization.LanguageChanged += OnLanguageChanged;
         RebuildNavigation();
@@ -58,6 +63,7 @@ public sealed partial class MainWindow : Window
                 Tag = goal,
                 Content = GoalHeader(goal),
             };
+            item.ContextFlyout = GoalMenu(goal);
             NavView.MenuItems.Add(item);
         }
 
@@ -110,6 +116,7 @@ public sealed partial class MainWindow : Window
     private void OnLanguageChanged()
     {
         Title = Localization.Tr("app.title");
+        AppTitleText.Text = Title;
         RebuildNavigation();
         RefreshContent();
     }
@@ -148,14 +155,51 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private async void OnNewGoalClick(object sender, RoutedEventArgs e)
+    /// <summary>供任务页底部的「新建目标」按钮调用：打开编辑器，成功后刷新并选中新目标。</summary>
+    public async void RequestNewGoal()
     {
-        var ok = await GoalEditDialog.ShowNewAsync(App.MainWindow);
+        var ok = await GoalEditDialog.ShowNewAsync(this);
         if (ok)
         {
             RebuildNavigation();
             if (NavView.MenuItems.Count > 0)
                 NavView.SelectedItem = NavView.MenuItems[^1];
+        }
+    }
+
+    /// <summary>目标项的右键菜单：编辑 / 删除</summary>
+    private MenuFlyout GoalMenu(Goal goal)
+    {
+        var flyout = new MenuFlyout();
+
+        var edit = new MenuFlyoutItem { Text = Localization.Tr("goals.edit") };
+        edit.Click += async (_, _) => await GoalEditDialog.ShowEditAsync(this, goal);
+        flyout.Items.Add(edit);
+
+        flyout.Items.Add(new MenuFlyoutSeparator());
+
+        var delete = new MenuFlyoutItem { Text = Localization.Tr("goals.delete") };
+        delete.Click += async (_, _) => await ConfirmDeleteGoalAsync(goal);
+        flyout.Items.Add(delete);
+
+        return flyout;
+    }
+
+    private async Task ConfirmDeleteGoalAsync(Goal goal)
+    {
+        var message = string.Format(Localization.Tr("goals.deleteConfirm"), goal.Name);
+        var ok = await Dialogs.ShowConfirmAsync(App.MainWindow, Localization.Tr("common.warning"), message);
+        if (!ok)
+            return;
+
+        AppServices.Main.DeleteGoal(goal);
+        RebuildNavigation();
+        if (NavView.MenuItems.Count > 0)
+            NavView.SelectedItem = NavView.MenuItems[0];
+        else
+        {
+            _currentPage = typeof(TasksPage);
+            RefreshContent();
         }
     }
 

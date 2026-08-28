@@ -47,18 +47,31 @@ public sealed class TasksPage : Page, ITaskRowHost
         var goal = AppServices.Main.SelectedGoal;
         if (goal is null)
         {
-            Content = new TextBlock
-            {
-                Text = Localization.Tr("goals.empty"),
-                Margin = new Thickness(24),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
+            Content = BuildEmptyState();
             return;
         }
 
         _nodeTask.Clear();
         Content = BuildPage(goal);
+    }
+
+    /// <summary>无选中目标时的空状态：提示 + 新建目标入口</summary>
+    private static UIElement BuildEmptyState()
+    {
+        var panel = new StackPanel
+        {
+            Spacing = 12,
+            Margin = new Thickness(24),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        panel.Children.Add(new TextBlock
+        {
+            Text = Localization.Tr("goals.empty"),
+            HorizontalAlignment = HorizontalAlignment.Center,
+        });
+        panel.Children.Add(BuildNewGoalButton());
+        return panel;
     }
 
     private UIElement BuildPage(Goal goal)
@@ -68,6 +81,7 @@ public sealed class TasksPage : Page, ITaskRowHost
         panel.Children.Add(BuildProgress(goal));
         panel.Children.Add(BuildTaskTree(goal));
         panel.Children.Add(BuildAddButton());
+        panel.Children.Add(BuildNewGoalButton());
         return new ScrollViewer { Content = panel };
     }
 
@@ -281,6 +295,17 @@ public sealed class TasksPage : Page, ITaskRowHost
             HorizontalAlignment = HorizontalAlignment.Stretch,
         };
         btn.Click += async (_, _) => await TaskEditDialog.ShowNewAsync(App.MainWindow);
+        return btn;
+    }
+
+    /// <summary>「新建目标」按钮：置于任务列表最底部（及空状态），调用主窗口完成创建与跳转</summary>
+    private static Button BuildNewGoalButton()
+    {
+        var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Center };
+        content.Children.Add(new FontIcon { Glyph = "\uE710", FontSize = 14, VerticalAlignment = VerticalAlignment.Center });
+        content.Children.Add(new TextBlock { Text = Localization.Tr("goals.add"), VerticalAlignment = VerticalAlignment.Center });
+        var btn = new Button { Content = content, HorizontalAlignment = HorizontalAlignment.Stretch };
+        btn.Click += (_, _) => App.MainWindow.RequestNewGoal();
         return btn;
     }
 

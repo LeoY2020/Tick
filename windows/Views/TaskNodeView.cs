@@ -24,6 +24,9 @@ public sealed class TaskNodeView : UserControl
         Content = BuildRow(task);
     }
 
+    /// <summary>防御性兜底：一旦任何渲染层退回调用 ToString（而非绘制控件），也显示真实任务名而非类型名。</summary>
+    public override string ToString() => _task.Name;
+
     // ---- 行构建 ----
 
     private Grid BuildRow(TaskItem task)
@@ -36,6 +39,15 @@ public sealed class TaskNodeView : UserControl
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        // 整行右键菜单
+        var flyout = new MenuFlyout();
+        BuildMenu(flyout, task);
+        grid.RightTapped += (_, e) =>
+        {
+            flyout.ShowAt(grid, e.GetPosition(grid));
+            e.Handled = true;
+        };
 
         // 颜色圆点（继承链解析）
         var dot = new Microsoft.UI.Xaml.Shapes.Ellipse
@@ -127,11 +139,11 @@ public sealed class TaskNodeView : UserControl
             }
         }
 
-        // 菜单（操作）
+        // 菜单入口（「…」）使用其自身的 flyout，避免与整行右键共用一个 Flyout 导致重设 Target 冲突
         var menu = new Button { Content = new FontIcon { Glyph = "\uE712" }, VerticalAlignment = VerticalAlignment.Center };
-        var flyout = new MenuFlyout();
-        BuildMenu(flyout, task);
-        menu.Flyout = flyout;
+        var menuFlyout = new MenuFlyout();
+        BuildMenu(menuFlyout, task);
+        menu.Flyout = menuFlyout;
         panel.Children.Add(menu);
     }
 

@@ -22,7 +22,7 @@ public static class Localization
         ["goals.edit"] = "编辑目标",
         ["goals.delete"] = "删除目标",
         ["goals.deleteConfirm"] = "确定删除目标“{0}”吗？其下全部任务将一并删除。",
-        ["goals.empty"] = "还没有目标，点击左侧“+”新建",
+        ["goals.empty"] = "还没有目标，点击下方「新建目标」创建",
 
         ["tasks.title"] = "任务",
         ["tasks.progress"] = "总进度",
@@ -138,7 +138,7 @@ public static class Localization
         ["goals.edit"] = "Edit Goal",
         ["goals.delete"] = "Delete Goal",
         ["goals.deleteConfirm"] = "Delete goal \"{0}\"? All its tasks will be removed.",
-        ["goals.empty"] = "No goals yet. Tap the \"+\" on the left to add one.",
+        ["goals.empty"] = "No goals yet. Tap \"New Goal\" below to create one.",
 
         ["tasks.title"] = "Tasks",
         ["tasks.progress"] = "Progress",
