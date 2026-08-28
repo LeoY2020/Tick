@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     app.setApplicationDisplayName(QStringLiteral("Tick"));
     app.setOrganizationName(QStringLiteral("Tick"));
     app.setApplicationVersion(QStringLiteral("1.0.0"));
-    app.setWindowIcon(QIcon(QStringLiteral(":/icon/app_icon.svg")));
+    app.setWindowIcon(QIcon(QStringLiteral(":/icon/app_icon.png")));
 
     tick::Tr::loadFromSettings();
 

@@ -34,7 +34,7 @@ add_executable(tick WIN32
     src/ui/translation.cpp
     src/ui/theme.cpp
 
-    resources/app_icon.svg
+    resources/app_icon.png
     resources/icon.qrc
 )
 

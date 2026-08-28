@@ -75,6 +75,6 @@ gradlew.bat assembleDebug
   AI 返回 JSON envelope：`{"generate":true,"tasks":[{"name":"","children":[]}],"message":""}`
   或 `{"generate":false,"message":""}`；`generate=true` 时任务树写入当前目标（不展示）。
   系统提示词明确禁止生成"了解xxx/阅读附件/整理要点"类空泛任务。
-- **皮肤**：`enum Skin` 内置 8 套厂商配色（ColorOS 绿 / One UI 蓝 / OriginOS 蓝 / realmeUI 黄 /
-  Flyme 蓝 / MIUI 橙 / HyperOS 橙半透明玻璃 / MagicOS 蓝），在设置页运行时切换。
+- **皮肤**：`enum Skin` 内置 8 套配色（翡翠绿 / 蔚蓝 / 靛蓝 / 柠檬黄 / 天蓝 / 活力橙 /
+  玻璃橙半透明 / 湖蓝），名称均为颜色名（`id` 保持稳定），在设置页运行时切换。
 - **备份**：设置页导出/导入 JSON（SAF 文件选择器），含全部目标、任务树与设置。

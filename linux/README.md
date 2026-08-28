@@ -31,7 +31,7 @@ src/
   model/    Goal / TaskItem / enums（与 iOS 对齐）
   services/ AIService、DocumentTextExtractor、NotificationService、JsonBackup
   ui/       MainWindow、GoalDialog、TaskDialog、SettingsDialog、AIChatDialog、theme、translation
-resources/  图标（icon.qrc / app_icon.svg）
+resources/  图标（icon.qrc / app_icon.png）
 debian/     打包（control + rules）
 redhat/     RPM spec
 arch/       PKGBUILD

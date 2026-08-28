@@ -13,16 +13,16 @@
 | `harmonyos/` | HarmonyOS | ArkTS / ArkUI | HarmonyOS Design |
 | `linux/` | Linux（Debian / Arch / RedHat） | C++ / Qt 6 | 自适应 GNOME / KDE 主题 |
 
-Android 皮肤（同一套 Kotlin 代码，编译期切换主题 skin）：
+Android 皮肤（同一套 Kotlin 代码，编译期切换主题 skin，名称均为颜色名，id 保持稳定）：
 
-- ColorOS（OPPO）
-- One UI（三星）
-- OriginOS（vivo）
-- realme UI（realme）
-- Flyme（魅族）
-- MIUI（小米）
-- HyperOS（小米澎湃）
-- MagicOS（荣耀）
+- 翡翠绿
+- 蔚蓝
+- 靛蓝
+- 柠檬黄
+- 天蓝
+- 活力橙
+- 玻璃橙（半透明）
+- 湖蓝
 
 ## AI 助手集成策略
 

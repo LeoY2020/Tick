@@ -16,14 +16,14 @@ enum class Skin(
     /** HyperOS 采用橙色调 + 半透明玻璃质感 */
     val translucentGlass: Boolean = false
 ) {
-    COLOROS("coloros", "ColorOS", 0xFF067A4A),
-    ONEUI("oneui", "One UI", 0xFF3B82F6),
-    ORIGINOS("originos", "OriginOS", 0xFF2856D6),
-    REALMEUI("realmeui", "realme UI", 0xFFFFD200),
-    FLYME("flyme", "Flyme", 0xFF0084FF),
-    MIUI("miui", "MIUI", 0xFFFF6900),
-    HYPEROS("hyperos", "HyperOS", 0xFFFF6900, translucentGlass = true),
-    MAGICOS("magicos", "MagicOS", 0xFF2E6BE6);
+    COLOROS("coloros", "翡翠绿", 0xFF067A4A),
+    ONEUI("oneui", "蔚蓝", 0xFF3B82F6),
+    ORIGINOS("originos", "靛蓝", 0xFF2856D6),
+    REALMEUI("realmeui", "柠檬黄", 0xFFFFD200),
+    FLYME("flyme", "天蓝", 0xFF0084FF),
+    MIUI("miui", "活力橙", 0xFFFF6900),
+    HYPEROS("hyperos", "玻璃橙", 0xFFFF6900, translucentGlass = true),
+    MAGICOS("magicos", "湖蓝", 0xFF2E6BE6);
 
     companion object {
         fun fromId(id: String?): Skin = Skin.entries.firstOrNull { it.id == id } ?: COLOROS
