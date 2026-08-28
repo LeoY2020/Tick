@@ -27,6 +27,11 @@
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
   </ItemGroup>
 
+  <!-- 全局别名：避免 Tick.Models.TaskStatus 与 System.Threading.Tasks.TaskStatus（隐式 using 引入）歧义 -->
+  <ItemGroup>
+    <Using Include="TaskStatus = Tick.Models.TaskStatus" />
+  </ItemGroup>
+
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>

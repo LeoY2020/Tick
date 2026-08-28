@@ -29,7 +29,7 @@ struct ChatReply: Sendable {
 }
 
 /// AI 生成的任务树节点（宽容解码：缺字段不失败）
-struct TaskNode: Decodable {
+struct TaskNode: Decodable, Sendable {
     var name: String = ""
     var children: [TaskNode] = []
 

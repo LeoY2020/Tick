@@ -50,6 +50,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import com.tick.app.android.model.AppLanguage
 import com.tick.app.android.model.Goal
 import com.tick.app.android.model.TaskItem
@@ -141,6 +143,7 @@ private fun AppContent(
     val strings = LocalStrings.current
     var screen by rememberSaveable { mutableStateOf(Screen.MAIN) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
     var showGoalEditor by remember { mutableStateOf(false) }
     var editingGoal by remember { mutableStateOf<Goal?>(null) }
@@ -184,7 +187,7 @@ private fun AppContent(
                         onClick = {
                             vm.selectGoal(g.id)
                             screen = Screen.MAIN
-                            drawerState.close()
+                            scope.launch { drawerState.close() }
                         },
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
@@ -196,7 +199,7 @@ private fun AppContent(
                     onClick = {
                         editingGoal = null
                         showGoalEditor = true
-                        drawerState.close()
+                        scope.launch { drawerState.close() }
                     },
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
@@ -205,14 +208,14 @@ private fun AppContent(
                     label = { Text(strings.settings) },
                     selected = screen == Screen.SETTINGS,
                     icon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
-                    onClick = { screen = Screen.SETTINGS; drawerState.close() },
+                    onClick = { screen = Screen.SETTINGS; scope.launch { drawerState.close() } },
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 NavigationDrawerItem(
                     label = { Text(strings.aiChat) },
                     selected = screen == Screen.AICHAT,
                     icon = { Icon(Icons.Outlined.ChatBubbleOutline, contentDescription = null) },
-                    onClick = { screen = Screen.AICHAT; drawerState.close() },
+                    onClick = { screen = Screen.AICHAT; scope.launch { drawerState.close() } },
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
             }
@@ -223,7 +226,7 @@ private fun AppContent(
                 TopAppBar(
                     title = { Text(appTitle) },
                     navigationIcon = {
-                        IconButton(onClick = { drawerState.open() }) {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Outlined.Menu, contentDescription = strings.settingsMenu)
                         }
                     },

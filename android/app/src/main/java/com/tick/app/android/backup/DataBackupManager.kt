@@ -29,8 +29,8 @@ object DataBackupManager {
     // MARK: - 导出
 
     suspend fun export(repo: Repository, settings: Settings): String {
-        val goals = first(repo.goals)
-        val tasks = first(repo.observeAllTasks())
+        val goals = repo.goals.first()
+        val tasks = repo.observeAllTasks().first()
         return buildJson(goals, tasks, settings)
     }
 

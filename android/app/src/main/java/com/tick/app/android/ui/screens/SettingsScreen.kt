@@ -24,7 +24,6 @@ import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -149,7 +148,7 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
 
         Spacer(Modifier.height(20.dp))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Text(strings.aiConfig, style = MaterialTheme.typography.titleMedium, Modifier.weight(1f))
+            Text(strings.aiConfig, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = { showAIDialog = true }) {
                 Text(if (en) settings.aiModel.displayName else settings.aiModel.displayName)
             }

@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tick.app.android.model.Goal
 import com.tick.app.android.model.ProgressCountingMode
+import com.tick.app.android.model.progressCountingMode
 import com.tick.app.android.ui.theme.LocalStrings
 import com.tick.app.android.ui.util.HexColor
 import com.tick.app.android.ui.util.iconForName

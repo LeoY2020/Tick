@@ -51,6 +51,8 @@ import com.tick.app.android.model.Goal
 import com.tick.app.android.model.TaskItem
 import com.tick.app.android.model.TaskStatus
 import com.tick.app.android.model.TaskType
+import com.tick.app.android.model.status
+import com.tick.app.android.model.type
 import com.tick.app.android.ui.theme.LocalStrings
 import com.tick.app.android.ui.util.CountdownFormatter
 import com.tick.app.android.ui.util.HexColor

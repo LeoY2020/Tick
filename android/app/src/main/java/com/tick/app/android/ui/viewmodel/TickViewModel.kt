@@ -26,6 +26,8 @@ import com.tick.app.android.model.TaskStatus
 import com.tick.app.android.model.TaskType
 import com.tick.app.android.model.ThemeMode
 import com.tick.app.android.model.progressCountingMode
+import com.tick.app.android.model.status
+import com.tick.app.android.model.type
 import com.tick.app.android.notification.ReminderScheduler
 import com.tick.app.android.ui.theme.Skin
 import kotlinx.coroutines.Dispatchers

@@ -27,7 +27,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
-import androidx.compose.material3.TimePickerDialog
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,6 +43,9 @@ import com.tick.app.android.model.RepeatRule
 import com.tick.app.android.model.TaskItem
 import com.tick.app.android.model.TaskStatus
 import com.tick.app.android.model.TaskType
+import com.tick.app.android.model.repeatRule
+import com.tick.app.android.model.status
+import com.tick.app.android.model.type
 import com.tick.app.android.ui.theme.LocalStrings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import java.util.Calendar
@@ -220,7 +222,7 @@ fun TaskEditorDialog(
             initialMinute = cal.get(Calendar.MINUTE),
             is24Hour = true
         )
-        TimePickerDialog(
+        AlertDialog(
             onDismissRequest = { showTimePicker = false },
             confirmButton = {
                 TextButton(onClick = {

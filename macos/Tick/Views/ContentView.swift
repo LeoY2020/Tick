@@ -219,7 +219,7 @@ struct ContentView: View {
                     TaskRowView(task: task, depth: 0)
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.inset)
             .environmentObject(expandedState)
         }
         .toolbar {

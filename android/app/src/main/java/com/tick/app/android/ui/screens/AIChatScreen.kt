@@ -73,7 +73,7 @@ fun AIChatScreen(vm: TickViewModel, en: Boolean) {
                 if (en) "AI Assistant" else "AI 助手",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                Modifier.weight(1f)
+                modifier = Modifier.weight(1f)
             )
             TextButton(onClick = { attachmentName = null; attachmentUri = null; vm.newChatSession() }) {
                 Icon(Icons.Outlined.Add, contentDescription = null)

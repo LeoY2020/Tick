@@ -75,7 +75,7 @@ data class TaskItem(
     @Ignore var goal: Goal? = null
 
     /** 是否拥有有效（非删除态）子任务（接管机制判定依据） */
-    @Ignore val hasActiveSubtasks: Boolean
+    val hasActiveSubtasks: Boolean
         get() = subtasks.any { it.type != TaskType.SINGLE || it.status != TaskStatus.DELETED }
 }
 
