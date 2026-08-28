@@ -96,14 +96,6 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
 
         Spacer(Modifier.height(20.dp))
         Text(strings.skin, style = MaterialTheme.typography.titleMedium)
-        if (settings.skinId == Skin.HYPEROS.id) {
-            Text(
-                strings.hyperosGlassNote,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(4.dp))
-        }
         Spacer(Modifier.height(8.dp))
         Skin.entries.forEach { skin ->
             Row(

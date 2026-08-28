@@ -17,26 +17,18 @@ import androidx.compose.ui.unit.sp
 import com.tick.app.android.model.ThemeMode
 
 private fun baseLightSurface(skin: Skin): androidx.compose.ui.graphics.Color {
-    return if (skin.id == Skin.HYPEROS.id) {
-        skin.brand.toColor().lighten(0.82f)
-    } else {
-        androidx.compose.ui.graphics.Color(0xFFFFFFFF)
-    }
+    return androidx.compose.ui.graphics.Color(0xFFFFFFFF)
 }
 
 private fun baseDarkSurface(skin: Skin): androidx.compose.ui.graphics.Color {
-    return if (skin.id == Skin.HYPEROS.id) {
-        skin.brand.toColor().lighten(0.12f)
-    } else {
-        androidx.compose.ui.graphics.Color(0xFF181818)
-    }
+    return androidx.compose.ui.graphics.Color(0xFF181818)
 }
 
 /** 皮肤浅色 ColorScheme */
 fun Skin.lightColorScheme(): ColorScheme {
     val p = brand.toColor()
     val onP = p.contrastOn()
-    val bg = if (translucentGlass) p.lighten(0.86f) else Color(0xFFFDFDFD)
+    val bg = Color(0xFFFDFDFD)
     val surface = baseLightSurface(this)
     return lightColorScheme(
         primary = p,
@@ -64,7 +56,7 @@ fun Skin.lightColorScheme(): ColorScheme {
 fun Skin.darkColorScheme(): ColorScheme {
     val p = brand.toColor().lighten(0.35f)
     val onP = p.contrastOn()
-    val bg = if (translucentGlass) brand.toColor().darken(0.55f) else Color(0xFF141414)
+    val bg = Color(0xFF141414)
     val surface = baseDarkSurface(this)
     return darkColorScheme(
         primary = p,
@@ -90,14 +82,13 @@ fun Skin.darkColorScheme(): ColorScheme {
 
 private fun defaultShapes(skin: Skin): Shapes {
     val r = when (skin) {
-        Skin.COLOROS -> 14f
-        Skin.ONEUI -> 18f
-        Skin.ORIGINOS -> 16f
-        Skin.REALMEUI -> 10f
-        Skin.FLYME -> 8f
-        Skin.MIUI -> 12f
-        Skin.HYPEROS -> 16f
-        Skin.MAGICOS -> 14f
+        Skin.RED -> 14f
+        Skin.ORANGE -> 12f
+        Skin.LEMON -> 10f
+        Skin.EMERALD -> 14f
+        Skin.AZURE -> 16f
+        Skin.LAKE -> 18f
+        Skin.LILAC -> 16f
     }
     return Shapes(
         extraSmall = RoundedCornerShape((r * 0.5f).dp),
