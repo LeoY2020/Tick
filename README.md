@@ -48,6 +48,23 @@ Android 皮肤（同一套 Kotlin 代码，编译期切换主题 skin）：
 - 深色 / 浅色 / 跟随系统配色，多语言
 - 数据持久化与备份（各平台按本机方案：iOS 用 SwiftData + iCloud，Android 用 Room，Linux 用 SQLite，等）
 
-## 构建
+## 构建与 CI
+
+### GitHub Actions 一键构建
+
+仓库内置多平台 CI 工作流，推送到 `master`（或提 PR）后自动在各平台官方镜像上编译并产出产物：
+
+| 平台 | 工作流 | Runner | 产出 |
+|---|---|---|---|
+| iOS | `.github/workflows/ios-build.yml` | `xcode-27` | 无签名 `.ipa` + 测试 |
+| macOS | `.github/workflows/macos-build.yml` | `xcode-27` | 无签名 App + 测试 |
+| Android | `.github/workflows/android-build.yml` | `ubuntu-latest` | Debug APK + 单元测试 |
+| Windows | `.github/workflows/windows-build.yml` | `windows-latest` | Release 构建（`.NET 8`） |
+| Linux | `.github/workflows/linux-build.yml` | `ubuntu-latest` | Qt6 可执行文件 |
+
+> **Windows 端**：构建与测试完全由 CI 在云端执行，无需在本地安装 .NET / WinUI 工具链。
+> **HarmonyOS**：依赖华为闭源 DevEco Studio / SDK，公共 runner 无法编译，请在装有 DevEco Studio 5 的机器上打开 `harmonyos/` 目录构建（见其子目录 README）。
+
+### 本地构建
 
 各平台目录内包含独立的工程配置与构建说明，详见对应子目录。

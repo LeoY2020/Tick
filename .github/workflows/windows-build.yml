@@ -1,0 +1,45 @@
+name: Windows Build
+
+# Windows 端构建与测试完全在 GitHub CI 云端执行，不在本地工具链上编译。
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build WinUI3 (dotnet, x64)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore windows/Tick.sln
+
+      - name: Build (Debug, x64)
+        run: dotnet build windows/Tick.sln -c Debug -p:Platform=x64 --no-restore
+
+      - name: Build (Release, x64)
+        run: dotnet build windows/Tick.sln -c Release -p:Platform=x64 --no-restore
+
+      # 上传 Release 构建产物（winui 解包运行目录，含可执行文件）
+      - name: Upload build output
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tick-windows-release
+          path: windows/bin/x64/Release
+          if-no-files-found: warn
+          retention-days: 30
