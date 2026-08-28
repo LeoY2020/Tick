@@ -18,6 +18,15 @@ public sealed partial class MainWindow : Window
         AppServices.Main.DataChanged += OnDataChanged;
         Localization.LanguageChanged += OnLanguageChanged;
         RebuildNavigation();
+        // 首次导航必须延后到控件载入（窗口渲染）后进行。
+        // 在构造函数里直接 Frame.Navigate 会触发 WinUI3 的
+        // AccessViolationException（coreclr.dll c0000005）。
+        NavView.Loaded += OnInitialNavigation;
+    }
+
+    private void OnInitialNavigation(object sender, RoutedEventArgs e)
+    {
+        NavView.Loaded -= OnInitialNavigation;
         SelectInitialGoal();
     }
 
@@ -69,7 +78,7 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>重新导航到当前页（语言 / 数据变更后重建界面）</summary>
-    public void RefreshContent() => ContentFrame.Navigate(_currentPage);
+    public void RefreshContent() => ContentFrame.Navigate(_currentPage, null);
 
     private void SelectInitialGoal()
     {
@@ -81,7 +90,7 @@ public sealed partial class MainWindow : Window
         else
         {
             _currentPage = typeof(TasksPage);
-            ContentFrame.Navigate(_currentPage);
+            ContentFrame.Navigate(_currentPage, null);
         }
     }
 
