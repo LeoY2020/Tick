@@ -27,8 +27,8 @@ public static class GoalEditDialog
         };
 
         var colorCombo = new ComboBox { Header = Localization.Tr("task.color"), HorizontalAlignment = HorizontalAlignment.Stretch };
-        foreach (var (label, hex) in vm.Palette)
-            colorCombo.Items.Add(new ComboBoxItem { Content = label, Tag = hex });
+        foreach (var (label, colorHex) in vm.Palette)
+            colorCombo.Items.Add(new ComboBoxItem { Content = label, Tag = colorHex });
         colorCombo.SelectedIndex = IndexOfTag(colorCombo, vm.Goal.ColorHex);
 
         var startPicker = new CalendarDatePicker { Header = Localization.Tr("task.startDate"), Date = ToNullableDate(vm.Goal.StartDate) };

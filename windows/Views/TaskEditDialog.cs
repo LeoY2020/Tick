@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Tick.Models;
 using Tick.Services;
 using Tick.ViewModels;

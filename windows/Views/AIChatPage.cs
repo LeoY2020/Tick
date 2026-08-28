@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -64,7 +65,7 @@ public sealed class AIChatPage : Page
         return root;
     }
 
-    private UIElement BuildInputArea()
+    private FrameworkElement BuildInputArea()
     {
         var panel = new StackPanel { Spacing = 8, Padding = new Thickness(16, 4, 16, 16) };
 
@@ -141,7 +142,7 @@ public sealed class AIChatPage : Page
             {
                 Text = message.Text,
                 TextWrapping = TextWrapping.Wrap,
-                Foreground = new SolidColorBrush(isUser ? Windows.UI.Colors.White : Windows.UI.Colors.Black),
+                Foreground = new SolidColorBrush(isUser ? Colors.White : Colors.Black),
             },
         };
     }

@@ -69,15 +69,19 @@ public static class DocumentTextExtractor
         yield return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
         yield return Encoding.Unicode; // UTF-16 LE
         yield return Encoding.BigEndianUnicode; // UTF-16 BE
+
+        // 需要 System.Text.Encoding.CodePages 注册（App 启动时 CodePagesEncodingProvider.Instance）
+        var extras = new List<Encoding>();
         try
         {
-            // 需要 System.Text.Encoding.CodePages 注册（App 启动时 CodePagesEncodingProvider.Instance）
-            yield return Encoding.GetEncoding("GB18030");
+            extras.Add(Encoding.GetEncoding("GB18030"));
         }
         catch (ArgumentException)
         {
             // 未注册时跳过
         }
+        foreach (var e in extras)
+            yield return e;
     }
 
     /// <summary>解析 docx（ZIP）并从 word/document.xml 抽取纯文本</summary>
