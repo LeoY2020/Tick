@@ -78,7 +78,20 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>重新导航到当前页（语言 / 数据变更后重建界面）</summary>
-    public void RefreshContent() => ContentFrame.Navigate(_currentPage, null);
+    public void RefreshContent() => ShowPage();
+
+    private Page? _currentPageInstance;
+
+    /// <summary>
+    /// 直接把页面实例放进 Frame.Content，而非调用 Frame.Navigate。
+    /// 规避 WinUI3 在解包自包含场景下 Frame.Navigate 的原生
+    /// AccessViolationException（coreclr.dll c0000005）。
+    /// </summary>
+    private void ShowPage()
+    {
+        _currentPageInstance = (Page)Activator.CreateInstance(_currentPage)!;
+        ContentFrame.Content = _currentPageInstance;
+    }
 
     private void SelectInitialGoal()
     {
@@ -90,7 +103,7 @@ public sealed partial class MainWindow : Window
         else
         {
             _currentPage = typeof(TasksPage);
-            ContentFrame.Navigate(_currentPage, null);
+            ShowPage();
         }
     }
 
