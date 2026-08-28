@@ -81,7 +81,6 @@ public sealed class TasksPage : Page, ITaskRowHost
         panel.Children.Add(BuildProgress(goal));
         panel.Children.Add(BuildTaskTree(goal));
         panel.Children.Add(BuildAddButton());
-        panel.Children.Add(BuildNewGoalButton());
         return new ScrollViewer { Content = panel };
     }
 
@@ -298,7 +297,7 @@ public sealed class TasksPage : Page, ITaskRowHost
         return btn;
     }
 
-    /// <summary>「新建目标」按钮：置于任务列表最底部（及空状态），调用主窗口完成创建与跳转</summary>
+    /// <summary>「新建目标」按钮（空状态入口）；有目标时位于侧栏顶部的 PaneHeader。</summary>
     private static Button BuildNewGoalButton()
     {
         var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Center };

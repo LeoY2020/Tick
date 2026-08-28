@@ -22,6 +22,7 @@ public sealed partial class MainWindow : Window
         AppTitleText.Text = Title;
         AppServices.Main.DataChanged += OnDataChanged;
         Localization.LanguageChanged += OnLanguageChanged;
+        NewGoalButton.ToolTip = Localization.Tr("goals.add");
         RebuildNavigation();
         // 首次导航必须延后到控件载入（窗口渲染）后进行。
         // 在构造函数里直接 Frame.Navigate 会触发 WinUI3 的
@@ -155,7 +156,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>供任务页底部的「新建目标」按钮调用：打开编辑器，成功后刷新并选中新目标。</summary>
+    /// <summary>供任务页底部或侧栏顶部的「新建目标」按钮调用：打开编辑器，成功后刷新并选中新目标。</summary>
     public async void RequestNewGoal()
     {
         var ok = await GoalEditDialog.ShowNewAsync(this);
@@ -166,6 +167,10 @@ public sealed partial class MainWindow : Window
                 NavView.SelectedItem = NavView.MenuItems[^1];
         }
     }
+
+    /// <summary>侧栏顶部「新建目标」按钮点击：复用 RequestNewGoal 创建并选中新目标。</summary>
+    private void OnNewGoalClick(object sender, RoutedEventArgs e)
+        => RequestNewGoal();
 
     /// <summary>目标项的右键菜单：编辑 / 删除</summary>
     private MenuFlyout GoalMenu(Goal goal)
