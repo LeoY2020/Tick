@@ -14,6 +14,10 @@ public partial class App : Application
         InitializeComponent();
         // 注册 GB18030 / GBK 编码，供按 GBK 解码中文 .txt 附件
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // 无控制台的解包运行场景下，捕获致命异常写日志，便于排查"双击没反应/闪退"
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            CrashLog.Record("appdomain", e.ExceptionObject as Exception);
+        UnhandledException += (_, e) => CrashLog.Record("ui", e.Exception);
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
