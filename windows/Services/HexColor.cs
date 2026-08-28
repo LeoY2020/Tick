@@ -28,7 +28,7 @@ public static class HexColor
     };
 
     /// <summary>解析为最终颜色："auto" 按色彩方案适配（深色白 / 浅色黑），其余按 HEX 解析</summary>
-    public static Color Resolve(string hex, bool isDark)
+    public static Windows.UI.Color Resolve(string hex, bool isDark)
     {
         if (string.Equals(hex, AutoHex, StringComparison.OrdinalIgnoreCase))
             return isDark ? Colors.White : Colors.Black;
@@ -36,7 +36,7 @@ public static class HexColor
     }
 
     /// <summary>解析 HEX 字符串为 Color：支持 "#RRGGBB"、"RRGGBB" 与 3 位缩写，无效返回黑色</summary>
-    public static Color Parse(string? hex)
+    public static Windows.UI.Color Parse(string? hex)
     {
         var value = (hex ?? "").Trim();
         if (value.StartsWith('#'))
@@ -48,7 +48,7 @@ public static class HexColor
         if (value.Length != 6 || !uint.TryParse(value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var rgb))
             return Colors.Black;
 
-        return Color.FromArgb(
+        return Windows.UI.Color.FromArgb(
             255,
             (byte)((rgb >> 16) & 0xFF),
             (byte)((rgb >> 8) & 0xFF),
