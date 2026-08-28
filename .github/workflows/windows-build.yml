@@ -1,0 +1,61 @@
+name: Windows Build
+
+# Windows 端构建与测试完全在 GitHub CI 云端执行，不在本地工具链上编译。
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build WinUI3 (dotnet, x64)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore windows/Tick.sln
+
+      - name: Build (Debug, x64)
+        run: dotnet build windows/Tick.sln -c Debug -p:Platform=x64 --no-restore
+
+      - name: Build (Release, x64)
+        run: dotnet build windows/Tick.sln -c Release -p:Platform=x64 --no-restore
+
+      # 上传 Release 构建产物：把真正自包含运行目录（含 Tick.exe 及全部依赖）压平成扁平目录，
+      # 消除 TFM/win-x64 多层嵌套，用户解压后直接运行最外层 Tick.exe 即可。
+      - name: Stage runnable output
+        if: success()
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path windows/bin/x64/Release -Recurse -Filter Tick.exe | Select-Object -First 1
+          if (-not $exe) { Write-Error "Tick.exe not found in build output"; exit 1 }
+          $src = $exe.DirectoryName
+          $stage = "tick-windows"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item -Path "$src\*" -Destination $stage -Recurse -Force
+          $exeName = Get-ChildItem -Path $stage -Filter "*.exe" | Select-Object -First 1
+          Write-Output "Runnable entry: $($exeName.FullName)"
+          Write-Output "请运行最外层的 Tick.exe；若提示缺少 DLL，请安装 Microsoft VC++ 2015-2022 x64 运行库。" |
+            Set-Content -Path "$stage\README.txt" -Encoding utf8
+
+      - name: Upload build output
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tick-windows-release
+          path: tick-windows
+          if-no-files-found: warn
+          retention-days: 30

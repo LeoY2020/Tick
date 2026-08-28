@@ -1,0 +1,35 @@
+.DS_Store
+xcuserdata/
+*.xcuserstate
+DerivedData/
+.trae/
+
+# iOS / macOS (Xcode)
+build/
+ios/build/
+macos/build/
+
+# Android (Gradle)
+android/.gradle/
+android/**/build/
+android/local.properties
+android/.idea/
+*.keystore
+
+# Windows (WinUI 3 / .NET)
+windows/bin/
+windows/obj/
+windows/.vs/
+windows/*.user
+
+# HarmonyOS (DevEco Studio)
+harmonyos/**/build/
+harmonyos/**/oh_modules/
+harmonyos/.hvigor/
+harmonyos/.idea/
+harmonyos/local.properties
+
+# Linux (CMake/Qt)
+linux/build/
+linux/cmake-build-*/
+linux/.qt/

@@ -1,0 +1,64 @@
+name: macOS Build & Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test macOS (Xcode)
+    runs-on: xcode-27
+    env:
+      PROJECT: macos/Tick.xcodeproj
+      SCHEME: Tick
+      # 免签名构建（CI 不配置开发者证书）
+      XCARGS: >-
+        CODE_SIGNING_ALLOWED=NO
+        CODE_SIGN_IDENTITY=
+        CODE_SIGNING_REQUIRED=NO
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i macosx || true
+
+      - name: Install xcbeautify (if missing)
+        run: which xcbeautify || brew install xcbeautify
+
+      - name: Test (includes build)
+        run: |
+          set -o pipefail
+          rm -rf TestResults.xcresult
+          xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+            -destination 'platform=macOS' \
+            -configuration Debug \
+            $XCARGS \
+            -resultBundlePath TestResults.xcresult \
+            test 2>&1 | xcbeautify --renderer github-actions
+
+      - name: Build Release (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+            -destination 'platform=macOS' \
+            -configuration Release \
+            $XCARGS \
+            build 2>&1 | xcbeautify --renderer github-actions
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-xcresult
+          path: TestResults.xcresult
+          retention-days: 7

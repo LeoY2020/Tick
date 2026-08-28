@@ -1,0 +1,42 @@
+name: Linux Build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-qt6:
+    name: Build Qt6 (CMake)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt6 dev deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            qt6-base-dev \
+            ninja-build \
+            cmake \
+            build-essential
+
+      - name: Configure
+        run: cmake -S linux -B linux/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build linux/build
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tick-linux
+          path: linux/build/tick
+          retention-days: 30

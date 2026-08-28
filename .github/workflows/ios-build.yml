@@ -1,0 +1,97 @@
+name: iOS Build & Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test (Xcode 27)
+    # GitHub 官方 Xcode 27 专用镜像（预览版，自带 Xcode 27）
+    runs-on: xcode-27
+    env:
+      PROJECT: ios/Tick.xcodeproj
+      SCHEME: Tick
+      # 免签名构建（CI 不配置开发者证书）
+      XCARGS: >-
+        CODE_SIGNING_ALLOWED=NO
+        CODE_SIGN_IDENTITY=
+        CODE_SIGNING_REQUIRED=NO
+        CODE_SIGN_ENTITLEMENTS=
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i ios || true
+
+      - name: Install xcbeautify (if missing)
+        run: which xcbeautify || brew install xcbeautify
+
+      - name: Resolve iOS Simulator
+        run: |
+          # 自动选择一个可用的 iPhone 模拟器（避免运行时镜像差异）
+          DEVICE=$(xcrun simctl list devices available | grep -oE "iPhone [0-9]+ (Pro Max|Pro)?" | head -n 1)
+          if [ -z "$DEVICE" ]; then
+            DEVICE=$(xcrun simctl list devices available | grep -oE "iPhone [0-9]+.*" | head -n 1 | cut -d '(' -f 1 | xargs)
+          fi
+          if [ -z "$DEVICE" ]; then
+            echo "未找到可用的 iPhone 模拟器"; exit 1
+          fi
+          echo "使用模拟器: $DEVICE"
+          echo "DESTINATION=platform=iOS Simulator,name=$DEVICE" >> "$GITHUB_ENV"
+
+      - name: Test (includes build)
+        run: |
+          set -o pipefail
+          rm -rf TestResults.xcresult
+          xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+            -destination "$DESTINATION" \
+            -configuration Debug \
+            $XCARGS \
+            -enableCodeCoverage YES \
+            -resultBundlePath TestResults.xcresult \
+            test 2>&1 | xcbeautify --renderer github-actions
+
+      - name: Archive (Release, unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -archivePath build/Tick.xcarchive \
+            $XCARGS \
+            archive 2>&1 | xcbeautify --renderer github-actions
+
+      - name: Package unsigned IPA
+        run: |
+          # 免签名 ipa：从 xcarchive 提取 .app，按 Payload 目录结构打包
+          # （CI 无开发者证书，ipa 未签名；安装前需经 AltStore/Sideloadly/爱思助手等工具自签）
+          mkdir -p build/Payload
+          cp -R "build/Tick.xcarchive/Products/Applications/Tick.app" build/Payload/
+          (cd build && zip -qry "Tick-unsigned.ipa" Payload)
+          ls -lh build/Tick-unsigned.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tick-unsigned-ipa-${{ github.run_number }}
+          path: build/Tick-unsigned.ipa
+          retention-days: 30
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcresult
+          path: TestResults.xcresult
+          retention-days: 7

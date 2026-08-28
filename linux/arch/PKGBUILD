@@ -1,0 +1,25 @@
+# Maintainer: Tick Developers <tick@example.com>
+# Reference PKGBUILD for building Tick from the linux/ source tree (CMake).
+pkgname=tick
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Tick — goal-based infinite-task-tree todo application (Qt6/Widgets)"
+arch=('x86_64' 'aarch64')
+url="https://example.invalid/tick"
+license=('MIT')
+depends=('qt6-base' 'qt6-svg' 'qt6-tools')
+makedepends=('cmake' 'ninja')
+# Build from the local source directory (the linux/ tree), not from a tarball.
+source=()
+sha256sums=()
+
+build() {
+  cmake -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr
+  cmake --build build
+}
+
+package() {
+  cmake --install build --prefix "$pkgdir/usr"
+}

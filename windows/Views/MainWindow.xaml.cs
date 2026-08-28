@@ -1,0 +1,243 @@
+using System;
+using System.Threading.Tasks;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Tick.Models;
+using Tick.Services;
+
+namespace Tick.Views;
+
+public sealed partial class MainWindow : Window
+{
+    private Type _currentPage = typeof(TasksPage);
+
+    public MainWindow()
+    {
+        InitializeComponent();
+        Title = Localization.Tr("app.title");
+        // 与窗口融合：内容延伸到系统标题栏区域，顶部栏作为自定义拖拽区（类似 Microsoft Store）
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppTitleBar);
+        AppTitleText.Text = Title;
+        AppServices.Main.DataChanged += OnDataChanged;
+        Localization.LanguageChanged += OnLanguageChanged;
+        RebuildNavigation();
+        // 首次导航必须延后到控件载入（窗口渲染）后进行。
+        // 在构造函数里直接 Frame.Navigate 会触发 WinUI3 的
+        // AccessViolationException（coreclr.dll c0000005）。
+        NavView.Loaded += OnInitialNavigation;
+    }
+
+    private void OnInitialNavigation(object sender, RoutedEventArgs e)
+    {
+        NavView.Loaded -= OnInitialNavigation;
+        SelectInitialGoal();
+    }
+
+    /// <summary>应用配色方案到窗口内容根节点（亮 / 暗 / 跟随系统）</summary>
+    public void ApplyTheme(ColorSchemeSetting scheme)
+    {
+        var root = Content as FrameworkElement;
+        if (root is null)
+            return;
+        root.RequestedTheme = scheme switch
+        {
+            ColorSchemeSetting.Light => ElementTheme.Light,
+            ColorSchemeSetting.Dark => ElementTheme.Dark,
+            _ => ElementTheme.Default,
+        };
+    }
+
+    /// <summary>目标增删后由页面调用，重建侧栏目标列表</summary>
+    public void RebuildNavigation()
+    {
+        var itemToSelect = NavView.SelectedItem as NavigationViewItem;
+        Guid? selectedGoalId = itemToSelect?.Tag is Goal g ? g.Id : null;
+
+        NavView.MenuItems.Clear();
+        foreach (var goal in AppServices.Main.Goals)
+        {
+            var item = new NavigationViewItem
+            {
+                Tag = goal,
+                Content = GoalHeader(goal),
+            };
+            item.ContextFlyout = GoalMenu(goal);
+            NavView.MenuItems.Add(item);
+        }
+
+        NavView.FooterMenuItems.Clear();
+        NavView.FooterMenuItems.Add(FooterItem("nav.ai", "\uE8BD", "ai"));
+        NavView.FooterMenuItems.Add(FooterItem("nav.settings", "\uE713", "settings"));
+
+        // 保留当前目标选中（若仍存在）
+        if (selectedGoalId is Guid id)
+        {
+            foreach (var item in NavView.MenuItems)
+                if (item is NavigationViewItem nvi && nvi.Tag is Goal gg && gg.Id == id)
+                {
+                    NavView.SelectedItem = nvi;
+                    break;
+                }
+        }
+    }
+
+    /// <summary>重新导航到当前页（语言 / 数据变更后重建界面）</summary>
+    public void RefreshContent() => ShowPage();
+
+    private Page? _currentPageInstance;
+
+    /// <summary>
+    /// 直接把页面实例放进 Frame.Content，而非调用 Frame.Navigate。
+    /// 规避 WinUI3 在解包自包含场景下 Frame.Navigate 的原生
+    /// AccessViolationException（coreclr.dll c0000005）。
+    /// </summary>
+    private void ShowPage()
+    {
+        _currentPageInstance = (Page)Activator.CreateInstance(_currentPage)!;
+        ContentFrame.Content = _currentPageInstance;
+    }
+
+    private void SelectInitialGoal()
+    {
+        AppServices.Main.Reload();
+        if (NavView.MenuItems.Count > 0)
+        {
+            NavView.SelectedItem = NavView.MenuItems[0];
+        }
+        else
+        {
+            _currentPage = typeof(TasksPage);
+            ShowPage();
+        }
+    }
+
+    private void OnLanguageChanged()
+    {
+        Title = Localization.Tr("app.title");
+        AppTitleText.Text = Title;
+        RebuildNavigation();
+        RefreshContent();
+    }
+
+    private void OnDataChanged()
+    {
+        // 目标增删或重命名后重建侧栏
+        var selected = (NavView.SelectedItem as NavigationViewItem)?.Tag;
+        RebuildNavigation();
+    }
+
+    private void SelectGoal(Goal goal)
+    {
+        AppServices.Main.SelectGoal(goal);
+        _currentPage = typeof(TasksPage);
+        RefreshContent();
+    }
+
+    private void OnNavSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+    {
+        var item = args.SelectedItem as NavigationViewItem;
+        var tag = item?.Tag;
+        if (tag is Goal goal)
+        {
+            SelectGoal(goal);
+        }
+        else if (tag is string s)
+        {
+            _currentPage = s switch
+            {
+                "ai" => typeof(AIChatPage),
+                "settings" => typeof(SettingsPage),
+                _ => typeof(TasksPage),
+            };
+            RefreshContent();
+        }
+    }
+
+    /// <summary>供任务页底部的「新建目标」按钮调用：打开编辑器，成功后刷新并选中新目标。</summary>
+    public async void RequestNewGoal()
+    {
+        var ok = await GoalEditDialog.ShowNewAsync(this);
+        if (ok)
+        {
+            RebuildNavigation();
+            if (NavView.MenuItems.Count > 0)
+                NavView.SelectedItem = NavView.MenuItems[^1];
+        }
+    }
+
+    /// <summary>目标项的右键菜单：编辑 / 删除</summary>
+    private MenuFlyout GoalMenu(Goal goal)
+    {
+        var flyout = new MenuFlyout();
+
+        var edit = new MenuFlyoutItem { Text = Localization.Tr("goals.edit") };
+        edit.Click += async (_, _) => await GoalEditDialog.ShowEditAsync(this, goal);
+        flyout.Items.Add(edit);
+
+        flyout.Items.Add(new MenuFlyoutSeparator());
+
+        var delete = new MenuFlyoutItem { Text = Localization.Tr("goals.delete") };
+        delete.Click += async (_, _) => await ConfirmDeleteGoalAsync(goal);
+        flyout.Items.Add(delete);
+
+        return flyout;
+    }
+
+    private async Task ConfirmDeleteGoalAsync(Goal goal)
+    {
+        var message = string.Format(Localization.Tr("goals.deleteConfirm"), goal.Name);
+        var ok = await Dialogs.ShowConfirmAsync(App.MainWindow, Localization.Tr("common.warning"), message);
+        if (!ok)
+            return;
+
+        AppServices.Main.DeleteGoal(goal);
+        RebuildNavigation();
+        if (NavView.MenuItems.Count > 0)
+            NavView.SelectedItem = NavView.MenuItems[0];
+        else
+        {
+            _currentPage = typeof(TasksPage);
+            RefreshContent();
+        }
+    }
+
+    /// <summary>侧栏目标项头部：颜色圆点 + 名称</summary>
+    private static UIElement GoalHeader(Goal goal)
+    {
+        var panel = new Grid { ColumnSpacing = 8 };
+        var dot = new Microsoft.UI.Xaml.Shapes.Ellipse
+        {
+            Width = 12,
+            Height = 12,
+            Fill = HexColor.Brush(goal.ColorHex, isDark: false),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        var name = new TextBlock
+        {
+            Text = goal.Name,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            Margin = new Thickness(14, 0, 0, 0),
+        };
+        panel.Children.Add(dot);
+        panel.Children.Add(name);
+        return panel;
+    }
+
+    private static NavigationViewItem FooterItem(string labelKey, string glyph, string tag)
+    {
+        var item = new NavigationViewItem
+        {
+            Tag = tag,
+            Icon = new FontIcon
+            {
+                Glyph = glyph,
+                FontFamily = new FontFamily("Segoe Fluent Icons"),
+            },
+        };
+        item.Content = new TextBlock { Text = Localization.Tr(labelKey) };
+        return item;
+    }
+}

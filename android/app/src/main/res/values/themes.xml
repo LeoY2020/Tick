@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose 应用的基础主题：仅负责启动窗口与系统栏外观，具体配色由 Compose 主题接管 -->
+    <style name="Theme.Tick" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
