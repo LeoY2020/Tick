@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Tick
+GenericName=Todo
+Comment=Tick todo application
+Exec=tick
+Icon=/usr/share/pixmaps/tick.png
+Terminal=false
+Categories=Utility;Office;Qt;
+StartupWMClass=Tick

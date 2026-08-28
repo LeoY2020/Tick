@@ -26,13 +26,32 @@ jobs:
             qt6-base-dev \
             ninja-build \
             cmake \
-            build-essential
+            build-essential \
+            dpkg-dev \
+            rpm
 
       - name: Configure
         run: cmake -S linux -B linux/build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build linux/build
+
+      - name: Package (deb / rpm / tar.gz)
+        run: |
+          cd linux/build
+          for gen in DEB RPM TGZ; do
+            cpack -G "$gen" -C Release
+          done
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tick-linux-packages
+          path: |
+            linux/build/tick-1.0.0-*.deb
+            linux/build/tick-1.0.0-*.rpm
+            linux/build/tick-1.0.0-*.tar.gz
+          retention-days: 30
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
