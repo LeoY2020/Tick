@@ -3,16 +3,14 @@ package com.tick.app.android.doc
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.text.PDFTextStripper
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.charset.Charset
 import java.util.Locale
 
 /**
  * 从导入的文档抽取纯文本（供 AI 生成任务清单）。
- * 支持：纯文本 / Markdown（.txt / .md / .markdown / .text）、PDF（文本型）。
+ * 支持：纯文本 / Markdown（.txt / .md / .markdown / .text）、PDF（文本型，依赖系统已安装 pdftotext）。
  * PDF 文本提取失败（如扫描件无文本层、加密等）时抛出友好提示，不崩溃。
  */
 object DocumentTextExtractor {
@@ -21,7 +19,7 @@ object DocumentTextExtractor {
         object CannotReadText : ExtractionError("无法读取该文件的文本内容（仅支持文本 / Markdown / PDF 格式）")
         object EmptyText : ExtractionError("文件中没有可识别的文字内容")
         object PdfExtractionFailed : ExtractionError(
-            "未能从该 PDF 提取文字：可能是扫描件（无文字层）或已加密，请改用带文字的 PDF 或文本文件"
+            "未能从该 PDF 提取文字：可能是扫描件（无文字层），或系统缺少 poppler-utils（pdftotext），请改用带文字的 PDF 或文本文件"
         )
     }
 
@@ -54,7 +52,7 @@ object DocumentTextExtractor {
     private fun decode(bytes: ByteArray): String {
         if (bytes.isEmpty()) return ""
         runCatching { return String(bytes, Charsets.UTF_8) }
-        runCatching { return String(bytes, Charsets.UTF_16) }
+        runCatching { return String(bytes, Charsets.UTF_16LE) }
         runCatching { return String(bytes, Charset.forName("GB18030")) }
         throw ExtractionError.CannotReadText
     }
@@ -63,23 +61,27 @@ object DocumentTextExtractor {
 
     private fun extractPdf(context: Context, uri: Uri, maxLength: Int): String {
         try {
-            PDFBoxResourceLoader.init(context.applicationContext)
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                 ?: throw ExtractionError.CannotReadText
-            val temp = File(context.cacheDir, "tick_attachment_${System.currentTimeMillis()}.pdf")
-            temp.writeBytes(bytes)
-            val text = try {
-                PDDocument.load(temp).use { doc ->
-                    val stripper = PDFTextStripper()
-                    stripper.startPage = 1
-                    stripper.endPage = doc.numberOfPages
-                    stripper.text
-                }
-            } finally {
-                temp.delete()
+            val tempPdf = File(context.cacheDir, "tick_temp_${System.currentTimeMillis()}.pdf")
+            tempPdf.writeBytes(bytes)
+
+            // 调用系统 pdftotext（来自 poppler-utils 包）提取文本布局
+            val process = Runtime.getRuntime().exec(arrayOf("pdftotext", "-layout", tempPdf.absolutePath, "-"))
+            val outputStream = ByteArrayOutputStream()
+            process.inputStream.copyTo(outputStream)
+            val exitCode = process.waitFor()
+
+            tempPdf.delete()
+            if (exitCode != 0) {
+                throw ExtractionError.PdfExtractionFailed
             }
-            val trimmed = text.trim()
-            if (trimmed.isEmpty()) throw ExtractionError.PdfExtractionFailed
+
+            val raw = outputStream.toString()
+            val trimmed = raw.trim()
+            if (trimmed.isEmpty()) {
+                throw ExtractionError.PdfExtractionFailed
+            }
             return clamp(trimmed, maxLength)
         } catch (e: ExtractionError) {
             throw e

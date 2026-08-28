@@ -143,7 +143,6 @@ struct TaskEditorView: View {
                 dateSection
             }
             .navigationTitle("编辑任务")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消", action: cancel)
@@ -205,7 +204,6 @@ struct TaskEditorView: View {
     private var progressSection: some View {
         Section {
             TextField("总量", text: $totalText)
-                .keyboardType(.numberPad)
                 .disabled(task.hasSubtasks)
                 .accessibilityLabel("进度总量")
             if task.hasSubtasks {

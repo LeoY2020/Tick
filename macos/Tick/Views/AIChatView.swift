@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import AppKit
 
 /// 与 AI 对话的对话框：会话内多轮对话，可上传附件（可选），并由 AI 自行判断是否生成任务。
 /// - AI 输出 JSON envelope：generate=true 时把 tasks 写入当前目标（不展示），只展示 message 文字。
@@ -48,12 +49,11 @@ struct AIChatView: View {
                 inputBar
             }
             .navigationTitle("AI 对话")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("关闭") { dismiss() }
                 }
-                ToolbarItemGroup(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .primaryAction) {
                     Button(action: newChat) {
                         Image(systemName: "square.and.pencil")
                     }
@@ -119,7 +119,7 @@ struct AIChatView: View {
                 .textSelection(.enabled)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(isUser ? Color.accentColor : Color(.secondarySystemBackground))
+                .background(isUser ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
                 .foregroundStyle(isUser ? Color.white : Color.primary)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .frame(maxWidth: 300, alignment: .leading)
@@ -307,7 +307,6 @@ struct AIChatView: View {
                 .onDelete(perform: deleteSessions)
             }
             .navigationTitle("AI 历史")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("完成") { showHistory = false }

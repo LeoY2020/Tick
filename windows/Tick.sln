@@ -4,8 +4,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tick", "Tick.csproj", "{7B4F1A32-2A1C-4C7E-9E1B-2D3A4F5C6D7E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProgressEngineTests", "Tests\ProgressEngineTests.csproj", "{1E2D3C4B-5A6F-4E8D-9B0C-1D2E3F4A5B6C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -16,10 +14,6 @@ Global
 		{7B4F1A32-2A1C-4C7E-9E1B-2D3A4F5C6D7E}.Debug|x64.Build.0 = Debug|x64
 		{7B4F1A32-2A1C-4C7E-9E1B-2D3A4F5C6D7E}.Release|x64.ActiveCfg = Release|x64
 		{7B4F1A32-2A1C-4C7E-9E1B-2D3A4F5C6D7E}.Release|x64.Build.0 = Release|x64
-		{1E2D3C4B-5A6F-4E8D-9B0C-1D2E3F4A5B6C}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{1E2D3C4B-5A6F-4E8D-9B0C-1D2E3F4A5B6C}.Debug|x64.Build.0 = Debug|Any CPU
-		{1E2D3C4B-5A6F-4E8D-9B0C-1D2E3F4A5B6C}.Release|x64.ActiveCfg = Release|Any CPU
-		{1E2D3C4B-5A6F-4E8D-9B0C-1D2E3F4A5B6C}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

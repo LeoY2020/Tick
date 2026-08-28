@@ -44,13 +44,11 @@ struct QuickAddTaskView: View {
                 if type == .progress {
                     Section("进度") {
                         TextField("总量", text: $totalText)
-                            .keyboardType(.numberPad)
                             .accessibilityLabel("进度总量")
                     }
                 }
             }
             .navigationTitle(parent == nil ? "添加任务" : "添加子任务")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") { dismiss() }

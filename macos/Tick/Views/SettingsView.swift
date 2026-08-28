@@ -89,7 +89,6 @@ struct SettingsView: View {
             Section {
                 if settings.selectedModel == .custom {
                     TextField("接口地址（Base URL）", text: $settings.customBaseURL)
-                        .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                     TextField("模型名", text: $settings.customModel)

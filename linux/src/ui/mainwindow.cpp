@@ -278,7 +278,6 @@ void MainWindow::buildTree(const std::shared_ptr<TaskItem>& task, QTreeWidgetIte
         percent = static_cast<int>(std::lround(progress.first / progress.second * 100.0));
     }
     percent = std::clamp(percent, 0, 100);
-    it->setProgressBar(2, percent);
     it->setText(2, QStringLiteral("%1%").arg(percent));
 
     for (const auto& c : task->subtasks) {
@@ -320,12 +319,6 @@ QString MainWindow::countdownText() const {
         return TR("截止倒计时：%1 小时 %2 分", "Due in %1h %2m").arg(hours).arg(minutes);
     }
     return TR("截止倒计时：%1 分", "Due in %1m").arg(minutes);
-}
-
-void MainWindow::saveTask(const std::shared_ptr<TaskItem>& task) {
-    if (!currentGoal_) return;
-    TaskRepository repo;
-    repo.save(task, currentGoal_->id);
 }
 
 void MainWindow::persistAndReload() {

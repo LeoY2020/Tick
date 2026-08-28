@@ -9,6 +9,7 @@
 
 class QLabel;
 class QListWidget;
+class QCloseEvent;
 class QProgressBar;
 class QPushButton;
 class QSplitter;
@@ -54,6 +55,9 @@ private:
     void applyTheme();
     void reapplyLanguage();
     std::shared_ptr<TaskItem> generatedToTask(const std::shared_ptr<GeneratedTask>& g);
+
+protected:
+    void closeEvent(QCloseEvent* event) override;
 
     QSplitter* splitter_ = nullptr;
     QListWidget* goalList_ = nullptr;

@@ -46,7 +46,7 @@ struct ContentView: View {
                 detail
                     // AI 导入按钮放在设置按钮左侧：导入文档自动生成任务清单
                     .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
+                        ToolbarItem(placement: .primaryAction) {
                             Button {
                                 showAIChat = true
                             } label: {
@@ -55,7 +55,7 @@ struct ContentView: View {
                             .accessibilityLabel("AI 对话并生成任务")
                             .disabled(selectedGoal == nil)
                         }
-                        ToolbarItem(placement: .topBarTrailing) {
+                        ToolbarItem(placement: .primaryAction) {
                             Button {
                                 showSettings = true
                             } label: {
@@ -78,7 +78,7 @@ struct ContentView: View {
             }
             .task {
                 // 首次启动空库检测与恢复（Keychain / CloudKit 双轨）
-                DataBackupManager.shared.restoreIfNeeded(context: context)
+                _ = DataBackupManager.shared.restoreIfNeeded(context: context)
             }
             .onChange(of: goals) { _, newGoals in
                 // 目标列表变化后保证有选中项
@@ -223,7 +223,7 @@ struct ContentView: View {
             .environmentObject(expandedState)
         }
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            ToolbarItem(placement: .primaryAction) {
                 // 侧边栏切换按钮：仅窄窗口（iPhone compact / iPad 台前调度窄窗）显示；
                 // iPad regular 宽度下系统自动提供切换按钮，手动添加会重复
                 if isNarrowWindow {

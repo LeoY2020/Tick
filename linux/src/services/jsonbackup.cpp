@@ -118,8 +118,8 @@ std::shared_ptr<TaskItem> JsonBackup::taskFromJson(const QJsonValue& v) {
         task->repeatRule = repeatRuleFromString(o.value(QStringLiteral("repeatRuleRaw")).toString());
         const QString cw = o.value(QStringLiteral("customWeekdaysRaw")).toString();
         task->customWeekdaysRaw = cw.isEmpty() ? std::nullopt : std::optional<std::string>(cw.toStdString());
-        const QDateTime created = dateTimeFromString(o.value(QStringLiteral("createdAt")).toString());
-        if (created.isValid()) task->createdAt = created;
+        const std::optional<QDateTime> created = dateTimeFromString(o.value(QStringLiteral("createdAt")).toString());
+        if (created.has_value()) task->createdAt = *created;
         task->sortOrder = o.value(QStringLiteral("sortOrder")).toInt();
         for (const auto& c : o.value(QStringLiteral("subtasks")).toArray()) {
             auto child = taskFromJson(c);
@@ -143,8 +143,8 @@ std::shared_ptr<Goal> JsonBackup::goalFromJson(const QJsonObject& o) {
     goal->endDate = dateTimeFromJson(o.value(QStringLiteral("endDate")));
     goal->startDatePreciseToHour = o.value(QStringLiteral("startDatePreciseToHour")).toBool(false);
     goal->endDatePreciseToHour = o.value(QStringLiteral("endDatePreciseToHour")).toBool(false);
-    const QDateTime created = dateTimeFromString(o.value(QStringLiteral("createdAt")).toString());
-    if (created.isValid()) goal->createdAt = created;
+    const std::optional<QDateTime> created = dateTimeFromString(o.value(QStringLiteral("createdAt")).toString());
+    if (created.has_value()) goal->createdAt = *created;
     goal->progressCountingMode = countingModeFromString(
         o.value(QStringLiteral("progressCountingModeRaw")).toString());
     for (const auto& t : o.value(QStringLiteral("tasks")).toArray()) {

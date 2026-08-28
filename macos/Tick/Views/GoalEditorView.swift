@@ -176,7 +176,6 @@ struct GoalEditorView: View {
                 }
             }
             .navigationTitle(isNew ? "新建目标" : "编辑目标")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消", action: cancel)

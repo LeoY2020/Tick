@@ -79,7 +79,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     // PDF 文本提取（仅支持文本型 PDF；扫描件因无文本层将给出友好提示）
-    implementation("com.tom-roush:pdfbox-android:2.0.27")
+    // 文档解析：纯文本 / Markdown 通过 Kotlin 标准库读取，PDF 需系统 pdftotext
+    // 注：PDF 文本提取依赖系统已安装 poppler-utils（pdftotext），不在此引入 JAR 依赖
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)

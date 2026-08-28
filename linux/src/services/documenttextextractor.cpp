@@ -43,7 +43,7 @@ DocumentTextExtractor::Result DocumentTextExtractor::readAsText(const QString& f
         return r;
     }
     // GB18030 / GBK（中文 txt 常见编码）
-    if (auto enc = QStringConverter::encodingForName(QStringLiteral("GB18030"))) {
+    if (auto enc = QStringConverter::encodingForName("GB18030")) {
         if (decode(*enc, text)) {
             r.ok = true;
             r.text = clamp(text, maxLength);
@@ -90,7 +90,7 @@ DocumentTextExtractor::Result DocumentTextExtractor::extractPDF(const QString& f
         r.text = clamp(text, maxLength);
         return r;
     }
-    if (auto enc = QStringConverter::encodingForName(QStringLiteral("GB18030"))) {
+    if (auto enc = QStringConverter::encodingForName("GB18030")) {
         if (decode(*enc, text)) {
             r.ok = true;
             r.text = clamp(text, maxLength);
