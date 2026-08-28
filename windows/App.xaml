@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="Tick.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- 应用级资源：任务状态颜色 / 共享画刷 -->
+            <SolidColorBrush x:Key="StatusDoneBrush" Color="#34C759" />
+            <SolidColorBrush x:Key="StatusHalfBrush" Color="#FF9500" />
+            <SolidColorBrush x:Key="StatusNotDoneBrush" Color="#8E8E93" />
+            <SolidColorBrush x:Key="StatusDeletedBrush" Color="#FF3B30" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

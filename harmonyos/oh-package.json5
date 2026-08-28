@@ -1,0 +1,11 @@
+{
+  "modelVersion": "5.0.0",
+  "name": "tick",
+  "version": "1.0.0",
+  "description": "Tick - 目标与任务管理（HarmonyOS 原生 / ArkTS + ArkUI）",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {},
+  "devDependencies": {}
+}
