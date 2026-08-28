@@ -7,7 +7,7 @@ namespace Tick;
 public partial class App : Application
 {
     /// <summary>当前主窗口引用（供主题 / 语言刷新）</summary>
-    public static Window MainWindow { get; private set; } = null!;
+    public static Views.MainWindow MainWindow { get; private set; } = null!;
 
     public App()
     {

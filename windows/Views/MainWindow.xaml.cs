@@ -47,7 +47,6 @@ public sealed partial class MainWindow : Window
             var item = new NavigationViewItem
             {
                 Tag = goal,
-                IsSelectable = true,
                 Content = GoalHeader(goal),
             };
             NavView.MenuItems.Add(item);

@@ -89,14 +89,14 @@ struct SettingsView: View {
             Section {
                 if settings.selectedModel == .custom {
                     TextField("接口地址（Base URL）", text: $settings.customBaseURL)
-                        .textInputAutocapitalization(.never)
+                        
                         .autocorrectionDisabled()
                     TextField("模型名", text: $settings.customModel)
-                        .textInputAutocapitalization(.never)
+                        
                         .autocorrectionDisabled()
                 }
                 SecureField("API Key", text: apiKeyBinding)
-                    .textInputAutocapitalization(.never)
+                    
                     .autocorrectionDisabled()
                     .accessibilityLabel("\(settings.selectedModel.displayName) API Key")
                 if apiKeyText.isEmpty {

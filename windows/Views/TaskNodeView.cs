@@ -81,8 +81,8 @@ public sealed class TaskNodeView : UserControl
                     Text = status.ToDisplayName(),
                     Foreground = StatusBrush(status),
                     VerticalAlignment = VerticalAlignment.Center,
-                    ToolTipService.SetToolTip(this, Localization.Tr("task.takenOver")),
                 };
+                ToolTipService.SetToolTip(badge, Localization.Tr("task.takenOver"));
                 panel.Children.Add(badge);
             }
             else
@@ -92,8 +92,8 @@ public sealed class TaskNodeView : UserControl
                     Content = new TextBlock { Text = task.Status.ToDisplayName(), Foreground = StatusBrush(task.Status) },
                     VerticalAlignment = VerticalAlignment.Center,
                     Padding = new Thickness(8, 2, 8, 2),
-                    ToolTipService.SetToolTip(this, "切换完成"),
                 };
+                ToolTipService.SetToolTip(toggle, "切换完成");
                 toggle.Click += (_, _) => _host.RequestToggle(task);
                 panel.Children.Add(toggle);
             }

@@ -87,9 +87,8 @@ public sealed class JsonBackup
                 CreatedAt = CreatedAt,
                 ProgressCountingModeRaw = ProgressCountingModeRaw,
             };
-            goal.Tasks.AddRange(TaskDto.TreeOf(Tasks));
-            foreach (var task in goal.Tasks)
-                task.Goal = goal;
+            foreach (var root in TaskDto.TreeOf(Tasks))
+                root.AttachTo(goal);
             return goal;
         }
     }
@@ -141,7 +140,7 @@ public sealed class JsonBackup
             Subtasks = t.Subtasks.Count > 0 ? FromList(t.Subtasks) : null,
         };
 
-        /// <summary>把 DTO 树还原为 TaskItem 对象图（重建父链，Goal 由外层填充）。</summary>
+        /// <summary>把 DTO 树还原为 TaskItem 对象图（递归重建父链，Goal 由外层填充）。</summary>
         public static List<TaskItem> TreeOf(List<TaskDto>? dtos)
         {
             var result = new List<TaskItem>();
@@ -149,51 +148,40 @@ public sealed class JsonBackup
                 return result;
             foreach (var dto in dtos)
                 result.Add(ToTask(dto));
-            Link(result);
             return result;
         }
 
-        private static TaskItem ToTask(TaskDto d) => new()
+        private static TaskItem ToTask(TaskDto d)
         {
-            Id = d.Id,
-            Name = d.Name,
-            ColorHex = d.ColorHex,
-            IconSystemName = d.IconSystemName,
-            TypeRaw = d.TypeRaw,
-            StatusRaw = d.StatusRaw,
-            TotalAmount = d.TotalAmount,
-            CurrentAmount = d.CurrentAmount,
-            StartDate = d.StartDate,
-            EndDate = d.EndDate,
-            ReminderDate = d.ReminderDate,
-            RepeatRuleRaw = d.RepeatRuleRaw,
-            CustomWeekdaysRaw = d.CustomWeekdaysRaw,
-            CreatedAt = d.CreatedAt,
-            SortOrder = d.SortOrder,
-        };
-
-        /// <summary>单遍关联父子（DTO 有序，父在前，子已展开为当前根列表的子树）。</summary>
-        private static void Link(List<TaskItem> roots)
-        {
-            var stack = new Stack<TaskItem>();
-            foreach (var root in roots)
+            var task = new TaskItem
             {
-                LinkSubtree(root, stack);
-            }
-            foreach (var root in roots)
+                Id = d.Id,
+                Name = d.Name,
+                ColorHex = d.ColorHex,
+                IconSystemName = d.IconSystemName,
+                TypeRaw = d.TypeRaw,
+                StatusRaw = d.StatusRaw,
+                TotalAmount = d.TotalAmount,
+                CurrentAmount = d.CurrentAmount,
+                StartDate = d.StartDate,
+                EndDate = d.EndDate,
+                ReminderDate = d.ReminderDate,
+                RepeatRuleRaw = d.RepeatRuleRaw,
+                CustomWeekdaysRaw = d.CustomWeekdaysRaw,
+                CreatedAt = d.CreatedAt,
+                SortOrder = d.SortOrder,
+            };
+            if (d.Subtasks is not null)
             {
-                if (root.ParentTask is not null)
-                    root.ParentTask.Subtasks.Add(root);
+                foreach (var sub in d.Subtasks)
+                {
+                    var child = ToTask(sub);
+                    child.ParentTask = task;
+                    child.ParentTaskId = task.Id;
+                    task.Subtasks.Add(child);
+                }
             }
-        }
-
-        private static void LinkSubtree(TaskItem item, Stack<TaskItem> stack)
-        {
-            foreach (var maybeChild in item.Subtasks)
-            {
-                maybeChild.ParentTask = item;
-                LinkSubtree(maybeChild, stack);
-            }
+            return task;
         }
     }
 }

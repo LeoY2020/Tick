@@ -110,6 +110,21 @@ public static class Localization
         ["ai.sending"] = "正在思考…",
         ["ai.generated"] = "已将生成的任务写入当前目标。",
         ["ai.history"] = "历史会话",
+        ["ai.noHistory"] = "暂无历史会话",
+
+        ["tasks.remaining"] = "剩余时间",
+        ["tasks.aiImport"] = "AI 导入",
+        ["tasks.deleteNoSub"] = "确定删除任务“{0}”吗？",
+        ["task.repeat"] = "重复",
+        ["task.invalidNumber"] = "请输入有效的数字",
+        ["task.reminderDate"] = "提醒日期",
+        ["task.reminderTime"] = "提醒时间",
+        ["ai.newChat"] = "新建聊天",
+        ["ai.welcome"] = "你好！我是你的任务规划助手。描述你想规划的事项，或附加文档让我提炼任务清单。",
+        ["ai.deleteSession"] = "确定删除该历史会话吗？",
+        ["settings.saved"] = "设置已保存",
+        ["settings.exportOk"] = "已导出备份文件",
+        ["settings.importOk"] = "导入完成，共恢复 {0} 个目标",
     };
 
     private static readonly Dictionary<string, string> En = new()
@@ -211,6 +226,21 @@ public static class Localization
         ["ai.sending"] = "Thinking…",
         ["ai.generated"] = "Generated tasks written into the current goal.",
         ["ai.history"] = "History",
+        ["ai.noHistory"] = "No history yet",
+
+        ["tasks.remaining"] = "Remaining",
+        ["tasks.aiImport"] = "AI Import",
+        ["tasks.deleteNoSub"] = "Delete task \"{0}\"?",
+        ["task.repeat"] = "Repeat",
+        ["task.invalidNumber"] = "Please enter a valid number",
+        ["task.reminderDate"] = "Reminder date",
+        ["task.reminderTime"] = "Reminder time",
+        ["ai.newChat"] = "New Chat",
+        ["ai.welcome"] = "Hi! I'm your task planner. Describe what you want to plan, or attach a document and I'll turn it into a task list.",
+        ["ai.deleteSession"] = "Delete this conversation?",
+        ["settings.saved"] = "Settings saved",
+        ["settings.exportOk"] = "Backup file exported",
+        ["settings.importOk"] = "Import complete: {0} goals restored",
     };
 
     public static string Language => _lang;

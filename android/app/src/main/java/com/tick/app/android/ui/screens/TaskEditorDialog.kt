@@ -43,6 +43,7 @@ import com.tick.app.android.model.RepeatRule
 import com.tick.app.android.model.TaskItem
 import com.tick.app.android.model.TaskStatus
 import com.tick.app.android.model.TaskType
+import com.tick.app.android.model.effectiveWeekdays
 import com.tick.app.android.model.repeatRule
 import com.tick.app.android.model.status
 import com.tick.app.android.model.type
@@ -235,10 +236,9 @@ fun TaskEditorDialog(
                     showTimePicker = false
                 }) { Text(strings.done) }
             },
-            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text(strings.cancel) } }
-        ) {
-            TimePicker(state = state)
-        }
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text(strings.cancel) } },
+            text = { TimePicker(state = state) }
+        )
     }
 }
 
