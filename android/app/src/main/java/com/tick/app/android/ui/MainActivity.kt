@@ -12,11 +12,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
@@ -24,6 +28,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
@@ -38,6 +43,7 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -60,6 +66,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -356,9 +363,9 @@ private fun AppContent(
     if (showQuickAdd) {
         QuickAddTaskDialog(
             en = en,
-            onSubmit = { name, type ->
+            onSubmit = { name, type, totalAmount, currentAmount ->
                 val goalId = selectedGoalId ?: return@QuickAddTaskDialog
-                vm.addTask(goalId, quickAddParent?.id, name, type, 0.0, 0.0)
+                vm.addTask(goalId, quickAddParent?.id, name, type, totalAmount, currentAmount)
                 showQuickAdd = false
             },
             onDismiss = { showQuickAdd = false }
@@ -386,12 +393,14 @@ private fun AppContent(
 @Composable
 private fun QuickAddTaskDialog(
     en: Boolean,
-    onSubmit: (name: String, type: TaskType) -> Unit,
+    onSubmit: (name: String, type: TaskType, totalAmount: Double, currentAmount: Double) -> Unit,
     onDismiss: () -> Unit
 ) {
     val strings = LocalStrings.current
     var name by remember { mutableStateOf("") }
     var type by remember { mutableStateOf(TaskType.SINGLE) }
+    var total by remember { mutableStateOf("0") }
+    var current by remember { mutableStateOf(0.0) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -419,10 +428,44 @@ private fun QuickAddTaskDialog(
                         shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
                     ) { Text(strings.typeProgress) }
                 }
+
+                if (type == TaskType.PROGRESS) {
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = total,
+                        onValueChange = { total = it.filter(Char::isDigit).take(7) },
+                        label = { Text(strings.total) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(strings.current, Modifier.weight(1f))
+                        OutlinedButton(onClick = { current = (current - 1).coerceAtLeast(0.0) }) {
+                            Icon(Icons.Outlined.Remove, contentDescription = "minus", Modifier.size(18.dp))
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Text("$current", style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.width(8.dp))
+                        OutlinedButton(onClick = {
+                            val cap = total.toDoubleOrNull()
+                            current = (current + 1).let {
+                                if (cap != null && !cap.isNaN()) it.coerceAtMost(cap) else it
+                            }
+                        }) {
+                            Icon(Icons.Outlined.Add, contentDescription = "plus", Modifier.size(18.dp))
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
-            TextButton(enabled = name.isNotBlank(), onClick = { onSubmit(name, type) }) { Text(strings.add) }
+            TextButton(enabled = name.isNotBlank(), onClick = {
+                val totalValue = total.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+                val currentValue = current.coerceIn(0.0, totalValue)
+                onSubmit(name, type, totalValue, currentValue)
+            }) { Text(strings.add) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(strings.cancel) } }
     )

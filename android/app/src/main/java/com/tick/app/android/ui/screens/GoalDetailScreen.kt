@@ -1,5 +1,7 @@
 package com.tick.app.android.ui.screens
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -130,10 +132,15 @@ fun GoalDetailScreen(
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { progress.fraction.toFloat() },
-                    modifier = Modifier.fillMaxWidth(),
+                AnimatedProgressBar(
+                    fraction = progress.fraction,
                     color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    percentText(progress.fraction),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -248,12 +255,17 @@ private fun TaskRowNode(
                 if (task.type == TaskType.PROGRESS) {
                     Spacer(Modifier.height(4.dp))
                     val (cur, tot) = ProgressEngine.effectiveProgress(task)
-                    val ratio = if (tot > 0) (cur / tot).toFloat().coerceIn(0f, 1f) else 0f
-                    LinearProgressIndicator(
-                        progress = { ratio },
-                        modifier = Modifier.fillMaxWidth(),
+                    val ratio = if (tot > 0) (cur / tot).toDouble().coerceIn(0.0, 1.0) else 0.0
+                    AnimatedProgressBar(
+                        fraction = ratio,
                         color = effectiveColor,
                         trackColor = effectiveColor.copy(alpha = 0.15f)
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        percentText(ratio),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -408,3 +420,26 @@ private fun effectiveColorFor(task: TaskItem): Color {
     val hex = ProgressEngine.effectiveColor(task)
     return HexColor.parse(hex) ?: if (hex == "auto") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
 }
+
+/** 带动画（400ms 平滑过渡）与 trackColor 支持的确定进度条。 */
+@Composable
+private fun AnimatedProgressBar(
+    fraction: Double,
+    color: Color,
+    trackColor: Color? = null
+) {
+    val animated by animateFloatAsState(
+        targetValue = fraction.toFloat().coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 400),
+        label = "progress"
+    )
+    LinearProgressIndicator(
+        progress = { animated },
+        modifier = Modifier.fillMaxWidth(),
+        color = color,
+        trackColor = trackColor
+    )
+}
+
+private fun percentText(fraction: Double): String =
+    "${(fraction.coerceIn(0.0, 1.0) * 100).toInt()}%"
