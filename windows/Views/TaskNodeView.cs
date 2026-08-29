@@ -89,28 +89,93 @@ public sealed class TaskNodeView : UserControl
         return grid;
     }
 
-    /// <summary>行首复选框：勾选置为完成、取消置为未完成；有子任务时由子任务折算、只读。</summary>
-    private CheckBox BuildCheckBox(TaskItem task)
+    /// <summary>行首状态复选框：未完成=空心；半完成/完成=填充任务色，半完成内有白色横线、完成内有白色对勾；点击循环 未完成→半完成→完成→未完成。有子任务时由子任务折算、只读。</summary>
+    private Button BuildCheckBox(TaskItem task)
     {
         bool takenOver = task.HasSubtasks;
-        bool done = takenOver
-            ? ProgressEngine.EffectiveStatus(task) == TaskStatus.Done
-            : task.Status == TaskStatus.Done;
+        TaskStatus status = takenOver
+            ? ProgressEngine.EffectiveStatus(task)
+            : task.Status;
 
-        var cb = new CheckBox
+        var box = new Border
         {
-            IsChecked = done,
-            IsEnabled = !takenOver,
+            Width = 20,
+            Height = 20,
+            CornerRadius = new CornerRadius(5),
+            BorderThickness = new Thickness(2),
+            BorderBrush = StatusBoxBorderBrush(),
+            Background = StatusBoxFillBrush(status, task),
             VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        // 完成：白色对勾；半完成：白色横线；未完成：留空
+        switch (status)
+        {
+            case TaskStatus.Done:
+                box.Child = new TextBlock
+                {
+                    Text = "\uE73E",
+                    FontFamily = new FontFamily("Segoe Fluent Icons"),
+                    FontSize = 12,
+                    Foreground = WhiteBrush,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                break;
+            case TaskStatus.HalfDone:
+                box.Child = new Microsoft.UI.Xaml.Shapes.Rectangle
+                {
+                    Width = 11,
+                    Height = 3,
+                    RadiusX = 1.5,
+                    RadiusY = 1.5,
+                    Fill = WhiteBrush,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                break;
+        }
+
+        var btn = new Button
+        {
+            Content = box,
+            Background = TransparentBrush,
+            BorderThickness = new Thickness(0),
             Padding = new Thickness(0),
             MinWidth = 0,
+            MinHeight = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            IsEnabled = !takenOver,
         };
         if (takenOver)
-            ToolTipService.SetToolTip(cb, Localization.Tr("task.takenOver"));
-        cb.Checked += (_, _) => _host.RequestSetStatus(task, TaskStatus.Done);
-        cb.Unchecked += (_, _) => _host.RequestSetStatus(task, TaskStatus.NotDone);
-        return cb;
+            ToolTipService.SetToolTip(btn, Localization.Tr("task.takenOver"));
+
+        btn.Click += (_, _) =>
+        {
+            if (takenOver)
+                return;
+            TaskStatus next = status switch
+            {
+                TaskStatus.NotDone => TaskStatus.HalfDone,
+                TaskStatus.HalfDone => TaskStatus.Done,
+                _ => TaskStatus.NotDone,
+            };
+            _host.RequestSetStatus(task, next);
+        };
+        return btn;
     }
+
+    private static SolidColorBrush StatusBoxBorderBrush()
+        => (SolidColorBrush?)Application.Current.Resources["StatusNotDoneBrush"] ?? NeutralBrush;
+
+    private static SolidColorBrush StatusBoxFillBrush(TaskStatus status, TaskItem task)
+        => status == TaskStatus.NotDone
+            ? TransparentBrush
+            : HexColor.Brush(ProgressEngine.EffectiveColor(task), isDark: false);
+
+    private static readonly SolidColorBrush WhiteBrush = new(Windows.UI.Color.FromArgb(255, 255, 255, 255));
+    private static readonly SolidColorBrush TransparentBrush = new(Windows.UI.Color.FromArgb(0, 0, 0, 0));
+    private static readonly SolidColorBrush NeutralBrush = new(Windows.UI.Color.FromArgb(180, 150, 150, 155));
 
     private void FillInteractionArea(StackPanel panel, TaskItem task)
     {
@@ -163,6 +228,12 @@ public sealed class TaskNodeView : UserControl
                 panel.Children.Add(plus);
             }
         }
+
+        // 删除（垃圾桶图标）
+        var del = new Button { Content = new FontIcon { Glyph = "\uE74D", FontSize = 14 }, VerticalAlignment = VerticalAlignment.Center, Padding = new Thickness(6, 2, 6, 2) };
+        ToolTipService.SetToolTip(del, Localization.Tr("tasks.delete"));
+        del.Click += (_, _) => _host.RequestDelete(task);
+        panel.Children.Add(del);
 
         // 菜单入口（「…」）使用其自身的 flyout，避免与整行右键共用一个 Flyout 导致重设 Target 冲突
         var menu = new Button { Content = new FontIcon { Glyph = "\uE712" }, VerticalAlignment = VerticalAlignment.Center };
