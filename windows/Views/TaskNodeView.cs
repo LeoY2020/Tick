@@ -36,6 +36,8 @@ public sealed class TaskNodeView : UserControl
             ColumnSpacing = 8,
             Padding = new Thickness(4, 2, 4, 2),
         };
+        // 首列：复选框（仅单任务）；随后颜色圆点、名称、右侧交互区
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -49,6 +51,14 @@ public sealed class TaskNodeView : UserControl
             e.Handled = true;
         };
 
+        // 复选框：勾选 = 完成，取消 = 未完成。进度任务不显示；被接管任务只读。
+        if (task.Type == TaskType.Single)
+        {
+            var checkBox = BuildCheckBox(task);
+            Grid.SetColumn(checkBox, 0);
+            grid.Children.Add(checkBox);
+        }
+
         // 颜色圆点（继承链解析）
         var dot = new Microsoft.UI.Xaml.Shapes.Ellipse
         {
@@ -57,7 +67,7 @@ public sealed class TaskNodeView : UserControl
             Fill = HexColor.Brush(ProgressEngine.EffectiveColor(task), isDark: false),
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Grid.SetColumn(dot, 0);
+        Grid.SetColumn(dot, 1);
 
         // 名称
         var name = new TextBlock
@@ -66,17 +76,40 @@ public sealed class TaskNodeView : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Grid.SetColumn(name, 1);
+        Grid.SetColumn(name, 2);
 
         // 右侧：状态 / 进度（接管则只读）+ 菜单
         var right = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
-        Grid.SetColumn(right, 2);
+        Grid.SetColumn(right, 3);
         FillInteractionArea(right, task);
 
         grid.Children.Add(dot);
         grid.Children.Add(name);
         grid.Children.Add(right);
         return grid;
+    }
+
+    /// <summary>行首复选框：勾选置为完成、取消置为未完成；有子任务时由子任务折算、只读。</summary>
+    private CheckBox BuildCheckBox(TaskItem task)
+    {
+        bool takenOver = task.HasSubtasks;
+        bool done = takenOver
+            ? ProgressEngine.EffectiveStatus(task) == TaskStatus.Done
+            : task.Status == TaskStatus.Done;
+
+        var cb = new CheckBox
+        {
+            IsChecked = done,
+            IsEnabled = !takenOver,
+            VerticalAlignment = VerticalAlignment.Center,
+            Padding = new Thickness(0),
+            MinWidth = 0,
+        };
+        if (takenOver)
+            ToolTipService.SetToolTip(cb, Localization.Tr("task.takenOver"));
+        cb.Checked += (_, _) => _host.RequestSetStatus(task, TaskStatus.Done);
+        cb.Unchecked += (_, _) => _host.RequestSetStatus(task, TaskStatus.NotDone);
+        return cb;
     }
 
     private void FillInteractionArea(StackPanel panel, TaskItem task)
@@ -99,15 +132,7 @@ public sealed class TaskNodeView : UserControl
             }
             else
             {
-                var toggle = new Button
-                {
-                    Content = new TextBlock { Text = task.Status.ToDisplayName(), Foreground = StatusBrush(task.Status) },
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Padding = new Thickness(8, 2, 8, 2),
-                };
-                ToolTipService.SetToolTip(toggle, "切换完成");
-                toggle.Click += (_, _) => _host.RequestToggle(task);
-                panel.Children.Add(toggle);
+                // 完成状态由行首复选框控制，这里不再重复放置切换按钮。
             }
         }
         else // progress
