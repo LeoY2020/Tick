@@ -22,7 +22,7 @@ public sealed partial class MainWindow : Window
         AppTitleText.Text = Title;
         AppServices.Main.DataChanged += OnDataChanged;
         Localization.LanguageChanged += OnLanguageChanged;
-        NewGoalButton.ToolTip = Localization.Tr("goals.add");
+        ToolTipService.SetToolTip(NewGoalButton, Localization.Tr("goals.add"));
         RebuildNavigation();
         // 首次导航必须延后到控件载入（窗口渲染）后进行。
         // 在构造函数里直接 Frame.Navigate 会触发 WinUI3 的
