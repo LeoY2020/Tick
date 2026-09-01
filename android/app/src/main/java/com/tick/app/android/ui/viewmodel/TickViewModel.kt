@@ -208,8 +208,9 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
     fun updateTask(task: TaskItem) {
         viewModelScope.launch(Dispatchers.IO) {
             repo.updateTask(task)
-            rescheduleTask(task)
+            // 先刷新 UI：提醒调度是可选副作用，失败/慢不能阻塞状态即时更新
             bumpRevision()
+            try { rescheduleTask(task) } catch (_: Exception) {}
         }
     }
 
@@ -242,8 +243,8 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
                 customWeekdaysRaw = customWeekdaysRaw
             )
             repo.updateTask(saved)
-            rescheduleTask(saved)
             bumpRevision()
+            runCatching { rescheduleTask(saved) }
         }
     }
 
