@@ -397,7 +397,6 @@ private fun StatusCircle(status: TaskStatus, color: Color, enabled: Boolean) {
         Modifier
             .size(22.dp)
             .background(fill, CircleShape)
-            .clickable(enabled = false) {}
     )
 }
 

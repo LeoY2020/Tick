@@ -71,8 +71,12 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
         gs.firstOrNull { it.id == id }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    /** 数据写入版本号：任何任务/目标的增删改都 +1，使 goalTree 重新查询，
+     *  避免 Room Flow 在个别动静下延迟触发导致 UI 不即时刷新。 */
+    private val dataRevision = MutableStateFlow(0L)
+
     @Suppress("UNCHECKED_CAST")
-    val goalTree: StateFlow<List<TaskItem>> = selectedGoalId
+    val goalTree: StateFlow<List<TaskItem>> = combine(selectedGoalId, dataRevision) { id, _ -> id }
         .flatMapLatest { id ->
             if (id == null) kotlinx.coroutines.flow.flowOf(emptyList())
             else repo.observeGoalTree(id)
@@ -81,6 +85,10 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
 
     /** 展开/折叠状态集合（按任务 id） */
     val expandedTasks: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
+
+    private fun bumpRevision() {
+        dataRevision.value = dataRevision.value + 1
+    }
 
     fun selectGoal(id: String) {
         if (id.isEmpty()) return
@@ -188,6 +196,7 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
                 sortOrder = parentTaskId?.let { 0 } ?: sort
             )
             repo.addTask(task)
+            bumpRevision()
         }
     }
 
@@ -200,6 +209,7 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             repo.updateTask(task)
             rescheduleTask(task)
+            bumpRevision()
         }
     }
 
@@ -233,6 +243,7 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
             )
             repo.updateTask(saved)
             rescheduleTask(saved)
+            bumpRevision()
         }
     }
 
@@ -240,6 +251,7 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             ReminderScheduler.cancel(context, taskId)
             repo.deleteTask(taskId)
+            bumpRevision()
         }
     }
 
