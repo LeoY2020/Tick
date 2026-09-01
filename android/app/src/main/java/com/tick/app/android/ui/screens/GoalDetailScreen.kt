@@ -33,6 +33,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -425,7 +426,7 @@ private fun effectiveColorFor(task: TaskItem): Color {
 private fun AnimatedProgressBar(
     fraction: Double,
     color: Color,
-    trackColor: Color? = null
+    trackColor: Color = ProgressIndicatorDefaults.linearTrackColor
 ) {
     val animated by animateFloatAsState(
         targetValue = fraction.toFloat().coerceIn(0f, 1f),
