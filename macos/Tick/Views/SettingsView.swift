@@ -57,7 +57,7 @@ struct SettingsView: View {
     private var languageSection: some View {
         Section("语言") {
             Picker("语言", selection: $settings.language) {
-                ForEach(LanguageSetting.allCases) { option in
+                ForEach(LanguageSetting.availableLanguages) { option in
                     Text(LocalizedStringKey(option.displayName)).tag(option)
                 }
             }

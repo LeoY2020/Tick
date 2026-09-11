@@ -32,8 +32,15 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     schemeCombo_->setCurrentIndex(sIdx < 0 ? 0 : sIdx);
 
     langCombo_ = new QComboBox(this);
-    langCombo_->addItem(TR("简体中文", "Simplified Chinese"), QStringLiteral("zh"));
-    langCombo_->addItem(TR("English", "English"), QStringLiteral("en"));
+    // 语言选项以各自原生名显示
+    langCombo_->addItem(QStringLiteral("简体中文"), QStringLiteral("zh"));
+    langCombo_->addItem(QStringLiteral("繁體中文"), QStringLiteral("zh-Hant"));
+    langCombo_->addItem(QStringLiteral("日本語"), QStringLiteral("ja"));
+    langCombo_->addItem(QStringLiteral("한국어"), QStringLiteral("ko"));
+    langCombo_->addItem(QStringLiteral("English"), QStringLiteral("en"));
+    langCombo_->addItem(QStringLiteral("Français"), QStringLiteral("fr"));
+    langCombo_->addItem(QStringLiteral("Deutsch"), QStringLiteral("de"));
+    langCombo_->addItem(QStringLiteral("Español"), QStringLiteral("es"));
     const int lIdx = langCombo_->findData(repo.language());
     langCombo_->setCurrentIndex(lIdx < 0 ? 0 : lIdx);
 

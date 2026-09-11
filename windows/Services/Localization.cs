@@ -1,15 +1,23 @@
 using System.Collections.Generic;
+using Windows.System.UserProfile;
 
 namespace Tick.Services;
 
 /// <summary>
-/// 语言本地化：简体中文 / English 两套文本表。
+/// 语言本地化：简体中文 / 繁體中文 / 日本語 / 한국어 / English / Français / Deutsch / Español 八套文本表。
+/// 支持「跟随系统」（<see cref="GlobalizationPreferences"/> 解析出上述之一）。
 /// 静态文本（XAML）经 <see cref="L"/> 标记扩展读取；代码动态字符串用 <see cref="Tr"/>。
 /// 切换语言后由 MainWindow 重新导航当前页触发 XAML 重建，从而即时生效。
 /// </summary>
 public static class Localization
 {
     private static string _lang = "zh";
+
+    /// <summary>当前语言码（"system" 已被解析为具体 8 语言码之一）</summary>
+    public static string Language => _lang;
+
+    /// <summary>兼容旧调用：是否 English</summary>
+    public static bool IsEnglish => _lang == "en";
 
     private static readonly Dictionary<string, string> Zh = new()
     {
@@ -82,8 +90,15 @@ public static class Localization
         ["theme.light"] = "亮色",
         ["theme.dark"] = "暗色",
         ["settings.language"] = "语言",
+        ["lang.system"] = "跟随系统",
         ["lang.zh"] = "简体中文",
+        ["lang.zhHant"] = "繁體中文",
+        ["lang.ja"] = "日本語",
+        ["lang.ko"] = "한국어",
         ["lang.en"] = "English",
+        ["lang.fr"] = "Français",
+        ["lang.de"] = "Deutsch",
+        ["lang.es"] = "Español",
         ["settings.ai"] = "AI 配置",
         ["settings.copilot"] = "Windows Copilot",
         ["settings.copilotHint"] = "Windows 无公开的第三方本地大模型 API，因此不内嵌 AI。可在下方配置任一 OpenAI 兼容模型的 API Key，聊天 / 生成任务会走该接口。",
@@ -125,6 +140,375 @@ public static class Localization
         ["settings.saved"] = "设置已保存",
         ["settings.exportOk"] = "已导出备份文件",
         ["settings.importOk"] = "导入完成，共恢复 {0} 个目标",
+    };
+
+    private static readonly Dictionary<string, string> ZhHant = new()
+    {
+        ["app.title"] = "Tick 待辦",
+        ["nav.goals"] = "目標",
+        ["nav.ai"] = "AI 助手",
+        ["nav.settings"] = "設定",
+
+        ["goals.add"] = "新建目標",
+        ["goals.edit"] = "編輯目標",
+        ["goals.delete"] = "刪除目標",
+        ["goals.deleteConfirm"] = "確定刪除目標「{0}」嗎？其下全部任務將一併刪除。",
+        ["goals.empty"] = "還沒有目標，點擊下方「新建目標」建立",
+
+        ["tasks.title"] = "任務",
+        ["tasks.progress"] = "總進度",
+        ["tasks.completed"] = "已完成 {0}/{1}",
+        ["tasks.countdown"] = "倒數計時",
+        ["tasks.add"] = "新增任務",
+        ["tasks.addSubtask"] = "新增子任務",
+        ["tasks.edit"] = "編輯任務",
+        ["tasks.delete"] = "刪除任務",
+        ["tasks.deleteConfirm"] = "確定刪除任務「{0}」嗎？其下全部子任務將一併刪除。",
+        ["tasks.noEndDate"] = "未設定截止日期",
+
+        ["task.name"] = "名稱",
+        ["task.type"] = "類型",
+        ["task.single"] = "單項",
+        ["task.progress"] = "進度",
+        ["task.status"] = "狀態",
+        ["task.notDone"] = "未完成",
+        ["task.halfDone"] = "半完成",
+        ["task.done"] = "完成",
+        ["task.deleted"] = "刪除",
+        ["task.total"] = "總量",
+        ["task.current"] = "目前",
+        ["task.color"] = "顏色",
+        ["task.color.auto"] = "自動",
+        ["task.startDate"] = "開始日期",
+        ["task.endDate"] = "截止日期",
+        ["task.preciseToHour"] = "精確到小時",
+        ["task.reminder"] = "提醒",
+        ["task.inherited"] = "（繼承父級）",
+        ["task.takenOver"] = "（由子任務接管）",
+
+        ["repeat.never"] = "不重複",
+        ["repeat.daily"] = "每天",
+        ["repeat.weekly"] = "每週",
+        ["repeat.monthly"] = "每月",
+        ["repeat.custom"] = "自訂",
+        ["weekday.1"] = "週日",
+        ["weekday.2"] = "週一",
+        ["weekday.3"] = "週二",
+        ["weekday.4"] = "週三",
+        ["weekday.5"] = "週四",
+        ["weekday.6"] = "週五",
+        ["weekday.7"] = "週六",
+
+        ["common.cancel"] = "取消",
+        ["common.ok"] = "確定",
+        ["common.save"] = "儲存",
+        ["common.name"] = "名稱",
+        ["common.error"] = "錯誤",
+        ["common.notice"] = "提示",
+        ["common.warning"] = "警告",
+
+        ["settings.title"] = "設定",
+        ["settings.theme"] = "配色方案",
+        ["theme.system"] = "跟隨系統",
+        ["theme.light"] = "亮色",
+        ["theme.dark"] = "暗色",
+        ["settings.language"] = "語言",
+        ["lang.system"] = "跟隨系統",
+        ["lang.zh"] = "简体中文",
+        ["lang.zhHant"] = "繁體中文",
+        ["lang.ja"] = "日本語",
+        ["lang.ko"] = "한국어",
+        ["lang.en"] = "English",
+        ["lang.fr"] = "Français",
+        ["lang.de"] = "Deutsch",
+        ["lang.es"] = "Español",
+        ["settings.ai"] = "AI 配置",
+        ["settings.copilot"] = "Windows Copilot",
+        ["settings.copilotHint"] = "Windows 沒有公開的第三方本地大模型 API，因此不內嵌 AI。可在下方配置任一 OpenAI 相容模型的 API Key，聊天／生成任務會走該介面。",
+        ["settings.copilotOpen"] = "開啟 Copilot",
+        ["settings.model"] = "模型",
+        ["settings.apiKey"] = "API Key（DPAPI 加密儲存）",
+        ["settings.baseUrl"] = "Base URL",
+        ["settings.modelId"] = "模型名稱",
+        ["settings.backup"] = "備份／還原",
+        ["settings.export"] = "匯出為 JSON 檔案",
+        ["settings.import"] = "從 JSON 檔案匯入",
+        ["settings.importConfirm"] = "匯入將合併目前資料庫（已有目標依 Id 覆寫）。是否繼續？",
+        ["settings.documents"] = "附件解析",
+        ["settings.documentsHint"] = "支援 .txt / .md / Markdown / .docx；.pdf 需要第三方程式庫，本版本未內建。",
+
+        ["ai.title"] = "AI 助手",
+        ["ai.hint"] = "描述你想規劃的事項，或上傳附件讓 AI 提煉任務。AI 會輸出 JSON：generate=true 時任務樹會直接寫入目前目標。",
+        ["ai.input"] = "輸入訊息…",
+        ["ai.send"] = "傳送",
+        ["ai.attach"] = "附件",
+        ["ai.clear"] = "清空對話",
+        ["ai.noAttachText"] = "該附件暫時無法解析（僅支援 .txt/.md/.docx）",
+        ["ai.notConfigured"] = "尚未配置 API Key，請在 設定 → AI 模型 中填寫。",
+        ["ai.sending"] = "正在思考…",
+        ["ai.generated"] = "已將產生的任務寫入目前目標。",
+        ["ai.history"] = "歷史對話",
+        ["ai.noHistory"] = "暫無歷史對話",
+
+        ["tasks.remaining"] = "剩餘時間",
+        ["tasks.aiImport"] = "AI 匯入",
+        ["tasks.deleteNoSub"] = "確定刪除任務「{0}」嗎？",
+        ["task.repeat"] = "重複",
+        ["task.invalidNumber"] = "請輸入有效的數字",
+        ["task.reminderDate"] = "提醒日期",
+        ["task.reminderTime"] = "提醒時間",
+        ["ai.newChat"] = "新增對話",
+        ["ai.welcome"] = "你好！我是你的任務規劃助手。描述你想規劃的事項，或附加文件讓我提煉任務清單。",
+        ["ai.deleteSession"] = "確定刪除該歷史對話嗎？",
+        ["settings.saved"] = "設定已儲存",
+        ["settings.exportOk"] = "已匯出備份檔案",
+        ["settings.importOk"] = "匯入完成，共還原 {0} 個目標",
+    };
+
+    private static readonly Dictionary<string, string> Ja = new()
+    {
+        ["app.title"] = "Tick Todo",
+        ["nav.goals"] = "目標",
+        ["nav.ai"] = "AI アシスタント",
+        ["nav.settings"] = "設定",
+
+        ["goals.add"] = "新規目標",
+        ["goals.edit"] = "目標を編集",
+        ["goals.delete"] = "目標を削除",
+        ["goals.deleteConfirm"] = "目標「{0}」を削除しますか？配下のすべてのタスクも削除されます。",
+        ["goals.empty"] = "目標はまだありません。下の「新規目標」をタップして作成してください",
+
+        ["tasks.title"] = "タスク",
+        ["tasks.progress"] = "全体の進捗",
+        ["tasks.completed"] = "完了 {0}/{1}",
+        ["tasks.countdown"] = "カウントダウン",
+        ["tasks.add"] = "タスクを追加",
+        ["tasks.addSubtask"] = "サブタスクを追加",
+        ["tasks.edit"] = "タスクを編集",
+        ["tasks.delete"] = "タスクを削除",
+        ["tasks.deleteConfirm"] = "タスク「{0}」を削除しますか？配下のすべてのサブタスクも削除されます。",
+        ["tasks.noEndDate"] = "期限日なし",
+
+        ["task.name"] = "名前",
+        ["task.type"] = "種類",
+        ["task.single"] = "単項目",
+        ["task.progress"] = "進捗",
+        ["task.status"] = "ステータス",
+        ["task.notDone"] = "未完了",
+        ["task.halfDone"] = "半完了",
+        ["task.done"] = "完了",
+        ["task.deleted"] = "削除",
+        ["task.total"] = "合計量",
+        ["task.current"] = "現在",
+        ["task.color"] = "カラー",
+        ["task.color.auto"] = "自動",
+        ["task.startDate"] = "開始日",
+        ["task.endDate"] = "期限日",
+        ["task.preciseToHour"] = "時間単位まで指定",
+        ["task.reminder"] = "リマインダー",
+        ["task.inherited"] = "（親から継承）",
+        ["task.takenOver"] = "（サブタスクが引き継いだ）",
+
+        ["repeat.never"] = "繰り返しなし",
+        ["repeat.daily"] = "毎日",
+        ["repeat.weekly"] = "毎週",
+        ["repeat.monthly"] = "毎月",
+        ["repeat.custom"] = "カスタム",
+        ["weekday.1"] = "日曜日",
+        ["weekday.2"] = "月曜日",
+        ["weekday.3"] = "火曜日",
+        ["weekday.4"] = "水曜日",
+        ["weekday.5"] = "木曜日",
+        ["weekday.6"] = "金曜日",
+        ["weekday.7"] = "土曜日",
+
+        ["common.cancel"] = "キャンセル",
+        ["common.ok"] = "OK",
+        ["common.save"] = "保存",
+        ["common.name"] = "名前",
+        ["common.error"] = "エラー",
+        ["common.notice"] = "通知",
+        ["common.warning"] = "警告",
+
+        ["settings.title"] = "設定",
+        ["settings.theme"] = "カラーテーマ",
+        ["theme.system"] = "システムに従う",
+        ["theme.light"] = "ライト",
+        ["theme.dark"] = "ダーク",
+        ["settings.language"] = "言語",
+        ["lang.system"] = "システムに従う",
+        ["lang.zh"] = "简体中文",
+        ["lang.zhHant"] = "繁體中文",
+        ["lang.ja"] = "日本語",
+        ["lang.ko"] = "한국어",
+        ["lang.en"] = "English",
+        ["lang.fr"] = "Français",
+        ["lang.de"] = "Deutsch",
+        ["lang.es"] = "Español",
+        ["settings.ai"] = "AI 設定",
+        ["settings.copilot"] = "Windows Copilot",
+        ["settings.copilotHint"] = "Windows には公開されたサードパーティ製ローカル LLM API がないため、AI は内蔵されていません。下記で OpenAI 互換モデルの API Key を設定すると、チャット／タスク生成はその API を使用します。",
+        ["settings.copilotOpen"] = "Copilot を開く",
+        ["settings.model"] = "モデル",
+        ["settings.apiKey"] = "API Key（DPAPI で暗号化して保存）",
+        ["settings.baseUrl"] = "Base URL",
+        ["settings.modelId"] = "モデル名",
+        ["settings.backup"] = "バックアップ／復元",
+        ["settings.export"] = "JSON ファイルに書き出す",
+        ["settings.import"] = "JSON ファイルから読み込む",
+        ["settings.importConfirm"] = "インポートすると現在のデータベースにマージされます（既存の目標は Id で上書き）。続行しますか？",
+        ["settings.documents"] = "添付ファイル解析",
+        ["settings.documentsHint"] = ".txt / .md / Markdown / .docx に対応。.pdf はサードパーティ製ライブラリが必要で、本バージョンには未搭載です。",
+
+        ["ai.title"] = "AI アシスタント",
+        ["ai.hint"] = "計画したいことを説明するか、添付ファイルをアップロードして AI にタスクを抽出させてください。AI は JSON を出力します：generate=true の場合、タスクツリーを現在の目標に直接書き込みます。",
+        ["ai.input"] = "メッセージを入力…",
+        ["ai.send"] = "送信",
+        ["ai.attach"] = "添付",
+        ["ai.clear"] = "チャットをクリア",
+        ["ai.noAttachText"] = "この添付ファイルは解析できません（.txt/.md/.docx のみ対応）",
+        ["ai.notConfigured"] = "API Key が設定されていません。設定 → AI モデルで入力してください。",
+        ["ai.sending"] = "考え中…",
+        ["ai.generated"] = "生成されたタスクを現在の目標に書き込みました。",
+        ["ai.history"] = "履歴",
+        ["ai.noHistory"] = "履歴はありません",
+
+        ["tasks.remaining"] = "残り時間",
+        ["tasks.aiImport"] = "AI インポート",
+        ["tasks.deleteNoSub"] = "タスク「{0}」を削除しますか？",
+        ["task.repeat"] = "繰り返し",
+        ["task.invalidNumber"] = "有効な数値を入力してください",
+        ["task.reminderDate"] = "リマインダー日",
+        ["task.reminderTime"] = "リマインダー時刻",
+        ["ai.newChat"] = "新しいチャット",
+        ["ai.welcome"] = "こんにちは！私はあなたのタスク計画アシスタントです。計画したいことを説明するか、文書を添付してタスクリストに変換できます。",
+        ["ai.deleteSession"] = "この履歴セッションを削除しますか？",
+        ["settings.saved"] = "設定を保存しました",
+        ["settings.exportOk"] = "バックアップファイルを書き出しました",
+        ["settings.importOk"] = "インポート完了：{0} 個の目標を復元しました",
+    };
+
+    private static readonly Dictionary<string, string> Ko = new()
+    {
+        ["app.title"] = "Tick 할 일",
+        ["nav.goals"] = "목표",
+        ["nav.ai"] = "AI 어시스턴트",
+        ["nav.settings"] = "설정",
+
+        ["goals.add"] = "새 목표",
+        ["goals.edit"] = "목표 편집",
+        ["goals.delete"] = "목표 삭제",
+        ["goals.deleteConfirm"] = "목표 \"{0}\"을(를) 삭제할까요? 아래의 모든 작업도 함께 삭제됩니다.",
+        ["goals.empty"] = "아직 목표가 없습니다. 아래의 「새 목표」를 눌러 만드세요",
+
+        ["tasks.title"] = "작업",
+        ["tasks.progress"] = "전체 진행률",
+        ["tasks.completed"] = "완료 {0}/{1}",
+        ["tasks.countdown"] = "카운트다운",
+        ["tasks.add"] = "작업 추가",
+        ["tasks.addSubtask"] = "하위 작업 추가",
+        ["tasks.edit"] = "작업 편집",
+        ["tasks.delete"] = "작업 삭제",
+        ["tasks.deleteConfirm"] = "작업 \"{0}\"을(를) 삭제할까요? 아래의 모든 하위 작업도 함께 삭제됩니다.",
+        ["tasks.noEndDate"] = "마감일 없음",
+
+        ["task.name"] = "이름",
+        ["task.type"] = "유형",
+        ["task.single"] = "단일 항목",
+        ["task.progress"] = "진행률",
+        ["task.status"] = "상태",
+        ["task.notDone"] = "미완료",
+        ["task.halfDone"] = "반 완료",
+        ["task.done"] = "완료",
+        ["task.deleted"] = "삭제",
+        ["task.total"] = "총량",
+        ["task.current"] = "현재",
+        ["task.color"] = "색상",
+        ["task.color.auto"] = "자동",
+        ["task.startDate"] = "시작일",
+        ["task.endDate"] = "마감일",
+        ["task.preciseToHour"] = "시간 단위 지정",
+        ["task.reminder"] = "알림",
+        ["task.inherited"] = "（상위에서 상속）",
+        ["task.takenOver"] = "（하위 작업이 인계했음）",
+
+        ["repeat.never"] = "반복 없음",
+        ["repeat.daily"] = "매일",
+        ["repeat.weekly"] = "매주",
+        ["repeat.monthly"] = "매월",
+        ["repeat.custom"] = "사용자 지정",
+        ["weekday.1"] = "일요일",
+        ["weekday.2"] = "월요일",
+        ["weekday.3"] = "화요일",
+        ["weekday.4"] = "수요일",
+        ["weekday.5"] = "목요일",
+        ["weekday.6"] = "금요일",
+        ["weekday.7"] = "토요일",
+
+        ["common.cancel"] = "취소",
+        ["common.ok"] = "확인",
+        ["common.save"] = "저장",
+        ["common.name"] = "이름",
+        ["common.error"] = "오류",
+        ["common.notice"] = "알림",
+        ["common.warning"] = "경고",
+
+        ["settings.title"] = "설정",
+        ["settings.theme"] = "색상 테마",
+        ["theme.system"] = "시스템 따르기",
+        ["theme.light"] = "라이트",
+        ["theme.dark"] = "다크",
+        ["settings.language"] = "언어",
+        ["lang.system"] = "시스템 따르기",
+        ["lang.zh"] = "简体中文",
+        ["lang.zhHant"] = "繁體中文",
+        ["lang.ja"] = "日本語",
+        ["lang.ko"] = "한국어",
+        ["lang.en"] = "English",
+        ["lang.fr"] = "Français",
+        ["lang.de"] = "Deutsch",
+        ["lang.es"] = "Español",
+        ["settings.ai"] = "AI 설정",
+        ["settings.copilot"] = "Windows Copilot",
+        ["settings.copilotHint"] = "Windows에는 공개된 타사 로컬 대형 모델 API가 없으므로 AI가 내장되어 있지 않습니다. 아래에서 OpenAI 호환 모델의 API Key를 구성하면 채팅/작업 생성이 해당 인터페이스를 사용합니다.",
+        ["settings.copilotOpen"] = "Copilot 열기",
+        ["settings.model"] = "모델",
+        ["settings.apiKey"] = "API Key（DPAPI로 암호화 저장）",
+        ["settings.baseUrl"] = "Base URL",
+        ["settings.modelId"] = "모델 이름",
+        ["settings.backup"] = "백업/복원",
+        ["settings.export"] = "JSON 파일로 내보내기",
+        ["settings.import"] = "JSON 파일에서 가져오기",
+        ["settings.importConfirm"] = "가져오면 현재 데이터베이스에 병합됩니다(기존 목표는 Id 기준으로 덮어씀). 계속할까요?",
+        ["settings.documents"] = "첨부 파일 분석",
+        ["settings.documentsHint"] = ".txt / .md / Markdown / .docx 지원. .pdf는 타사 라이브러리가 필요하며 이 버전에는 포함되어 있지 않습니다.",
+
+        ["ai.title"] = "AI 어시스턴트",
+        ["ai.hint"] = "계획할 내용을 설명하거나 첨부 파일을 올려 AI가 작업을 추출하도록 하세요. AI는 JSON을 출력합니다: generate=true면 작업 트리가 현재 목표에 직접 기록됩니다.",
+        ["ai.input"] = "메시지 입력…",
+        ["ai.send"] = "보내기",
+        ["ai.attach"] = "첨부",
+        ["ai.clear"] = "대화 지우기",
+        ["ai.noAttachText"] = "이 첨부 파일은 분석할 수 없습니다(.txt/.md/.docx만 지원)",
+        ["ai.notConfigured"] = "API Key가 구성되어 있지 않습니다. 설정 → AI 모델에서 입력하세요.",
+        ["ai.sending"] = "생각하는 중…",
+        ["ai.generated"] = "생성된 작업을 현재 목표에 기록했습니다.",
+        ["ai.history"] = "기록",
+        ["ai.noHistory"] = "기록이 없습니다",
+
+        ["tasks.remaining"] = "남은 시간",
+        ["tasks.aiImport"] = "AI 가져오기",
+        ["tasks.deleteNoSub"] = "작업 \"{0}\"을(를) 삭제할까요?",
+        ["task.repeat"] = "반복",
+        ["task.invalidNumber"] = "유효한 숫자를 입력하세요",
+        ["task.reminderDate"] = "알림 날짜",
+        ["task.reminderTime"] = "알림 시간",
+        ["ai.newChat"] = "새 채팅",
+        ["ai.welcome"] = "안녕하세요! 저는 여러분의 작업 계획 도우미입니다. 계획할 내용을 설명하거나 문서를 첨부하면 작업 목록으로 변환해 드립니다.",
+        ["ai.deleteSession"] = "이 기록 세션을 삭제할까요?",
+        ["settings.saved"] = "설정 저장됨",
+        ["settings.exportOk"] = "백업 파일 내보냄",
+        ["settings.importOk"] = "가져오기 완료: 목표 {0}개 복원",
     };
 
     private static readonly Dictionary<string, string> En = new()
@@ -198,8 +582,15 @@ public static class Localization
         ["theme.light"] = "Light",
         ["theme.dark"] = "Dark",
         ["settings.language"] = "Language",
+        ["lang.system"] = "Follow system",
         ["lang.zh"] = "简体中文",
+        ["lang.zhHant"] = "繁體中文",
+        ["lang.ja"] = "日本語",
+        ["lang.ko"] = "한국어",
         ["lang.en"] = "English",
+        ["lang.fr"] = "Français",
+        ["lang.de"] = "Deutsch",
+        ["lang.es"] = "Español",
         ["settings.ai"] = "AI Configuration",
         ["settings.copilot"] = "Windows Copilot",
         ["settings.copilotHint"] = "Windows has no public third-party on-device LLM API, so no AI is embedded here. Configure any OpenAI-compatible API below; chat / task generation uses it.",
@@ -243,16 +634,385 @@ public static class Localization
         ["settings.importOk"] = "Import complete: {0} goals restored",
     };
 
-    public static string Language => _lang;
+    private static readonly Dictionary<string, string> Fr = new()
+    {
+        ["app.title"] = "Tick Tâches",
+        ["nav.goals"] = "Objectifs",
+        ["nav.ai"] = "Assistant IA",
+        ["nav.settings"] = "Réglages",
 
-    public static bool IsEnglish => _lang == "en";
+        ["goals.add"] = "Nouvel objectif",
+        ["goals.edit"] = "Modifier l'objectif",
+        ["goals.delete"] = "Supprimer l'objectif",
+        ["goals.deleteConfirm"] = "Supprimer l'objectif \"{0}\" ? Toutes ses tâches seront supprimées.",
+        ["goals.empty"] = "Aucun objectif pour l'instant. Appuyez sur « Nouvel objectif » ci-dessous pour en créer un.",
+
+        ["tasks.title"] = "Tâches",
+        ["tasks.progress"] = "Progression globale",
+        ["tasks.completed"] = "Terminés {0}/{1}",
+        ["tasks.countdown"] = "Compte à rebours",
+        ["tasks.add"] = "Ajouter une tâche",
+        ["tasks.addSubtask"] = "Ajouter une sous-tâche",
+        ["tasks.edit"] = "Modifier la tâche",
+        ["tasks.delete"] = "Supprimer la tâche",
+        ["tasks.deleteConfirm"] = "Supprimer la tâche \"{0}\" ? Toutes ses sous-tâches seront supprimées.",
+        ["tasks.noEndDate"] = "Aucune date d'échéance",
+
+        ["task.name"] = "Nom",
+        ["task.type"] = "Type",
+        ["task.single"] = "Ponctuel",
+        ["task.progress"] = "Progression",
+        ["task.status"] = "Statut",
+        ["task.notDone"] = "Non terminé",
+        ["task.halfDone"] = "Partiellement terminé",
+        ["task.done"] = "Terminé",
+        ["task.deleted"] = "Supprimé",
+        ["task.total"] = "Quantité totale",
+        ["task.current"] = "Actuel",
+        ["task.color"] = "Couleur",
+        ["task.color.auto"] = "Auto",
+        ["task.startDate"] = "Date de début",
+        ["task.endDate"] = "Date d'échéance",
+        ["task.preciseToHour"] = "Précis à l'heure",
+        ["task.reminder"] = "Rappel",
+        ["task.inherited"] = "（hérité du parent）",
+        ["task.takenOver"] = "（repris par les sous-tâches）",
+
+        ["repeat.never"] = "Jamais",
+        ["repeat.daily"] = "Quotidien",
+        ["repeat.weekly"] = "Hebdomadaire",
+        ["repeat.monthly"] = "Mensuel",
+        ["repeat.custom"] = "Personnalisé",
+        ["weekday.1"] = "Dimanche",
+        ["weekday.2"] = "Lundi",
+        ["weekday.3"] = "Mardi",
+        ["weekday.4"] = "Mercredi",
+        ["weekday.5"] = "Jeudi",
+        ["weekday.6"] = "Vendredi",
+        ["weekday.7"] = "Samedi",
+
+        ["common.cancel"] = "Annuler",
+        ["common.ok"] = "OK",
+        ["common.save"] = "Enregistrer",
+        ["common.name"] = "Nom",
+        ["common.error"] = "Erreur",
+        ["common.notice"] = "Info",
+        ["common.warning"] = "Avertissement",
+
+        ["settings.title"] = "Réglages",
+        ["settings.theme"] = "Nuancier",
+        ["theme.system"] = "Suivre le système",
+        ["theme.light"] = "Clair",
+        ["theme.dark"] = "Sombre",
+        ["settings.language"] = "Langue",
+        ["lang.system"] = "Suivre le système",
+        ["lang.zh"] = "简体中文",
+        ["lang.zhHant"] = "繁體中文",
+        ["lang.ja"] = "日本語",
+        ["lang.ko"] = "한국어",
+        ["lang.en"] = "English",
+        ["lang.fr"] = "Français",
+        ["lang.de"] = "Deutsch",
+        ["lang.es"] = "Español",
+        ["settings.ai"] = "Configuration IA",
+        ["settings.copilot"] = "Windows Copilot",
+        ["settings.copilotHint"] = "Windows ne dispose d'aucune API publique tierce de grand modèle local ; aucune IA n'est donc intégrée. Configurez ci-dessous la clé API d'un modèle compatible OpenAI : la conversation / la génération de tâches passeront par cette interface.",
+        ["settings.copilotOpen"] = "Ouvrir Copilot",
+        ["settings.model"] = "Modèle",
+        ["settings.apiKey"] = "Clé API (stockée chiffrée avec DPAPI)",
+        ["settings.baseUrl"] = "URL de base",
+        ["settings.modelId"] = "Nom du modèle",
+        ["settings.backup"] = "Sauvegarde / Restauration",
+        ["settings.export"] = "Exporter vers un fichier JSON",
+        ["settings.import"] = "Importer depuis un fichier JSON",
+        ["settings.importConfirm"] = "L'importation fusionnera la base actuelle (les objectifs existants sont écrasés par Id). Continuer ?",
+        ["settings.documents"] = "Analyse des pièces jointes",
+        ["settings.documentsHint"] = "Prend en charge .txt / .md / Markdown / .docx ; le .pdf nécessite une bibliothèque tierce et n'est pas inclus dans cette version.",
+
+        ["ai.title"] = "Assistant IA",
+        ["ai.hint"] = "Décrivez ce que vous voulez planifier ou joignez un document pour que l'IA en extraie des tâches. L'IA renvoie du JSON : lorsque generate=true, l'arborescence des tâches est écrite dans l'objectif courant.",
+        ["ai.input"] = "Saisissez un message…",
+        ["ai.send"] = "Envoyer",
+        ["ai.attach"] = "Joindre",
+        ["ai.clear"] = "Effacer la conversation",
+        ["ai.noAttachText"] = "Impossible d'analyser cette pièce jointe (seuls .txt/.md/.docx sont pris en charge)",
+        ["ai.notConfigured"] = "Aucune clé API configurée. Renseignez-la dans Réglages → Modèle IA.",
+        ["ai.sending"] = "Réflexion en cours…",
+        ["ai.generated"] = "Les tâches générées ont été écrites dans l'objectif courant.",
+        ["ai.history"] = "Historique",
+        ["ai.noHistory"] = "Aucun historique",
+
+        ["tasks.remaining"] = "Temps restant",
+        ["tasks.aiImport"] = "Import IA",
+        ["tasks.deleteNoSub"] = "Supprimer la tâche \"{0}\" ?",
+        ["task.repeat"] = "Répéter",
+        ["task.invalidNumber"] = "Veuillez saisir un nombre valide",
+        ["task.reminderDate"] = "Date du rappel",
+        ["task.reminderTime"] = "Heure du rappel",
+        ["ai.newChat"] = "Nouvelle conversation",
+        ["ai.welcome"] = "Bonjour ! Je suis votre assistant de planification de tâches. Décrivez ce que vous voulez planifier, ou joignez un document pour que je le transforme en liste de tâches.",
+        ["ai.deleteSession"] = "Supprimer cette conversation ?",
+        ["settings.saved"] = "Réglages enregistrés",
+        ["settings.exportOk"] = "Fichier de sauvegarde exporté",
+        ["settings.importOk"] = "Import terminé : {0} objectifs restaurés",
+    };
+
+    private static readonly Dictionary<string, string> De = new()
+    {
+        ["app.title"] = "Tick To-Do",
+        ["nav.goals"] = "Ziele",
+        ["nav.ai"] = "KI-Assistent",
+        ["nav.settings"] = "Einstellungen",
+
+        ["goals.add"] = "Neues Ziel",
+        ["goals.edit"] = "Ziel bearbeiten",
+        ["goals.delete"] = "Ziel löschen",
+        ["goals.deleteConfirm"] = "Ziel \"{0}\" löschen? Alle zugehörigen Aufgaben werden entfernt.",
+        ["goals.empty"] = "Noch keine Ziele. Tippen Sie unten auf „Neues Ziel“, um eines zu erstellen.",
+
+        ["tasks.title"] = "Aufgaben",
+        ["tasks.progress"] = "Gesamtfortschritt",
+        ["tasks.completed"] = "Erledigt {0}/{1}",
+        ["tasks.countdown"] = "Countdown",
+        ["tasks.add"] = "Aufgabe hinzufügen",
+        ["tasks.addSubtask"] = "Unteraufgabe hinzufügen",
+        ["tasks.edit"] = "Aufgabe bearbeiten",
+        ["tasks.delete"] = "Aufgabe löschen",
+        ["tasks.deleteConfirm"] = "Aufgabe \"{0}\" löschen? Alle zugehörigen Unteraufgaben werden entfernt.",
+        ["tasks.noEndDate"] = "Kein Fälligkeitsdatum",
+
+        ["task.name"] = "Name",
+        ["task.type"] = "Typ",
+        ["task.single"] = "Einmalig",
+        ["task.progress"] = "Fortschritt",
+        ["task.status"] = "Status",
+        ["task.notDone"] = "Nicht erledigt",
+        ["task.halfDone"] = "Teilweise erledigt",
+        ["task.done"] = "Erledigt",
+        ["task.deleted"] = "Gelöscht",
+        ["task.total"] = "Gesamtmenge",
+        ["task.current"] = "Aktuell",
+        ["task.color"] = "Farbe",
+        ["task.color.auto"] = "Auto",
+        ["task.startDate"] = "Startdatum",
+        ["task.endDate"] = "Fälligkeitsdatum",
+        ["task.preciseToHour"] = "Auf die Stunde genau",
+        ["task.reminder"] = "Erinnerung",
+        ["task.inherited"] = "（vom übergeordneten ererbt）",
+        ["task.takenOver"] = "（von Unteraufgaben übernommen）",
+
+        ["repeat.never"] = "Nie",
+        ["repeat.daily"] = "Täglich",
+        ["repeat.weekly"] = "Wöchentlich",
+        ["repeat.monthly"] = "Monatlich",
+        ["repeat.custom"] = "Benutzerdefiniert",
+        ["weekday.1"] = "Sonntag",
+        ["weekday.2"] = "Montag",
+        ["weekday.3"] = "Dienstag",
+        ["weekday.4"] = "Mittwoch",
+        ["weekday.5"] = "Donnerstag",
+        ["weekday.6"] = "Freitag",
+        ["weekday.7"] = "Samstag",
+
+        ["common.cancel"] = "Abbrechen",
+        ["common.ok"] = "OK",
+        ["common.save"] = "Speichern",
+        ["common.name"] = "Name",
+        ["common.error"] = "Fehler",
+        ["common.notice"] = "Hinweis",
+        ["common.warning"] = "Warnung",
+
+        ["settings.title"] = "Einstellungen",
+        ["settings.theme"] = "Farbschema",
+        ["theme.system"] = "System folgen",
+        ["theme.light"] = "Hell",
+        ["theme.dark"] = "Dunkel",
+        ["settings.language"] = "Sprache",
+        ["lang.system"] = "System folgen",
+        ["lang.zh"] = "简体中文",
+        ["lang.zhHant"] = "繁體中文",
+        ["lang.ja"] = "日本語",
+        ["lang.ko"] = "한국어",
+        ["lang.en"] = "English",
+        ["lang.fr"] = "Français",
+        ["lang.de"] = "Deutsch",
+        ["lang.es"] = "Español",
+        ["settings.ai"] = "KI-Konfiguration",
+        ["settings.copilot"] = "Windows Copilot",
+        ["settings.copilotHint"] = "Windows bietet keine öffentliche API für lokale Drittanbieter-LLMs, daher ist keine KI eingebettet. Konfigurieren Sie unten den API-Schlüssel eines beliebigen OpenAI-kompatiblen Modells; Chat/Task-Generierung nutzen diese Schnittstelle.",
+        ["settings.copilotOpen"] = "Copilot öffnen",
+        ["settings.model"] = "Modell",
+        ["settings.apiKey"] = "API-Schlüssel (mit DPAPI verschlüsselt gespeichert)",
+        ["settings.baseUrl"] = "Basis-URL",
+        ["settings.modelId"] = "Modellname",
+        ["settings.backup"] = "Sicherung / Wiederherstellung",
+        ["settings.export"] = "Als JSON-Datei exportieren",
+        ["settings.import"] = "Aus JSON-Datei importieren",
+        ["settings.importConfirm"] = "Beim Import wird die aktuelle Datenbank zusammengeführt (vorhandene Ziele werden per Id überschrieben). Fortfahren?",
+        ["settings.documents"] = "Anhang-Analyse",
+        ["settings.documentsHint"] = "Unterstützt .txt / .md / Markdown / .docx; .pdf erfordert eine Drittanbieter-Bibliothek und ist in dieser Version nicht enthalten.",
+
+        ["ai.title"] = "KI-Assistent",
+        ["ai.hint"] = "Beschreiben Sie, was Sie planen möchten, oder laden Sie einen Anhang hoch, damit die KI Aufgaben extrahiert. Die KI gibt JSON aus: bei generate=true wird der Aufgabenbaum direkt in das aktuelle Ziel geschrieben.",
+        ["ai.input"] = "Nachricht eingeben…",
+        ["ai.send"] = "Senden",
+        ["ai.attach"] = "Anhang",
+        ["ai.clear"] = "Chat leeren",
+        ["ai.noAttachText"] = "Dieser Anhang kann nicht analysiert werden (nur .txt/.md/.docx unterstützt)",
+        ["ai.notConfigured"] = "Kein API-Schlüssel konfiguriert. Bitte unter Einstellungen → KI-Modell festlegen.",
+        ["ai.sending"] = "Denke nach…",
+        ["ai.generated"] = "Generierte Aufgaben wurden in das aktuelle Ziel geschrieben.",
+        ["ai.history"] = "Verlauf",
+        ["ai.noHistory"] = "Kein Verlauf",
+
+        ["tasks.remaining"] = "Verbleibende Zeit",
+        ["tasks.aiImport"] = "KI-Import",
+        ["tasks.deleteNoSub"] = "Aufgabe \"{0}\" löschen?",
+        ["task.repeat"] = "Wiederholen",
+        ["task.invalidNumber"] = "Bitte eine gültige Zahl eingeben",
+        ["task.reminderDate"] = "Erinnerungsdatum",
+        ["task.reminderTime"] = "Erinnerungszeit",
+        ["ai.newChat"] = "Neuer Chat",
+        ["ai.welcome"] = "Hallo! Ich bin Ihr Planungsassistent für Aufgaben. Beschreiben Sie, was Sie planen möchten, oder hängen Sie ein Dokument an, das ich in eine Aufgabenliste verwandle.",
+        ["ai.deleteSession"] = "Diesen Verlauf löschen?",
+        ["settings.saved"] = "Einstellungen gespeichert",
+        ["settings.exportOk"] = "Sicherungsdatei exportiert",
+        ["settings.importOk"] = "Import abgeschlossen: {0} Ziele wiederhergestellt",
+    };
+
+    private static readonly Dictionary<string, string> Es = new()
+    {
+        ["app.title"] = "Tick Pendientes",
+        ["nav.goals"] = "Objetivos",
+        ["nav.ai"] = "Asistente de IA",
+        ["nav.settings"] = "Ajustes",
+
+        ["goals.add"] = "Nuevo objetivo",
+        ["goals.edit"] = "Editar objetivo",
+        ["goals.delete"] = "Eliminar objetivo",
+        ["goals.deleteConfirm"] = "¿Eliminar el objetivo \"{0}\"? Se eliminarán todas sus tareas.",
+        ["goals.empty"] = "Aún no hay objetivos. Toque «Nuevo objetivo» abajo para crear uno.",
+
+        ["tasks.title"] = "Tareas",
+        ["tasks.progress"] = "Progreso general",
+        ["tasks.completed"] = "Completadas {0}/{1}",
+        ["tasks.countdown"] = "Cuenta atrás",
+        ["tasks.add"] = "Añadir tarea",
+        ["tasks.addSubtask"] = "Añadir subtarea",
+        ["tasks.edit"] = "Editar tarea",
+        ["tasks.delete"] = "Eliminar tarea",
+        ["tasks.deleteConfirm"] = "¿Eliminar la tarea \"{0}\"? Se eliminarán todas sus subtareas.",
+        ["tasks.noEndDate"] = "Sin fecha límite",
+
+        ["task.name"] = "Nombre",
+        ["task.type"] = "Tipo",
+        ["task.single"] = "Único",
+        ["task.progress"] = "Progreso",
+        ["task.status"] = "Estado",
+        ["task.notDone"] = "Sin hacer",
+        ["task.halfDone"] = "A medias",
+        ["task.done"] = "Hecho",
+        ["task.deleted"] = "Eliminado",
+        ["task.total"] = "Cantidad total",
+        ["task.current"] = "Actual",
+        ["task.color"] = "Color",
+        ["task.color.auto"] = "Automático",
+        ["task.startDate"] = "Fecha de inicio",
+        ["task.endDate"] = "Fecha límite",
+        ["task.preciseToHour"] = "Preciso a la hora",
+        ["task.reminder"] = "Recordatorio",
+        ["task.inherited"] = "（heredado del padre）",
+        ["task.takenOver"] = "（asumido por las subtareas）",
+
+        ["repeat.never"] = "Nunca",
+        ["repeat.daily"] = "Diario",
+        ["repeat.weekly"] = "Semanal",
+        ["repeat.monthly"] = "Mensual",
+        ["repeat.custom"] = "Personalizado",
+        ["weekday.1"] = "Domingo",
+        ["weekday.2"] = "Lunes",
+        ["weekday.3"] = "Martes",
+        ["weekday.4"] = "Miércoles",
+        ["weekday.5"] = "Jueves",
+        ["weekday.6"] = "Viernes",
+        ["weekday.7"] = "Sábado",
+
+        ["common.cancel"] = "Cancelar",
+        ["common.ok"] = "Aceptar",
+        ["common.save"] = "Guardar",
+        ["common.name"] = "Nombre",
+        ["common.error"] = "Error",
+        ["common.notice"] = "Aviso",
+        ["common.warning"] = "Advertencia",
+
+        ["settings.title"] = "Ajustes",
+        ["settings.theme"] = "Esquema de color",
+        ["theme.system"] = "Seguir el sistema",
+        ["theme.light"] = "Claro",
+        ["theme.dark"] = "Oscuro",
+        ["settings.language"] = "Idioma",
+        ["lang.system"] = "Seguir el sistema",
+        ["lang.zh"] = "简体中文",
+        ["lang.zhHant"] = "繁體中文",
+        ["lang.ja"] = "日本語",
+        ["lang.ko"] = "한국어",
+        ["lang.en"] = "English",
+        ["lang.fr"] = "Français",
+        ["lang.de"] = "Deutsch",
+        ["lang.es"] = "Español",
+        ["settings.ai"] = "Configuración de IA",
+        ["settings.copilot"] = "Windows Copilot",
+        ["settings.copilotHint"] = "Windows no dispone de una API pública de modelos locales de terceros, por lo que no incluye IA. Configure abajo una clave de API de cualquier modelo compatible con OpenAI; el chat / la generación de tareas usarán esa interfaz.",
+        ["settings.copilotOpen"] = "Abrir Copilot",
+        ["settings.model"] = "Modelo",
+        ["settings.apiKey"] = "Clave API (almacenada cifrada con DPAPI)",
+        ["settings.baseUrl"] = "URL base",
+        ["settings.modelId"] = "Nombre del modelo",
+        ["settings.backup"] = "Copia de seguridad / Restaurar",
+        ["settings.export"] = "Exportar a archivo JSON",
+        ["settings.import"] = "Importar desde archivo JSON",
+        ["settings.importConfirm"] = "La importación fusionará la base de datos actual (los objetivos existentes se sobrescriben por Id). ¿Continuar?",
+        ["settings.documents"] = "Análisis de adjuntos",
+        ["settings.documentsHint"] = "Admite .txt / .md / Markdown / .docx; el .pdf requiere una biblioteca de terceros y no está incluido en esta versión.",
+
+        ["ai.title"] = "Asistente de IA",
+        ["ai.hint"] = "Describa lo que quiere planificar o adjunte un documento para que la IA extraiga tareas. La IA devuelve JSON: cuando generate=true, el árbol de tareas se escribe en el objetivo actual.",
+        ["ai.input"] = "Escriba un mensaje…",
+        ["ai.send"] = "Enviar",
+        ["ai.attach"] = "Adjuntar",
+        ["ai.clear"] = "Vaciar conversación",
+        ["ai.noAttachText"] = "No se puede analizar este adjunto (solo .txt/.md/.docx)",
+        ["ai.notConfigured"] = "No hay ninguna clave API configurada. Complétela en Ajustes → Modelo de IA.",
+        ["ai.sending"] = "Pensando…",
+        ["ai.generated"] = "Las tareas generadas se han escrito en el objetivo actual.",
+        ["ai.history"] = "Historial",
+        ["ai.noHistory"] = "Sin historial",
+
+        ["tasks.remaining"] = "Tiempo restante",
+        ["tasks.aiImport"] = "Importar con IA",
+        ["tasks.deleteNoSub"] = "¿Eliminar la tarea \"{0}\"?",
+        ["task.repeat"] = "Repetir",
+        ["task.invalidNumber"] = "Introduzca un número válido",
+        ["task.reminderDate"] = "Fecha del recordatorio",
+        ["task.reminderTime"] = "Hora del recordatorio",
+        ["ai.newChat"] = "Nuevo chat",
+        ["ai.welcome"] = "¡Hola! Soy su asistente de planificación de tareas. Describa lo que quiere planificar o adjunte un documento para que lo convierta en una lista de tareas.",
+        ["ai.deleteSession"] = "¿Eliminar esta conversación?",
+        ["settings.saved"] = "Ajustes guardados",
+        ["settings.exportOk"] = "Archivo de copia de seguridad exportado",
+        ["settings.importOk"] = "Importación completada: {0} objetivos restaurados",
+    };
 
     /// <summary>语言切换事件（MainWindow 据此重新导航 / 重建界面）</summary>
     public static event System.Action? LanguageChanged;
 
+    /// <summary>
+    /// 设置当前语言。"system" 表示跟随系统语言（解析为 8 种之一）。
+    /// 合法码：zh / zh-Hant / ja / ko / en / fr / de / es；未知输入回退 "zh"。
+    /// </summary>
     public static void SetLanguage(string lang)
     {
-        lang = lang == "en" ? "en" : "zh";
+        lang = Normalize(lang);
         if (_lang == lang)
             return;
         _lang = lang;
@@ -261,10 +1021,74 @@ public static class Localization
 
     public static string Tr(string key)
     {
-        var table = IsEnglish ? En : Zh;
+        var table = CurrentTable();
         if (table.TryGetValue(key, out var v))
             return v;
         return Zh.TryGetValue(key, out var fallback) ? fallback : key;
+    }
+
+    /// <summary>归一化语言码；解析「跟随系统」为 8 语言之一。</summary>
+    private static string Normalize(string lang)
+    {
+        if (string.Equals(lang, "system", System.StringComparison.OrdinalIgnoreCase))
+            lang = ResolveSystemLanguage();
+        return lang.ToLowerInvariant() switch
+        {
+            "zh" => "zh",
+            "zh-hant" or "zh-tw" or "zh-hk" => "zh-Hant",
+            "ja" => "ja",
+            "ko" => "ko",
+            "en" => "en",
+            "fr" => "fr",
+            "de" => "de",
+            "es" => "es",
+            _ => "zh",
+        };
+    }
+
+    private static Dictionary<string, string> CurrentTable() => _lang switch
+    {
+        "zh-Hant" => ZhHant,
+        "ja" => Ja,
+        "ko" => Ko,
+        "en" => En,
+        "fr" => Fr,
+        "de" => De,
+        "es" => Es,
+        _ => Zh,
+    };
+
+    /// <summary>按系统首选语言解析出 8 语言码之一（兼容 zh-Hant / zh-TW / zh-HK）。</summary>
+    private static string ResolveSystemLanguage()
+    {
+        try
+        {
+            var prefs = GlobalizationPreferences.Languages;
+            if (prefs is { Count: > 0 })
+            {
+                var code = prefs[0]?.ToLowerInvariant() ?? "";
+                if (code.StartsWith("zh-hant") || code.StartsWith("zh-tw") || code.StartsWith("zh-hk"))
+                    return "zh-Hant";
+                if (code.StartsWith("zh"))
+                    return "zh";
+                if (code.StartsWith("ja"))
+                    return "ja";
+                if (code.StartsWith("ko"))
+                    return "ko";
+                if (code.StartsWith("fr"))
+                    return "fr";
+                if (code.StartsWith("de"))
+                    return "de";
+                if (code.StartsWith("es"))
+                    return "es";
+                return "en";
+            }
+        }
+        catch
+        {
+            // 读取系统语言失败时回退英文
+        }
+        return "en";
     }
 }
 

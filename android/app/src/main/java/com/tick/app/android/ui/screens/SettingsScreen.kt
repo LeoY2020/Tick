@@ -55,6 +55,7 @@ import com.tick.app.android.model.AppLanguage
 import com.tick.app.android.model.ThemeMode
 import com.tick.app.android.ui.theme.LocalStrings
 import com.tick.app.android.ui.theme.Skin
+import com.tick.app.android.ui.theme.Strings
 import com.tick.app.android.ui.viewmodel.TickViewModel
 import androidx.compose.runtime.LaunchedEffect
 
@@ -130,7 +131,7 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
                     .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(lang.displayName, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                Text(languageLabel(lang, strings), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
                 RadioButton(selected = settings.language == lang, onClick = { vm.setLanguage(lang) })
             }
         }
@@ -211,6 +212,19 @@ private fun themeLabel(mode: ThemeMode, en: Boolean): String = when (mode) {
     ThemeMode.SYSTEM -> if (en) "System" else "跟随系统"
     ThemeMode.LIGHT -> if (en) "Light" else "亮色"
     ThemeMode.DARK -> if (en) "Dark" else "暗色"
+}
+
+/** 语言选项的显示名，随当前界面语言本地化。 */
+private fun languageLabel(lang: AppLanguage, strings: Strings): String = when (lang) {
+    AppLanguage.SYSTEM -> strings.langSystem
+    AppLanguage.ZH_HANS -> strings.langZh
+    AppLanguage.ZH_HANT -> strings.langZhHant
+    AppLanguage.JA -> strings.langJa
+    AppLanguage.KO -> strings.langKo
+    AppLanguage.EN -> strings.langEn
+    AppLanguage.FR -> strings.langFr
+    AppLanguage.DE -> strings.langDe
+    AppLanguage.ES -> strings.langEs
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

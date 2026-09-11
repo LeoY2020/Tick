@@ -35,7 +35,7 @@ public sealed class AppSettings
     /// <summary>自定义 / 覆盖的模型名（空 = 用模型默认）</summary>
     public string ModelId { get; set; } = "";
 
-    /// <summary>界面语言（"zh" / "en"）</summary>
+    /// <summary>界面语言（"system" / "zh" / "zh-Hant" / "ja" / "ko" / "en" / "fr" / "de" / "es"）</summary>
     public string Language { get; set; } = "zh";
 
     private AppSettings(SettingsRepository repo) => _repo = repo;

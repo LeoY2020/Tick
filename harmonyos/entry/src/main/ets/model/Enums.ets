@@ -18,8 +18,20 @@ export type RepeatRule = 'never' | 'daily' | 'weekly' | 'monthly' | 'custom';
 /** 配色方案设置 */
 export type ColorSchemeSetting = 'system' | 'light' | 'dark';
 
-/** 语言设置 */
-export type LanguageSetting = 'system' | 'zh' | 'en';
+/**
+ * 语言设置：system=跟随系统，其余为显式语言。
+ * 保持既有 'system' | 'zh' | 'en' 编码兼容（持久化值不变）。
+ */
+export type LanguageSetting =
+  | 'system'
+  | 'zh'
+  | 'zh-Hant'
+  | 'ja'
+  | 'ko'
+  | 'en'
+  | 'fr'
+  | 'de'
+  | 'es';
 
 /** AI 模型选择：小艺（盘古，可选/需授权）优先，其余为 OpenAI 兼容云模型 */
 export type AIModelKind =

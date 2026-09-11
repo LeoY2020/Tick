@@ -96,6 +96,11 @@ enum LanguageSetting: String, CaseIterable, Codable, Identifiable {
         }
     }
 
+    /// 应用实际提供 .lproj 翻译的语言（跟随系统 + 简体/繁体中文/英/日/韩/法/德/西）。
+    static let availableLanguages: [LanguageSetting] = [
+        .system, .zhHans, .zhHant, .ja, .ko, .en, .fr, .de, .es
+    ]
+
     /// 对应 Locale 标识（跟随系统 = nil，由系统语言决定）
     var localeIdentifier: String? {
         switch self {

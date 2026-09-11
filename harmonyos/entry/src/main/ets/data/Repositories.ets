@@ -409,7 +409,8 @@ export class SettingsStore {
     const cs = (await SettingsStore.pref.get('colorScheme', 'system')) as string;
     m.colorScheme = (cs === 'light' || cs === 'dark' || cs === 'system') ? (cs as ColorSchemeSetting) : 'system';
     const lang = (await SettingsStore.pref.get('language', 'system')) as string;
-    m.language = (lang === 'zh' || lang === 'en' || lang === 'system') ? (lang as LanguageSetting) : 'system';
+    m.language = (lang === 'zh' || lang === 'zh-Hant' || lang === 'ja' || lang === 'ko' ||
+      lang === 'en' || lang === 'fr' || lang === 'de' || lang === 'es' || lang === 'system') ? (lang as LanguageSetting) : 'system';
     const ai = (await SettingsStore.pref.get('aiModel', 'deepseek')) as string;
     m.aiModel = (ai === 'xiaoyi' || ai === 'qwen' || ai === 'deepseek' || ai === 'chatgpt' ||
       ai === 'yuanbao' || ai === 'glm' || ai === 'kimi' || ai === 'ernie' || ai === 'custom')

@@ -67,8 +67,21 @@ public sealed class SettingsPage : Page
         return panel;
     }
 
-    private static string LangLabel(string lang)
-        => lang == "en" ? Localization.Tr("lang.en") : Localization.Tr("lang.zh");
+    private static string LangLabel(string lang) => Localization.Tr(LangKey(lang));
+
+    private static string LangKey(string lang) => lang switch
+    {
+        "system" => "lang.system",
+        "zh" => "lang.zh",
+        "zh-Hant" => "lang.zhHant",
+        "ja" => "lang.ja",
+        "ko" => "lang.ko",
+        "en" => "lang.en",
+        "fr" => "lang.fr",
+        "de" => "lang.de",
+        "es" => "lang.es",
+        _ => "lang.zh",
+    };
 
     // ---- AI 模型 ----
 
