@@ -42,6 +42,21 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicLong
+
+/**
+ * 任务树快照（UI 订阅对象）。
+ *
+ * - [tasks]：当前目标的整棵任务树（含全部后代）。
+ * - [version]：任务树流内的自增序号，每次数据变更都不同。
+ *
+ * 为什么需要 version：StateFlow 与 Compose 的 State 都按 equals 去重，而
+ * [TaskItem] 是 data class，equals 只比较主构造参数、**不含内存子树 subtasks**。
+ * 于是"仅子任务发生变化"时，根任务列表会被判为相等而被丢弃，UI 不刷新
+ * （表现为子任务点了没反应，要等其它根任务变化才突然生效）。
+ * 带上自增 version 后，任何一次数据变更都会产生不相等的新快照，确保即时刷新。
+ */
+data class TaskTreeSnapshot(val version: Long, val tasks: List<TaskItem>)
 
 class TickViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -75,13 +90,21 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
      *  避免 Room Flow 在个别动静下延迟触发导致 UI 不即时刷新。 */
     private val dataRevision = MutableStateFlow(0L)
 
-    @Suppress("UNCHECKED_CAST")
-    val goalTree: StateFlow<List<TaskItem>> = combine(selectedGoalId, dataRevision) { id, _ -> id }
+    /** 任务树快照的自增序号：保证每次数据变更都产生"不相等"的快照（见 [TaskTreeSnapshot]）。 */
+    private val treeVersion = AtomicLong(0L)
+
+    val goalTree: StateFlow<TaskTreeSnapshot> = combine(selectedGoalId, dataRevision) { id, _ -> id }
         .flatMapLatest { id ->
-            if (id == null) kotlinx.coroutines.flow.flowOf(emptyList())
-            else repo.observeGoalTree(id)
+            if (id == null) flowOf(TaskTreeSnapshot(treeVersion.incrementAndGet(), emptyList()))
+            else repo.observeGoalTree(id).map { tree ->
+                TaskTreeSnapshot(treeVersion.incrementAndGet(), tree)
+            }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            TaskTreeSnapshot(0L, emptyList())
+        )
 
     /** 展开/折叠状态集合（按任务 id） */
     val expandedTasks: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())

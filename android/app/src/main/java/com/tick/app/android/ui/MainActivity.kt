@@ -113,7 +113,7 @@ fun TickAppRoot(vm: TickViewModel) {
     val goals by vm.goals.collectAsStateWithLifecycle()
     val selectedGoal by vm.selectedGoal.collectAsStateWithLifecycle()
     val selectedGoalId by vm.selectedGoalId.collectAsStateWithLifecycle()
-    val tree by vm.goalTree.collectAsStateWithLifecycle()
+    val treeSnapshot by vm.goalTree.collectAsStateWithLifecycle()
     val expandedTasks by vm.expandedTasks.collectAsStateWithLifecycle()
 
     val skin = Skin.fromId(settings.skinId)
@@ -126,7 +126,7 @@ fun TickAppRoot(vm: TickViewModel) {
                 goals = goals,
                 selectedGoal = selectedGoal,
                 selectedGoalId = selectedGoalId,
-                tree = tree,
+                tree = treeSnapshot.tasks,
                 expandedTasks = expandedTasks,
                 isEmpty = goals.isEmpty(),
                 en = en
