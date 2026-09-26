@@ -13,8 +13,9 @@ android {
         applicationId = "com.tick.app.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // 版本号：1.0.1 alpha1（versionCode 编码为 major*1000000 + minor*10000 + patch*100 + 阶段序号）
+        versionCode = 1000101
+        versionName = "1.0.1-alpha1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

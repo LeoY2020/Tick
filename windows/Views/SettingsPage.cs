@@ -34,6 +34,7 @@ public sealed class SettingsPage : Page
         panel.Children.Add(BuildAiSection());
         panel.Children.Add(BuildDataSection());
         panel.Children.Add(BuildSaveButton());
+        panel.Children.Add(BuildVersionFooter());
         return new ScrollViewer { Content = panel };
     }
 
@@ -268,6 +269,17 @@ public sealed class SettingsPage : Page
             await Dialogs.ShowErrorAsync(App.MainWindow, Localization.Tr("common.error"), ex.Message);
         }
     }
+
+    // ---- 版本 ----
+
+    /// <summary>版本号（语言无关的纯文本，便于分辨安装包新旧；须与 Tick.csproj 的 Version 保持一致）。</summary>
+    private static UIElement BuildVersionFooter() => new TextBlock
+    {
+        Text = "v1.0.1 alpha1",
+        FontSize = 12,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 142, 142, 147)),
+    };
 
     // ---- 辅助 ----
 

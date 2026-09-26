@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(Tick VERSION 1.0.0 LANGUAGES CXX)
+project(Tick VERSION 1.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -51,7 +51,8 @@ install(FILES packaging/tick.desktop
 
 # ---- 安装包（deb / rpm / 通用 tar.gz）----
 set(CPACK_PACKAGE_NAME "tick")
-set(CPACK_PACKAGE_VERSION "1.0.0")
+# 版本号：1.0.1 alpha1（安装包元数据用数值 1.0.1，alpha 标识体现在包名与设置页显示）
+set(CPACK_PACKAGE_VERSION "1.0.1")
 set(CPACK_PACKAGE_VENDOR "Tick")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Tick todo application")

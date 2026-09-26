@@ -7,6 +7,8 @@
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <RootNamespace>Tick</RootNamespace>
     <AssemblyName>Tick</AssemblyName>
+    <!-- 版本号：1.0.1 alpha1；同时决定 exe 文件属性中的版本信息 -->
+    <Version>1.0.1-alpha1</Version>
     <ApplicationIcon>Assets\Tick.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x64</Platforms>

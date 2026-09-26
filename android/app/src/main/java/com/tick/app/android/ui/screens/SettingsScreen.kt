@@ -59,6 +59,9 @@ import com.tick.app.android.ui.theme.Strings
 import com.tick.app.android.ui.viewmodel.TickViewModel
 import androidx.compose.runtime.LaunchedEffect
 
+/** 设置页展示的版本号（语言无关的纯文本，便于分辨安装包新旧；须与 build.gradle.kts 的 versionName 保持一致）。 */
+private const val APP_VERSION_TEXT = "v1.0.1 alpha1"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(vm: TickViewModel, en: Boolean) {
@@ -170,6 +173,13 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
                 Text(strings.importData)
             }
         }
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = APP_VERSION_TEXT,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Spacer(Modifier.height(48.dp))
     }
 

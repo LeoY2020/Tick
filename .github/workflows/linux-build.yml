@@ -46,16 +46,16 @@ jobs:
       - name: Upload packages
         uses: actions/upload-artifact@v4
         with:
-          name: Tick-linux-packages
+          name: Tick-1.0.1-alpha1-linux-packages
           path: |
-            linux/build/tick-1.0.0-*.deb
-            linux/build/tick-1.0.0-*.rpm
-            linux/build/tick-1.0.0-*.tar.gz
+            linux/build/tick-*.deb
+            linux/build/tick-*.rpm
+            linux/build/tick-*.tar.gz
           retention-days: 30
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: Tick-linux
+          name: Tick-1.0.1-alpha1-linux
           path: linux/build/tick
           retention-days: 30

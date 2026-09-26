@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
@@ -94,12 +95,18 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     backupLayout->addWidget(exportBtn_);
     backupLayout->addWidget(importBtn_);
 
+    // 版本号（语言无关的纯文本，便于分辨安装包新旧；与 CMakeLists.txt 的 CPACK_PACKAGE_VERSION 保持一致）
+    auto versionLabel = new QLabel(QStringLiteral("v1.0.1 alpha1"), this);
+    versionLabel->setAlignment(Qt::AlignCenter);
+    versionLabel->setStyleSheet(QStringLiteral("color: palette(mid);"));
+
     auto buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
 
     auto root = new QVBoxLayout(this);
     root->addWidget(themeGroup);
     root->addWidget(aiGroup);
     root->addWidget(backupGroup);
+    root->addWidget(versionLabel);
     root->addWidget(buttons);
 
     connect(exportBtn_, &QPushButton::clicked, this, &SettingsDialog::onExport);

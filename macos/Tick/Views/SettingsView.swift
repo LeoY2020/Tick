@@ -20,6 +20,7 @@ struct SettingsView: View {
                 iCloudSection
                 backupSection
                 reminderSection
+                versionSection
             }
             .navigationTitle("设置")
             .toolbar {
@@ -218,6 +219,18 @@ struct SettingsView: View {
                 Label("已授权", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
             }
+        }
+    }
+
+    // MARK: - 版本
+
+    /// 版本号（语言无关的纯文本，便于分辨安装包新旧；与 Xcode 工程的 MARKETING_VERSION 保持一致）
+    private var versionSection: some View {
+        Section {
+            Text("v1.0.1 alpha1")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 
