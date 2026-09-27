@@ -43,7 +43,7 @@ jobs:
           $exe = Get-ChildItem -Path windows/bin/x64/Release -Recurse -Filter Tick.exe | Select-Object -First 1
           if (-not $exe) { Write-Error "Tick.exe not found in build output"; exit 1 }
           $src = $exe.DirectoryName
-          $stage = "tick-windows-1.0.1-alpha1"
+          $stage = "tick-windows-1.0.0-beta1"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
           Copy-Item -Path "$src\*" -Destination $stage -Recurse -Force
           $exeName = Get-ChildItem -Path $stage -Filter "*.exe" | Select-Object -First 1
@@ -55,7 +55,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: Tick-1.0.1-alpha1-windows-release
-          path: tick-windows-1.0.1-alpha1
+          name: Tick-1.0.0-beta1-windows-release
+          path: tick-windows-1.0.0-beta1
           if-no-files-found: warn
           retention-days: 30

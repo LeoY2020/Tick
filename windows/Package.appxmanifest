@@ -19,7 +19,7 @@
   <Identity
     Name="Tick.Todo"
     Publisher="CN=Tick"
-    Version="1.0.1.0" />
+    Version="1.0.0.0" />
 
   <Properties>
     <DisplayName>Tick</DisplayName>
