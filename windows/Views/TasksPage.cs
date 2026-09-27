@@ -256,7 +256,12 @@ public sealed class TasksPage : Page, ITaskRowHost
 
     private UIElement BuildTaskTree(Goal goal)
     {
-        var tree = new TreeView();
+        // 必须显式指定行模板：TreeView 默认行模板只渲染节点 Content 的字符串形式，
+        // 不指定的话 TaskNodeView（复选框 / 圆点 / 按钮）不会显示。模板见 App.xaml 的 TaskTreeRowTemplate。
+        var tree = new TreeView
+        {
+            ItemTemplate = (DataTemplate)Application.Current.Resources["TaskTreeRowTemplate"],
+        };
         foreach (var task in goal.Tasks)
             tree.RootNodes.Add(BuildNode(task, 0));
 
