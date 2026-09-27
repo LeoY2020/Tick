@@ -60,7 +60,7 @@ import com.tick.app.android.ui.viewmodel.TickViewModel
 import androidx.compose.runtime.LaunchedEffect
 
 /** 设置页展示的版本号（语言无关的纯文本，便于分辨安装包新旧；须与 build.gradle.kts 的 versionName 保持一致）。 */
-private const val APP_VERSION_TEXT = "v1.0.1 alpha1"
+private const val APP_VERSION_TEXT = "v1.0.0 beta1"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
