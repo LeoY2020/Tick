@@ -92,8 +92,8 @@ enum BackupStatus: Equatable {
 
 // MARK: - 数据备份管理器
 
-/// 数据备份管理器：数据变更时同步备份至 Keychain；首次启动空库时恢复。
-/// 所有公开方法不抛出（内部 catch），保证 UI 调用安全。
+/// 数据备份管理器：数据变更时同步备份至 Keychain（整份快照分片写入，见 KeychainBackupService）；
+/// 首次启动空库时恢复。所有公开方法不抛出（内部 catch），保证 UI 调用安全。
 @MainActor
 final class DataBackupManager: ObservableObject {
     static let shared = DataBackupManager()
@@ -104,8 +104,6 @@ final class DataBackupManager: ObservableObject {
     @Published private(set) var isRestoring = false
 
     private let keychain = KeychainBackupService.shared
-    /// 约 1MB 软阈值：超过后仍尝试写入，由 Keychain 硬阈值与设备实际限制决定成败
-    private let snapshotLimitBytes = 1_000_000
     /// 快照格式版本
     private let snapshotVersion = 1
 
@@ -121,8 +119,8 @@ final class DataBackupManager: ObservableObject {
         }
         do {
             let data = try JSONEncoder().encode(snapshot)
-            // 容量降级：输出超过 snapshotLimitBytes 软阈值时仍尝试写入，
-            // Keychain 实际容量约 512KB~数 MB（视设备而定），写入结果决定最终状态
+            // 快照按 3KB 分片写入多个 Keychain 条目，总容量只受设备可用存储限制
+            // （见 KeychainBackupService.appDataChunkSize），不再受单个条目容量限制
             try keychain.saveAppData(data)
             status = .success(Date())
         } catch BackupError.insufficientSpace {
