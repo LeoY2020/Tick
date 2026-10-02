@@ -42,13 +42,19 @@ public static class CountdownFormatter
         }
 
         if (year >= 1)
-            return month > 0 ? $"{year}年{month}月" : $"{year}年";
+            return month > 0
+                ? string.Format(Localization.Tr("countdown.yearMonth"), year, month)
+                : string.Format(Localization.Tr("countdown.year"), year);
         if (month >= 1)
-            return day > 0 ? $"{month}月{day}日" : $"{month}月";
+            return day > 0
+                ? string.Format(Localization.Tr("countdown.monthDay"), month, day)
+                : string.Format(Localization.Tr("countdown.month"), month);
         if (day >= 1)
-            return preciseToHour && hour > 0 ? $"{day}日{hour}时" : $"{day}日";
+            return preciseToHour && hour > 0
+                ? string.Format(Localization.Tr("countdown.dayHour"), day, hour)
+                : string.Format(Localization.Tr("countdown.day"), day);
         if (hour > 0)
-            return preciseToHour ? $"{hour}时" : null;
+            return preciseToHour ? string.Format(Localization.Tr("countdown.hour"), hour) : null;
         return null;
     }
 }

@@ -181,7 +181,7 @@ public sealed class TasksPage : Page, ITaskRowHost
 
             string text = DocumentTextExtractor.ExtractText(file.Path);
 
-            var history = new List<ChatMessage> { new(ChatRole.User, "请根据附件内容生成任务清单") };
+            var history = new List<ChatMessage> { new(ChatRole.User, Localization.Tr("tasks.aiImportPrompt")) };
             var reply = await AppServices.AI.ChatReplyAsync(
                 history,
                 text,

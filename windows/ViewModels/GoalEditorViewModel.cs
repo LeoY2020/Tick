@@ -13,10 +13,11 @@ public sealed class GoalEditorViewModel : ViewModelBase
 
     public bool IsNew { get; }
 
-    /// <summary>预设色板（含 "auto"）</summary>
-    public IReadOnlyList<(string Name, string Hex)> Palette { get; } = new[] { ("自动", HexColor.AutoHex) }
-        .Concat(HexColor.Palette)
-        .ToArray();
+    /// <summary>预设色板（含 "auto"；显示名随当前语言本地化）</summary>
+    public IReadOnlyList<(string Name, string Hex)> Palette { get; } =
+        new[] { (Localization.Tr("task.color.auto"), HexColor.AutoHex) }
+            .Concat(HexColor.Palette.Select(p => (Localization.Tr(p.Key), p.Hex)))
+            .ToArray();
 
     public IReadOnlyList<ProgressCountingMode> CountingModes { get; } =
         Enum.GetValues<ProgressCountingMode>();
@@ -45,7 +46,7 @@ public sealed class GoalEditorViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(Goal.Name))
         {
-            Error = "目标名称不能为空";
+            Error = Localization.Tr("validation.goal.nameEmpty");
             return false;
         }
         Error = "";

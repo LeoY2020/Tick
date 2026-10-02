@@ -46,7 +46,7 @@ public static class GoalEditDialog
             IsOn = vm.Goal.EndDatePreciseToHour,
         };
 
-        var modeCombo = new ComboBox { Header = "统计模式", HorizontalAlignment = HorizontalAlignment.Stretch };
+        var modeCombo = new ComboBox { Header = Localization.Tr("task.counting.header"), HorizontalAlignment = HorizontalAlignment.Stretch };
         foreach (var m in vm.CountingModes)
             modeCombo.Items.Add(new ComboBoxItem { Content = m.ToDisplayName(), Tag = m });
         for (int i = 0; i < modeCombo.Items.Count; i++)

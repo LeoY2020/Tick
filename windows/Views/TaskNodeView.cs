@@ -69,13 +69,18 @@ public sealed class TaskNodeView : UserControl
         };
         Grid.SetColumn(dot, 1);
 
-        // 名称
+        // 名称（删除态：删除线 + 降低不透明度）
         var name = new TextBlock
         {
             Text = task.Name,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
+        if (task.Type == TaskType.Single && DisplayStatus(task) == TaskStatus.Deleted)
+        {
+            name.TextDecorations = Windows.UI.Text.TextDecorations.Strikethrough;
+            name.Opacity = 0.55;
+        }
         Grid.SetColumn(name, 2);
 
         // 右侧：状态 / 进度（接管则只读）+ 菜单
@@ -89,13 +94,11 @@ public sealed class TaskNodeView : UserControl
         return grid;
     }
 
-    /// <summary>行首状态复选框：未完成=空心；半完成/完成=填充任务色，半完成内有白色横线、完成内有白色对勾；点击循环 未完成→半完成→完成→未完成。有子任务时由子任务折算、只读。</summary>
+    /// <summary>行首状态复选框：未完成=空心；半完成=填充任务色带白色横线；完成=填充任务色带白色对勾；删除=红色垃圾桶；点击循环 未完成→已完成→半完成→删除→未完成。有子任务时由子任务折算、只读。</summary>
     private Button BuildCheckBox(TaskItem task)
     {
         bool takenOver = task.HasSubtasks;
-        TaskStatus status = takenOver
-            ? ProgressEngine.EffectiveStatus(task)
-            : task.Status;
+        TaskStatus status = DisplayStatus(task);
 
         var box = new Border
         {
@@ -103,12 +106,12 @@ public sealed class TaskNodeView : UserControl
             Height = 20,
             CornerRadius = new CornerRadius(5),
             BorderThickness = new Thickness(2),
-            BorderBrush = StatusBoxBorderBrush(),
+            BorderBrush = status == TaskStatus.Deleted ? StatusBrush(TaskStatus.Deleted) : StatusBoxBorderBrush(),
             Background = StatusBoxFillBrush(status, task),
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        // 完成：白色对勾；半完成：白色横线；未完成：留空
+        // 完成：白色对勾；半完成：白色横线；删除：红色垃圾桶；未完成：留空
         switch (status)
         {
             case TaskStatus.Done:
@@ -130,6 +133,17 @@ public sealed class TaskNodeView : UserControl
                     RadiusX = 1.5,
                     RadiusY = 1.5,
                     Fill = WhiteBrush,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                break;
+            case TaskStatus.Deleted:
+                box.Child = new FontIcon
+                {
+                    Glyph = "\uE74D",
+                    FontFamily = new FontFamily("Segoe Fluent Icons"),
+                    FontSize = 11,
+                    Foreground = WhiteBrush,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
                 };
@@ -156,8 +170,9 @@ public sealed class TaskNodeView : UserControl
                 return;
             TaskStatus next = status switch
             {
-                TaskStatus.NotDone => TaskStatus.HalfDone,
-                TaskStatus.HalfDone => TaskStatus.Done,
+                TaskStatus.NotDone => TaskStatus.Done,
+                TaskStatus.Done => TaskStatus.HalfDone,
+                TaskStatus.HalfDone => TaskStatus.Deleted,
                 _ => TaskStatus.NotDone,
             };
             _host.RequestSetStatus(task, next);
@@ -165,13 +180,20 @@ public sealed class TaskNodeView : UserControl
         return btn;
     }
 
+    /// <summary>行展示状态：被接管（有子任务）时由子任务折算，否则用手动状态。</summary>
+    private static TaskStatus DisplayStatus(TaskItem task)
+        => task.HasSubtasks ? ProgressEngine.EffectiveStatus(task) : task.Status;
+
     private static SolidColorBrush StatusBoxBorderBrush()
         => (SolidColorBrush?)Application.Current.Resources["StatusNotDoneBrush"] ?? NeutralBrush;
 
     private static SolidColorBrush StatusBoxFillBrush(TaskStatus status, TaskItem task)
-        => status == TaskStatus.NotDone
-            ? TransparentBrush
-            : HexColor.Brush(ProgressEngine.EffectiveColor(task), isDark: false);
+        => status switch
+        {
+            TaskStatus.NotDone => TransparentBrush,
+            TaskStatus.Deleted => StatusBrush(TaskStatus.Deleted),
+            _ => HexColor.Brush(ProgressEngine.EffectiveColor(task), isDark: false),
+        };
 
     private static readonly SolidColorBrush WhiteBrush = new(Windows.UI.Color.FromArgb(255, 255, 255, 255));
     private static readonly SolidColorBrush TransparentBrush = new(Windows.UI.Color.FromArgb(0, 0, 0, 0));
@@ -264,7 +286,7 @@ public sealed class TaskNodeView : UserControl
         {
             flyout.Items.Add(new MenuFlyoutSeparator());
             var setMy = new MenuFlyoutSubItem { Text = Localization.Tr("task.status") };
-            foreach (var s in new[] { TaskStatus.Done, TaskStatus.HalfDone, TaskStatus.NotDone, TaskStatus.Deleted })
+            foreach (var s in new[] { TaskStatus.NotDone, TaskStatus.Done, TaskStatus.HalfDone, TaskStatus.Deleted })
             {
                 var item = new MenuFlyoutItem { Text = s.ToDisplayName() };
                 item.Click += (_, _) => _host.RequestSetStatus(task, s);
