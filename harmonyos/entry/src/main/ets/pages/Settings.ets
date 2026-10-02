@@ -50,8 +50,8 @@ struct Settings {
           this.sectionTitle(I18n.all({ zh: '备份', zhHant: '備份', ja: 'バックアップ', ko: '백업', en: 'Backup', fr: 'Sauvegarde', de: 'Sicherung', es: 'Copia de seguridad' }))
           this.backupSection()
 
-          // 版本号（语言无关的纯文本，便于分辨安装包新旧；与 AppScope/app.json5 的 versionName 保持一致）
-          Text('v1.0.1 alpha1')
+          // 版本号（语言无关的纯文本，便于分辨安装包新旧；app.json5 的 versionName 用数值 1.0.0，beta 标识体现于此）
+          Text('v1.0.0 beta1')
             .fontSize(D.fontSizeCaption)
             .fontColor(this.tSecondary())
             .width('100%')

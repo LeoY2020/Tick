@@ -96,7 +96,7 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     backupLayout->addWidget(importBtn_);
 
     // 版本号（语言无关的纯文本，便于分辨安装包新旧；与 CMakeLists.txt 的 CPACK_PACKAGE_VERSION 保持一致）
-    auto versionLabel = new QLabel(QStringLiteral("v1.0.1 alpha1"), this);
+    auto versionLabel = new QLabel(QStringLiteral("v1.0.0 beta1"), this);
     versionLabel->setAlignment(Qt::AlignCenter);
     versionLabel->setStyleSheet(QStringLiteral("color: palette(mid);"));
 
