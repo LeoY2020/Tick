@@ -78,8 +78,10 @@ public sealed class TaskNodeView : UserControl
         };
         if (task.Type == TaskType.Single && DisplayStatus(task) == TaskStatus.Deleted)
         {
-            name.TextDecorations = Windows.UI.Text.TextDecorations.Strikethrough;
-            name.Opacity = 0.55;
+            // 删除态：名称置为删除色并降低不透明度。
+            // 不使用 TextDecorations：该枚举在 Microsoft.WinUI 与 Windows SDK 中重复定义，直接引用会触发 CS0433 编译冲突。
+            name.Opacity = 0.5;
+            name.Foreground = StatusBrush(TaskStatus.Deleted);
         }
         Grid.SetColumn(name, 2);
 
