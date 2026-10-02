@@ -7,6 +7,8 @@
 #include <optional>
 #include <string>
 
+#include "ui/translation.h"
+
 namespace tick {
 
 // ---------------------------------------------------------------------------
@@ -78,10 +80,10 @@ inline TaskType taskTypeFromString(const QString& s, TaskType fallback = TaskTyp
 
 inline QString taskTypeDisplayName(TaskType t) {
     switch (t) {
-        case TaskType::Single: return QStringLiteral("单项");
-        case TaskType::Progress: return QStringLiteral("进度");
+        case TaskType::Single: return TR("单项", "Single");
+        case TaskType::Progress: return TR("进度", "Progress");
     }
-    return QStringLiteral("单项");
+    return TR("单项", "Single");
 }
 
 // ---------------------------------------------------------------------------
@@ -106,12 +108,12 @@ inline TaskStatus taskStatusFromString(const QString& s, TaskStatus fallback = T
 
 inline QString taskStatusDisplayName(TaskStatus s) {
     switch (s) {
-        case TaskStatus::NotDone: return QStringLiteral("未完成");
-        case TaskStatus::HalfDone: return QStringLiteral("半完成");
-        case TaskStatus::Done: return QStringLiteral("完成");
-        case TaskStatus::Deleted: return QStringLiteral("删除");
+        case TaskStatus::NotDone: return TR("未完成", "Not done");
+        case TaskStatus::HalfDone: return TR("半完成", "Half done");
+        case TaskStatus::Done: return TR("完成", "Done");
+        case TaskStatus::Deleted: return TR("删除", "Deleted");
     }
-    return QStringLiteral("未完成");
+    return TR("未完成", "Not done");
 }
 
 // ---------------------------------------------------------------------------
@@ -138,13 +140,13 @@ inline RepeatRule repeatRuleFromString(const QString& s, RepeatRule fallback = R
 
 inline QString repeatRuleDisplayName(RepeatRule r) {
     switch (r) {
-        case RepeatRule::Never: return QStringLiteral("不重复");
-        case RepeatRule::Daily: return QStringLiteral("每天");
-        case RepeatRule::Weekly: return QStringLiteral("每周");
-        case RepeatRule::Monthly: return QStringLiteral("每月");
-        case RepeatRule::Custom: return QStringLiteral("自定义");
+        case RepeatRule::Never: return TR("不重复", "Never");
+        case RepeatRule::Daily: return TR("每天", "Daily");
+        case RepeatRule::Weekly: return TR("每周", "Weekly");
+        case RepeatRule::Monthly: return TR("每月", "Monthly");
+        case RepeatRule::Custom: return TR("自定义", "Custom");
     }
-    return QStringLiteral("不重复");
+    return TR("不重复", "Never");
 }
 
 // ---------------------------------------------------------------------------
@@ -166,10 +168,10 @@ inline ProgressCountingMode countingModeFromString(const QString& s,
 
 inline QString countingModeDisplayName(ProgressCountingMode m) {
     switch (m) {
-        case ProgressCountingMode::AllTasks: return QStringLiteral("全部任务");
-        case ProgressCountingMode::LeafTasks: return QStringLiteral("仅叶子任务");
+        case ProgressCountingMode::AllTasks: return TR("全部任务", "All tasks");
+        case ProgressCountingMode::LeafTasks: return TR("仅叶子任务", "Leaf tasks only");
     }
-    return QStringLiteral("全部任务");
+    return TR("全部任务", "All tasks");
 }
 
 // ---------------------------------------------------------------------------
@@ -212,21 +214,21 @@ inline AIProvider aiProviderFromString(const QString& s, AIProvider fallback = A
 
 inline QString aiProviderDisplayName(AIProvider p) {
     switch (p) {
-        case AIProvider::Qwen: return QStringLiteral("千问");
+        case AIProvider::Qwen: return TR("千问", "Qwen");
         case AIProvider::DeepSeek: return QStringLiteral("DeepSeek");
         case AIProvider::ChatGPT: return QStringLiteral("ChatGPT");
-        case AIProvider::Yuanbao: return QStringLiteral("元宝");
+        case AIProvider::Yuanbao: return TR("元宝", "Yuanbao");
         case AIProvider::Claude: return QStringLiteral("Claude");
         case AIProvider::Gemini: return QStringLiteral("Gemini");
         case AIProvider::GLM: return QStringLiteral("GLM");
         case AIProvider::Kimi: return QStringLiteral("Kimi");
-        case AIProvider::Ernie: return QStringLiteral("文心");
+        case AIProvider::Ernie: return TR("文心", "Ernie");
         case AIProvider::Grok: return QStringLiteral("Grok");
-        case AIProvider::StepFun: return QStringLiteral("阶跃星辰");
+        case AIProvider::StepFun: return TR("阶跃星辰", "StepFun");
         case AIProvider::MiniMax: return QStringLiteral("MiniMax");
-        case AIProvider::Custom: return QStringLiteral("自定义");
+        case AIProvider::Custom: return TR("自定义", "Custom");
     }
-    return QStringLiteral("自定义");
+    return TR("自定义", "Custom");
 }
 
 // 预设 Base URL（不含 /chat/completions 后缀，由 AIService 拼接）

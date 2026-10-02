@@ -35,7 +35,7 @@ TaskDialog::TaskDialog(QWidget* parent)
     colorCombo_->addItem(TR("继承父级", "Inherit"), QString());
     const auto& palette = goalColorPalette();
     for (const auto& c : palette) {
-        colorCombo_->addItem(c.name, c.hex);
+        colorCombo_->addItem(Tr::t(c.name, c.nameEn), c.hex);
     }
 
     statusCombo_ = new QComboBox(this);
@@ -120,6 +120,10 @@ void TaskDialog::setup(const std::shared_ptr<TaskItem>& item) {
     colorCombo_->setCurrentIndex(cIdx < 0 ? 0 : cIdx);
     const int sIdx = statusCombo_->findData(taskStatusToString(item_->status));
     statusCombo_->setCurrentIndex(sIdx < 0 ? 0 : sIdx);
+    // 有子任务（被接管）时状态只读，由子任务折算
+    const bool takenOver = item_->hasSubtasks();
+    statusCombo_->setEnabled(!takenOver);
+    statusCombo_->setToolTip(takenOver ? TR("（由子任务接管）", "(Taken over by subtasks)") : QString());
     totalSpin_->setValue(item_->totalAmount);
     currentSpin_->setValue(item_->currentAmount);
     startEnable_->setChecked(item_->startDate.has_value());

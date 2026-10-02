@@ -8,6 +8,7 @@
 #include <QUrl>
 
 #include "data/settingsrepository.h"
+#include "ui/translation.h"
 
 namespace tick {
 
@@ -96,7 +97,8 @@ ChatReplyParse AIService::parseChatReply(const QString& raw) {
                 }
                 out.message = root.value(QStringLiteral("message")).toString();
                 if (out.message.trimmed().isEmpty()) {
-                    out.message = QStringLiteral("已为你生成 %1 个任务。").arg(out.tasks.size());
+                    out.message = TR("已为你生成 %1 个任务。", "Generated %1 tasks for you.")
+                                      .arg(out.tasks.size());
                 }
                 return out;
             }
@@ -157,11 +159,11 @@ void AIService::send(const AIConfig& config, const QString& systemPrompt,
         reply_ = nullptr;
     }
     if (config.apiKey.trimmed().isEmpty()) {
-        emit failed(QStringLiteral("请前往设置填写 API Key"));
+        emit failed(TR("请前往设置填写 API Key", "Please set your API Key in Settings"));
         return;
     }
     if (config.baseUrl.trimmed().isEmpty()) {
-        emit failed(QStringLiteral("请前往设置填写 Base URL"));
+        emit failed(TR("请前往设置填写 Base URL", "Please set your Base URL in Settings"));
         return;
     }
 
@@ -201,25 +203,26 @@ void AIService::onReplyFinished() {
     r->deleteLater();
 
     if (r->error() != QNetworkReply::NoError) {
-        emit failed(QStringLiteral("网络请求失败：%1（HTTP %2）").arg(netError).arg(httpStatus));
+        emit failed(TR("网络请求失败：%1（HTTP %2）", "Network request failed: %1 (HTTP %2)")
+                        .arg(netError).arg(httpStatus));
         return;
     }
 
     const QJsonDocument doc = QJsonDocument::fromJson(data);
     if (!doc.isObject()) {
-        emit failed(QStringLiteral("模型服务返回了异常响应"));
+        emit failed(TR("模型服务返回了异常响应", "The model service returned an invalid response"));
         return;
     }
     const QJsonObject root = doc.object();
     const QJsonArray choices = root.value(QStringLiteral("choices")).toArray();
     if (choices.isEmpty()) {
-        emit failed(QStringLiteral("模型服务返回了异常响应"));
+        emit failed(TR("模型服务返回了异常响应", "The model service returned an invalid response"));
         return;
     }
     const QJsonObject message = choices.first().toObject().value(QStringLiteral("message")).toObject();
     const QString content = message.value(QStringLiteral("content")).toString();
     if (content.trimmed().isEmpty()) {
-        emit failed(QStringLiteral("模型未生成有效内容"));
+        emit failed(TR("模型未生成有效内容", "The model returned no valid content"));
         return;
     }
     emit finished(content);

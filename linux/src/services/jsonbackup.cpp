@@ -15,6 +15,7 @@
 #include "model/enums.h"
 #include "model/goal.h"
 #include "model/taskitem.h"
+#include "ui/translation.h"
 
 namespace tick {
 
@@ -156,7 +157,8 @@ std::shared_ptr<Goal> JsonBackup::goalFromJson(const QJsonObject& o) {
 bool JsonBackup::importGoals(const QString& json, QString& error) {
     const QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
     if (!doc.isObject()) {
-        error = QStringLiteral("备份文件格式错误（不是有效的 JSON 对象）");
+        error = TR("备份文件格式错误（不是有效的 JSON 对象）",
+                  "Invalid backup file (not a valid JSON object)");
         return false;
     }
     const QJsonObject root = doc.object();
@@ -165,11 +167,13 @@ bool JsonBackup::importGoals(const QString& json, QString& error) {
     QSqlQuery clearQuery(Database::instance().connection());
     // 外键级联删除全部任务，仅供导入前清空
     if (!clearQuery.exec(QStringLiteral("DELETE FROM TaskItem"))) {
-        error = QStringLiteral("清理旧数据失败：%1").arg(clearQuery.lastError().text());
+        error = TR("清理旧数据失败：%1", "Failed to clear old data: %1")
+                    .arg(clearQuery.lastError().text());
         return false;
     }
     if (!clearQuery.exec(QStringLiteral("DELETE FROM Goal"))) {
-        error = QStringLiteral("清理旧数据失败：%1").arg(clearQuery.lastError().text());
+        error = TR("清理旧数据失败：%1", "Failed to clear old data: %1")
+                    .arg(clearQuery.lastError().text());
         return false;
     }
 
@@ -179,7 +183,7 @@ bool JsonBackup::importGoals(const QString& json, QString& error) {
         const auto goal = goalFromJson(gv.toObject());
         if (goal->name.isEmpty()) continue;
         if (!goalRepo.insert(*goal)) {
-            error = QStringLiteral("恢复目标失败：%1").arg(goal->name);
+            error = TR("恢复目标失败：%1", "Failed to restore goal: %1").arg(goal->name);
             return false;
         }
         for (const auto& t : goal->tasks) {
