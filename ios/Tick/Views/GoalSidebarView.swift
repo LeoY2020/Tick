@@ -46,7 +46,7 @@ struct GoalSidebarView: View {
         }
         // 删除前二次确认
         .confirmationDialog(
-            deleteDialogTitle,
+            "删除目标",
             isPresented: deleteDialogPresented,
             titleVisibility: .visible
         ) {
@@ -57,6 +57,10 @@ struct GoalSidebarView: View {
             }
             Button("取消", role: .cancel) {
                 goalToDelete = nil
+            }
+        } message: {
+            if let name = goalToDelete?.name {
+                Text("删除目标「\(name)」？其下所有任务将被一并删除。")
             }
         }
     }
@@ -106,7 +110,7 @@ struct GoalSidebarView: View {
                 Label("删除", systemImage: "trash")
             }
         }
-        .accessibilityLabel("目标\(goal.name)")
+        .accessibilityLabel(Text("目标\(goal.name)"))
         .accessibilityHint("轻点两下切换到该目标")
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
@@ -136,12 +140,6 @@ struct GoalSidebarView: View {
     }
 
     // MARK: - 删除确认
-
-    /// 确认对话框标题（含目标名称）
-    private var deleteDialogTitle: String {
-        guard let goal = goalToDelete else { return "删除目标" }
-        return "删除目标「\(goal.name)」？其下所有任务将被一并删除。"
-    }
 
     /// 由 goalToDelete 派生的对话框呈现绑定
     private var deleteDialogPresented: Binding<Bool> {

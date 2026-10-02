@@ -8,18 +8,18 @@ namespace tick {
 
 const QVector<ColorInfo>& goalColorPalette() {
     static const QVector<ColorInfo> s_palette = {
-        { QStringLiteral("黑色"), QStringLiteral("#000000") },
-        { QStringLiteral("红色"), QStringLiteral("#FF3B30") },
-        { QStringLiteral("橙色"), QStringLiteral("#FF9500") },
-        { QStringLiteral("黄色"), QStringLiteral("#FFCC00") },
-        { QStringLiteral("绿色"), QStringLiteral("#34C759") },
-        { QStringLiteral("薄荷绿"), QStringLiteral("#00C7BE") },
-        { QStringLiteral("青色"), QStringLiteral("#30B0C7") },
-        { QStringLiteral("蓝色"), QStringLiteral("#007AFF") },
-        { QStringLiteral("靛蓝"), QStringLiteral("#5856D6") },
-        { QStringLiteral("紫色"), QStringLiteral("#AF52DE") },
-        { QStringLiteral("粉色"), QStringLiteral("#FF2D55") },
-        { QStringLiteral("棕色"), QStringLiteral("#A2845E") },
+        { QStringLiteral("黑色"), QStringLiteral("Black"), QStringLiteral("#000000") },
+        { QStringLiteral("红色"), QStringLiteral("Red"), QStringLiteral("#FF3B30") },
+        { QStringLiteral("橙色"), QStringLiteral("Orange"), QStringLiteral("#FF9500") },
+        { QStringLiteral("黄色"), QStringLiteral("Yellow"), QStringLiteral("#FFCC00") },
+        { QStringLiteral("绿色"), QStringLiteral("Green"), QStringLiteral("#34C759") },
+        { QStringLiteral("薄荷绿"), QStringLiteral("Mint"), QStringLiteral("#00C7BE") },
+        { QStringLiteral("青色"), QStringLiteral("Cyan"), QStringLiteral("#30B0C7") },
+        { QStringLiteral("蓝色"), QStringLiteral("Blue"), QStringLiteral("#007AFF") },
+        { QStringLiteral("靛蓝"), QStringLiteral("Indigo"), QStringLiteral("#5856D6") },
+        { QStringLiteral("紫色"), QStringLiteral("Purple"), QStringLiteral("#AF52DE") },
+        { QStringLiteral("粉色"), QStringLiteral("Pink"), QStringLiteral("#FF2D55") },
+        { QStringLiteral("棕色"), QStringLiteral("Brown"), QStringLiteral("#A2845E") },
     };
     return s_palette;
 }

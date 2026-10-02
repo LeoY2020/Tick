@@ -26,6 +26,9 @@
 "English" = "English";
 "日本語" = "Japanese";
 "한국어" = "Korean";
+"Français" = "French";
+"Deutsch" = "German";
+"Español" = "Spanish";
 "iCloud 同步" = "iCloud Sync";
 "数据备份" = "Data Backup";
 "备份成功" = "Backup Successful";
@@ -119,3 +122,99 @@
 "共 %lld 项" = "%lld items";
 "总进度：已完成 %lld，共 %lld 项" = "Overall progress: %lld completed, %lld items";
 "当前进度 %lld" = "Current progress: %lld";
+
+/* Added: delete confirmation / notifications / accessibility */
+"删除任务「%@」？其所有子任务将一并删除。" = "Delete task “%@”? All of its subtasks will also be deleted.";
+"剩余时间：%@" = "Time left: %@";
+"状态由子任务计算：" = "Status computed from subtasks: ";
+"切换状态，当前" = "Toggle status, currently ";
+"进度 %lld / %lld" = "Progress %lld / %lld";
+"每%@提醒" = "Reminder every %@";
+"删除目标「%@」？其下所有任务将被一并删除。" = "Delete goal “%@”? All tasks under it will also be deleted.";
+"目标%@" = "Goal %@";
+"目标：%@" = "Goal: %@";
+
+/* Added: AI chat */
+"AI 对话" = "AI Chat";
+"关闭" = "Close";
+"新建聊天" = "New chat";
+"AI 历史" = "AI History";
+"错误" = "Error";
+"好" = "OK";
+"正在思考…" = "Thinking…";
+"移除附件" = "Remove attachment";
+"上传附件" = "Upload attachment";
+"和 AI 说点什么…" = "Say something to the AI…";
+"发送" = "Send";
+"对话" = "Chat";
+"%lld 条消息" = "%lld messages";
+"已为「%@」生成 %lld 个任务" = "Generated %lld tasks for “%@”";
+
+/* Added: settings - AI model */
+"使用模型" = "Model";
+"AI 模型" = "AI Model";
+"导入文档自动生成任务清单时使用所选模型。Apple Intelligence 为设备端模型，无需 API Key。" = "The selected model is used when importing a document to auto-generate a task list. Apple Intelligence is an on-device model and needs no API Key.";
+"接口地址（Base URL）" = "Endpoint (Base URL)";
+"模型名" = "Model name";
+"API Key" = "API Key";
+"未配置密钥，导入文档时将提示配置" = "No key configured. You will be prompted to configure one when importing a document.";
+"自定义模型" = "Custom model";
+"API Key 仅保存在本机钥匙串中，卸载重装后仍保留。" = "The API Key is stored only in this device's keychain and is retained after reinstalling.";
+"iCloud" = "iCloud";
+"千问" = "Qwen";
+"元宝" = "Yuanbao";
+"文心" = "ERNIE";
+"阶跃星辰" = "StepFun";
+
+/* Added: date / automatic color / override dates */
+"精确到小时" = "Precise to hour";
+"开始时间精确到小时" = "Start time precise to hour";
+"截止时间精确到小时" = "End time precise to hour";
+"自动颜色" = "Automatic color";
+"覆盖开始日期" = "Override start date";
+"覆盖截止日期" = "Override end date";
+
+/* Added: icon names */
+"旗帜" = "Flag";
+"星标" = "Star";
+"爱心" = "Heart";
+"书本" = "Book";
+"公文包" = "Briefcase";
+"跑步" = "Running";
+"健身" = "Fitness";
+"铅笔" = "Pencil";
+"画笔" = "Paintbrush";
+"音乐" = "Music";
+"相机" = "Camera";
+"飞机" = "Airplane";
+"汽车" = "Car";
+"购物" = "Shopping";
+"银行卡" = "Bank card";
+"礼物" = "Gift";
+"学业" = "Study";
+"自然" = "Nature";
+"月亮" = "Moon";
+"太阳" = "Sun";
+"时钟" = "Clock";
+"日程" = "Calendar";
+"家庭" = "Family";
+"电话" = "Phone";
+"邮件" = "Mail";
+"游戏" = "Game";
+"酒杯" = "Wine glass";
+"咖啡" = "Coffee";
+"餐饮" = "Dining";
+
+/* Added: palette names */
+"黑色" = "Black";
+"红色" = "Red";
+"橙色" = "Orange";
+"黄色" = "Yellow";
+"绿色" = "Green";
+"薄荷绿" = "Mint green";
+"青色" = "Teal";
+"蓝色" = "Blue";
+"靛蓝" = "Indigo";
+"紫色" = "Purple";
+"粉色" = "Pink";
+"棕色" = "Brown";

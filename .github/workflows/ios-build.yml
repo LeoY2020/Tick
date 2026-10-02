@@ -78,14 +78,14 @@ jobs:
           # （CI 无开发者证书，ipa 未签名；安装前需经 AltStore/Sideloadly/爱思助手等工具自签）
           mkdir -p build/Payload
           cp -R "build/Tick.xcarchive/Products/Applications/Tick.app" build/Payload/
-          (cd build && zip -qry "Tick-unsigned.ipa" Payload)
-          ls -lh build/Tick-unsigned.ipa
+          (cd build && zip -qry "Tick-1.0.0-beta1-unsigned.ipa" Payload)
+          ls -lh build/Tick-1.0.0-beta1-unsigned.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: Tick-unsigned-ipa-${{ github.run_number }}
-          path: build/Tick-unsigned.ipa
+          name: Tick-1.0.0-beta1-unsigned-ipa-${{ github.run_number }}
+          path: build/Tick-1.0.0-beta1-unsigned.ipa
           retention-days: 30
 
       - name: Upload test results

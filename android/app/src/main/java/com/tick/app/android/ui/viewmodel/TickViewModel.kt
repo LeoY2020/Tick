@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tick.app.android.ai.AIService
+import com.tick.app.android.ai.AIServiceError
 import com.tick.app.android.ai.ChatReply
 import com.tick.app.android.ai.TaskNode
 import com.tick.app.android.backup.DataBackupManager
@@ -30,6 +31,7 @@ import com.tick.app.android.model.status
 import com.tick.app.android.model.type
 import com.tick.app.android.notification.ReminderScheduler
 import com.tick.app.android.ui.theme.Skin
+import com.tick.app.android.ui.theme.Strings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,6 +44,21 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicLong
+
+/**
+ * 任务树快照（UI 订阅对象）。
+ *
+ * - [tasks]：当前目标的整棵任务树（含全部后代）。
+ * - [version]：任务树流内的自增序号，每次数据变更都不同。
+ *
+ * 为什么需要 version：StateFlow 与 Compose 的 State 都按 equals 去重，而
+ * [TaskItem] 是 data class，equals 只比较主构造参数、**不含内存子树 subtasks**。
+ * 于是"仅子任务发生变化"时，根任务列表会被判为相等而被丢弃，UI 不刷新
+ * （表现为子任务点了没反应，要等其它根任务变化才突然生效）。
+ * 带上自增 version 后，任何一次数据变更都会产生不相等的新快照，确保即时刷新。
+ */
+data class TaskTreeSnapshot(val version: Long, val tasks: List<TaskItem>)
 
 class TickViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -71,16 +88,32 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
         gs.firstOrNull { it.id == id }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    @Suppress("UNCHECKED_CAST")
-    val goalTree: StateFlow<List<TaskItem>> = selectedGoalId
+    /** 数据写入版本号：任何任务/目标的增删改都 +1，使 goalTree 重新查询，
+     *  避免 Room Flow 在个别动静下延迟触发导致 UI 不即时刷新。 */
+    private val dataRevision = MutableStateFlow(0L)
+
+    /** 任务树快照的自增序号：保证每次数据变更都产生"不相等"的快照（见 [TaskTreeSnapshot]）。 */
+    private val treeVersion = AtomicLong(0L)
+
+    val goalTree: StateFlow<TaskTreeSnapshot> = combine(selectedGoalId, dataRevision) { id, _ -> id }
         .flatMapLatest { id ->
-            if (id == null) kotlinx.coroutines.flow.flowOf(emptyList())
-            else repo.observeGoalTree(id)
+            if (id == null) flowOf(TaskTreeSnapshot(treeVersion.incrementAndGet(), emptyList()))
+            else repo.observeGoalTree(id).map { tree ->
+                TaskTreeSnapshot(treeVersion.incrementAndGet(), tree)
+            }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            TaskTreeSnapshot(0L, emptyList())
+        )
 
     /** 展开/折叠状态集合（按任务 id） */
     val expandedTasks: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
+
+    private fun bumpRevision() {
+        dataRevision.value = dataRevision.value + 1
+    }
 
     fun selectGoal(id: String) {
         if (id.isEmpty()) return
@@ -188,6 +221,7 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
                 sortOrder = parentTaskId?.let { 0 } ?: sort
             )
             repo.addTask(task)
+            bumpRevision()
         }
     }
 
@@ -199,7 +233,9 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
     fun updateTask(task: TaskItem) {
         viewModelScope.launch(Dispatchers.IO) {
             repo.updateTask(task)
-            rescheduleTask(task)
+            // 先刷新 UI：提醒调度是可选副作用，失败/慢不能阻塞状态即时更新
+            bumpRevision()
+            try { rescheduleTask(task) } catch (_: Exception) {}
         }
     }
 
@@ -232,7 +268,8 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
                 customWeekdaysRaw = customWeekdaysRaw
             )
             repo.updateTask(saved)
-            rescheduleTask(saved)
+            bumpRevision()
+            runCatching { rescheduleTask(saved) }
         }
     }
 
@@ -240,15 +277,17 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             ReminderScheduler.cancel(context, taskId)
             repo.deleteTask(taskId)
+            bumpRevision()
         }
     }
 
+    /** 单项任务状态四态循环：未完成 → 完成 → 半完成 → 删除 → 未完成 */
     fun toggleSingleStatus(task: TaskItem) {
         if (task.type == TaskType.PROGRESS) return
         val next = when (task.status) {
             TaskStatus.NOT_DONE -> TaskStatus.DONE
             TaskStatus.DONE -> TaskStatus.HALF_DONE
-            TaskStatus.HALF_DONE -> TaskStatus.NOT_DONE
+            TaskStatus.HALF_DONE -> TaskStatus.DELETED
             TaskStatus.DELETED -> TaskStatus.NOT_DONE
         }
         updateTask(task.copy(statusRaw = next.raw))
@@ -262,7 +301,10 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun rescheduleTask(task: TaskItem) {
         val goal = goalNameOf(task)
-        ReminderScheduler.schedule(context, task, goal?.first ?: task.goalId.orEmpty(), goal?.second ?: "")
+        ReminderScheduler.schedule(
+            context, task, goal?.first ?: task.goalId.orEmpty(), goal?.second ?: "",
+            settings.value.language.raw
+        )
     }
 
     private suspend fun goalNameOf(task: TaskItem): Pair<String?, String>? {
@@ -362,6 +404,7 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun sendMessage(sessionId: String, text: String, attachmentUri: Uri?) {
         viewModelScope.launch(Dispatchers.IO) {
+            val strings = Strings.of(settings.value.language)
             try {
                 isGenerating.value = true
                 aiError.value = null
@@ -374,8 +417,8 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
                 if (attachmentUri != null) {
                     try {
                         attachmentText = DocumentTextExtractor.extractText(context, attachmentUri)
-                    } catch (e: Exception) {
-                        aiError.value = e.message ?: "附件解析失败"
+                    } catch (_: Exception) {
+                        aiError.value = strings.attachParseFailed
                     }
                 }
 
@@ -400,9 +443,9 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
                     if (reply.message.isNotBlank()) append(reply.message)
                     if (attachmentText != null) {
                         if (this.isNotEmpty()) append("\n\n")
-                        append("【附件】${attachmentText.take(120)}${if (attachmentText.length > 120) "…" else ""}")
+                        append("${strings.attachmentPrefix}${attachmentText.take(120)}${if (attachmentText.length > 120) "…" else ""}")
                     }
-                }.ifEmpty { "收到" }
+                }.ifEmpty { strings.received }
 
                 // 生成任务 → 写入当前选中目标
                 if (reply.shouldGenerateTasks && reply.tasks.isNotEmpty()) {
@@ -415,11 +458,21 @@ class TickViewModel(application: Application) : AndroidViewModel(application) {
                 val updated = session.copy(messagesJson = ChatMessageCodec.encode(messages + AIChatMessage(role = "assistant", text = assistantText)))
                 repo.updateSession(updated)
             } catch (e: Exception) {
-                aiError.value = e.message ?: "请求失败"
+                aiError.value = localizeAiError(e, strings)
             } finally {
                 isGenerating.value = false
             }
         }
+    }
+
+    /** 把 AI 服务错误映射为当前语言的提示文案 */
+    private fun localizeAiError(e: Throwable, strings: Strings): String = when (e) {
+        AIServiceError.MissingAPIKey -> strings.aiErrMissingKey
+        AIServiceError.MissingConfiguration -> strings.aiErrMissingConfig
+        is AIServiceError.Network -> strings.aiErrNetwork.replace("{0}", e.detail)
+        is AIServiceError.BadResponse -> strings.aiErrBadResponse.replace("{0}", e.detail)
+        AIServiceError.EmptyResult -> strings.aiErrEmptyResult
+        else -> e.message ?: strings.requestFailed
     }
 
     private suspend fun writeTaskTree(goalId: String, nodes: List<TaskNode>) {

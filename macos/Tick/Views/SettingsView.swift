@@ -20,6 +20,7 @@ struct SettingsView: View {
                 iCloudSection
                 backupSection
                 reminderSection
+                versionSection
             }
             .navigationTitle("设置")
             .toolbar {
@@ -57,7 +58,7 @@ struct SettingsView: View {
     private var languageSection: some View {
         Section("语言") {
             Picker("语言", selection: $settings.language) {
-                ForEach(LanguageSetting.allCases) { option in
+                ForEach(LanguageSetting.availableLanguages) { option in
                     Text(LocalizedStringKey(option.displayName)).tag(option)
                 }
             }
@@ -74,7 +75,7 @@ struct SettingsView: View {
         Section {
             Picker("使用模型", selection: $settings.selectedModel) {
                 ForEach(AIModel.allCases) { model in
-                    Text(model.displayName).tag(model)
+                    Text(LocalizedStringKey(model.displayName)).tag(model)
                 }
             }
             .pickerStyle(.menu)
@@ -98,14 +99,18 @@ struct SettingsView: View {
                 SecureField("API Key", text: apiKeyBinding)
                     
                     .autocorrectionDisabled()
-                    .accessibilityLabel("\(settings.selectedModel.displayName) API Key")
+                    .accessibilityLabel(Text(LocalizedStringKey(settings.selectedModel.displayName)) + Text(verbatim: " API Key"))
                 if apiKeyText.isEmpty {
                     Text("未配置密钥，导入文档时将提示配置")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             } header: {
-                Text(settings.selectedModel == .custom ? "自定义模型" : "API Key")
+                if settings.selectedModel == .custom {
+                    Text("自定义模型")
+                } else {
+                    Text("API Key")
+                }
             } footer: {
                 Text("API Key 仅保存在本机钥匙串中，卸载重装后仍保留。")
             }
@@ -218,6 +223,18 @@ struct SettingsView: View {
                 Label("已授权", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
             }
+        }
+    }
+
+    // MARK: - 版本
+
+    /// 版本号（语言无关的纯文本，便于分辨安装包新旧；与 Xcode 工程的 MARKETING_VERSION 保持一致）
+    private var versionSection: some View {
+        Section {
+            Text("v1.0.0 beta1")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 

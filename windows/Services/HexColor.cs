@@ -10,21 +10,21 @@ public static class HexColor
     /// <summary>自动颜色标识：深色模式解析为白色、浅色模式解析为黑色</summary>
     public const string AutoHex = "auto";
 
-    /// <summary>预设色板（12 色）</summary>
-    public static readonly (string Name, string Hex)[] Palette =
+    /// <summary>预设色板（12 色；Name 为本地化键，由调用方经 <see cref="Localization.Tr"/> 解析）</summary>
+    public static readonly (string Key, string Hex)[] Palette =
     {
-        ("黑色", "#000000"),
-        ("红色", "#FF3B30"),
-        ("橙色", "#FF9500"),
-        ("黄色", "#FFCC00"),
-        ("绿色", "#34C759"),
-        ("薄荷绿", "#00C7BE"),
-        ("青色", "#30B0C7"),
-        ("蓝色", "#007AFF"),
-        ("靛蓝", "#5856D6"),
-        ("紫色", "#AF52DE"),
-        ("粉色", "#FF2D55"),
-        ("棕色", "#A2845E"),
+        ("color.black", "#000000"),
+        ("color.red", "#FF3B30"),
+        ("color.orange", "#FF9500"),
+        ("color.yellow", "#FFCC00"),
+        ("color.green", "#34C759"),
+        ("color.mint", "#00C7BE"),
+        ("color.teal", "#30B0C7"),
+        ("color.blue", "#007AFF"),
+        ("color.indigo", "#5856D6"),
+        ("color.purple", "#AF52DE"),
+        ("color.pink", "#FF2D55"),
+        ("color.brown", "#A2845E"),
     };
 
     /// <summary>解析为最终颜色："auto" 按色彩方案适配（深色白 / 浅色黑），其余按 HEX 解析</summary>

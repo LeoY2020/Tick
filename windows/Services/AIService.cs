@@ -54,15 +54,15 @@ public sealed class AIService
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(apiKey))
-            throw new AIServiceException("请先在 设置 → AI 模型 中填写该模型的 API Key");
+            throw new AIServiceException(Localization.Tr("ai.error.noApiKey"));
 
         var (url, id) = ResolveEndpoint(model, baseUrl, modelId);
         if (model == AIModel.Custom && string.IsNullOrWhiteSpace(url))
-            throw new AIServiceException("自定义模型需要在设置中填写 Base URL");
+            throw new AIServiceException(Localization.Tr("ai.error.customBaseUrl"));
 
         var merged = MergeHistory(history, attachmentText);
         if (merged.Count == 0)
-            throw new AIServiceException("请先输入内容");
+            throw new AIServiceException(Localization.Tr("ai.error.emptyInput"));
 
         var raw = await RequestTextAsync(url, id, apiKey, merged, cancellationToken);
         return ParseChatReply(raw);
@@ -96,7 +96,7 @@ public sealed class AIService
         List<ChatMessage> history, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(url))
-            throw new AIServiceException("模型服务地址无效");
+            throw new AIServiceException(Localization.Tr("ai.error.invalidUrl"));
 
         var messages = new List<object> { new { role = "system", content = ChatSystemPrompt } };
         foreach (var m in history)
@@ -112,7 +112,7 @@ public sealed class AIService
         using var response = await Http.SendAsync(request, cancellationToken);
         string content = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
-            throw new AIServiceException($"模型服务返回异常：HTTP {(int)response.StatusCode}");
+            throw new AIServiceException(string.Format(Localization.Tr("ai.error.httpError"), (int)response.StatusCode));
 
         return ParseCloudResponse(content);
     }
@@ -133,7 +133,7 @@ public sealed class AIService
                 return text.GetString() ?? "";
             }
         }
-        throw new AIServiceException("模型服务返回了异常响应");
+        throw new AIServiceException(Localization.Tr("ai.error.badResponse"));
     }
 
     // ---- 提示词注入 / 解析 ----
@@ -166,7 +166,7 @@ public sealed class AIService
                 {
                     ShouldGenerateTasks = true,
                     Tasks = nodes,
-                    Message = string.IsNullOrEmpty(message) ? $"已为你生成 {nodes.Count} 个任务。" : message,
+                    Message = string.IsNullOrEmpty(message) ? string.Format(Localization.Tr("ai.generatedCount"), nodes.Count) : message,
                 };
             }
             if (!string.IsNullOrEmpty(message))

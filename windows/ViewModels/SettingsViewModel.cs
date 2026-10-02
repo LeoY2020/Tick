@@ -19,7 +19,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     {
         _settings = settings;
         SelectedColorScheme = settings.ColorScheme;
-        SelectedLanguage = settings.Language == "en" ? "en" : "zh";
+        SelectedLanguage = Languages.Contains(settings.Language) ? settings.Language : "zh";
         SelectedModel = settings.AiModel;
         ApiKey = settings.ApiKey;
         BaseUrl = settings.BaseUrl;
@@ -41,7 +41,8 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     public IReadOnlyList<ColorSchemeSetting> ColorSchemes { get; } =
         new[] { ColorSchemeSetting.System, ColorSchemeSetting.Light, ColorSchemeSetting.Dark };
 
-    public IReadOnlyList<string> Languages { get; } = new[] { "zh", "en" };
+    public IReadOnlyList<string> Languages { get; } =
+        new[] { "system", "zh", "zh-Hant", "ja", "ko", "en", "fr", "de", "es" };
 
     public IReadOnlyList<AIModel> Models { get; } = new[]
     {

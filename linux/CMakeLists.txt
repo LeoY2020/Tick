@@ -41,4 +41,29 @@ add_executable(tick WIN32
 target_include_directories(tick PRIVATE src)
 target_link_libraries(tick PRIVATE Qt6::Widgets Qt6::Network Qt6::Sql)
 
+# ---- 安装规则 ----
 install(TARGETS tick RUNTIME DESTINATION bin)
+install(FILES resources/app_icon.png
+        DESTINATION share/pixmaps
+        RENAME tick.png)
+install(FILES packaging/tick.desktop
+        DESTINATION share/applications)
+
+# ---- 安装包（deb / rpm / 通用 tar.gz）----
+set(CPACK_PACKAGE_NAME "tick")
+# 版本号：1.0.0 beta1（安装包元数据用数值 1.0.0，beta 标识体现在包名与设置页显示）
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_PACKAGE_VENDOR "Tick")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Tick todo application")
+set(CPACK_PACKAGE_CONTACT "Tick Developers <dev@tick.local>")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Tick Developers <dev@tick.local>")
+set(CPACK_PACKAGE_EXECUTABLES "tick" "Tick")
+set(CPACK_CREATE_DESKTOP_LINKS "tick")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "qt6-base")
+set(CPACK_RPM_PACKAGE_REQUIRES "qt6-qtbase")
+set(CPACK_RPM_PACKAGE_GROUP "Applications/Productivity")
+set(CPACK_RPM_PACKAGE_DESCRIPTION "Tick todo application")
+set(CPACK_STRIP_FILES "bin/tick")
+set(CPACK_GENERATOR "DEB;RPM;TGZ")
+include(CPack)

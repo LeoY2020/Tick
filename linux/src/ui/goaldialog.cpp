@@ -27,7 +27,7 @@ GoalDialog::GoalDialog(QWidget* parent)
     colorCombo_->addItem(TR("跟随系统", "Auto"), QStringLiteral("auto"));
     const auto& palette = goalColorPalette();
     for (const auto& c : palette) {
-        colorCombo_->addItem(c.name, c.hex);
+        colorCombo_->addItem(Tr::t(c.name, c.nameEn), c.hex);
     }
 
     iconEdit_ = new QLineEdit(this);

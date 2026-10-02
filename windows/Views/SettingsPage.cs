@@ -34,6 +34,7 @@ public sealed class SettingsPage : Page
         panel.Children.Add(BuildAiSection());
         panel.Children.Add(BuildDataSection());
         panel.Children.Add(BuildSaveButton());
+        panel.Children.Add(BuildVersionFooter());
         return new ScrollViewer { Content = panel };
     }
 
@@ -67,8 +68,21 @@ public sealed class SettingsPage : Page
         return panel;
     }
 
-    private static string LangLabel(string lang)
-        => lang == "en" ? Localization.Tr("lang.en") : Localization.Tr("lang.zh");
+    private static string LangLabel(string lang) => Localization.Tr(LangKey(lang));
+
+    private static string LangKey(string lang) => lang switch
+    {
+        "system" => "lang.system",
+        "zh" => "lang.zh",
+        "zh-Hant" => "lang.zhHant",
+        "ja" => "lang.ja",
+        "ko" => "lang.ko",
+        "en" => "lang.en",
+        "fr" => "lang.fr",
+        "de" => "lang.de",
+        "es" => "lang.es",
+        _ => "lang.zh",
+    };
 
     // ---- AI 模型 ----
 
@@ -255,6 +269,17 @@ public sealed class SettingsPage : Page
             await Dialogs.ShowErrorAsync(App.MainWindow, Localization.Tr("common.error"), ex.Message);
         }
     }
+
+    // ---- 版本 ----
+
+    /// <summary>版本号（语言无关的纯文本，便于分辨安装包新旧；须与 Tick.csproj 的 Version 保持一致）。</summary>
+    private static UIElement BuildVersionFooter() => new TextBlock
+    {
+        Text = "v1.0.0 beta1",
+        FontSize = 12,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 142, 142, 147)),
+    };
 
     // ---- 辅助 ----
 

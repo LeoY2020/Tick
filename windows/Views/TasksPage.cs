@@ -81,7 +81,6 @@ public sealed class TasksPage : Page, ITaskRowHost
         panel.Children.Add(BuildProgress(goal));
         panel.Children.Add(BuildTaskTree(goal));
         panel.Children.Add(BuildAddButton());
-        panel.Children.Add(BuildNewGoalButton());
         return new ScrollViewer { Content = panel };
     }
 
@@ -182,7 +181,7 @@ public sealed class TasksPage : Page, ITaskRowHost
 
             string text = DocumentTextExtractor.ExtractText(file.Path);
 
-            var history = new List<ChatMessage> { new(ChatRole.User, "请根据附件内容生成任务清单") };
+            var history = new List<ChatMessage> { new(ChatRole.User, Localization.Tr("tasks.aiImportPrompt")) };
             var reply = await AppServices.AI.ChatReplyAsync(
                 history,
                 text,
@@ -257,7 +256,12 @@ public sealed class TasksPage : Page, ITaskRowHost
 
     private UIElement BuildTaskTree(Goal goal)
     {
-        var tree = new TreeView();
+        // 必须显式指定行模板：TreeView 默认行模板只渲染节点 Content 的字符串形式，
+        // 不指定的话 TaskNodeView（复选框 / 圆点 / 按钮）不会显示。模板见 App.xaml 的 TaskTreeRowTemplate。
+        var tree = new TreeView
+        {
+            ItemTemplate = (DataTemplate)Application.Current.Resources["TaskTreeRowTemplate"],
+        };
         foreach (var task in goal.Tasks)
             tree.RootNodes.Add(BuildNode(task, 0));
 
@@ -298,7 +302,7 @@ public sealed class TasksPage : Page, ITaskRowHost
         return btn;
     }
 
-    /// <summary>「新建目标」按钮：置于任务列表最底部（及空状态），调用主窗口完成创建与跳转</summary>
+    /// <summary>「新建目标」按钮（空状态入口）；有目标时位于侧栏顶部的 PaneHeader。</summary>
     private static Button BuildNewGoalButton()
     {
         var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Center };

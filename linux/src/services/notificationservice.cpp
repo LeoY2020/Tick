@@ -7,6 +7,8 @@
 #include <QPixmap>
 #include <QStringList>
 
+#include "ui/translation.h"
+
 namespace tick {
 
 namespace {
@@ -81,7 +83,7 @@ void NotificationService::collect(const std::shared_ptr<Goal>& goal, const QStri
         Reminder r;
         r.id = QString::fromStdString(t->id);
         r.title = t->name;
-        r.body = QStringLiteral("目标：%1").arg(goalName);
+        r.body = TR("目标：%1", "Goal: %1").arg(goalName);
         r.nextFire = *t->reminderDate;
         r.rule = t->repeatRule;
         r.weekdays = t->effectiveWeekdays();

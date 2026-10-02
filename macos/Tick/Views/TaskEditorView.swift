@@ -172,7 +172,7 @@ struct TaskEditorView: View {
                 .accessibilityLabel("任务名称")
             Picker("类型", selection: $task.type) {
                 ForEach(TaskType.allCases, id: \.self) { type in
-                    Text(type.displayName).tag(type)
+                    Text(LocalizedStringKey(type.displayName)).tag(type)
                 }
             }
             .pickerStyle(.segmented)
@@ -185,7 +185,7 @@ struct TaskEditorView: View {
         Section {
             Picker("状态", selection: $task.status) {
                 ForEach(TaskStatus.allCases, id: \.self) { status in
-                    Text(status.displayName).tag(status)
+                    Text(LocalizedStringKey(status.displayName)).tag(status)
                 }
             }
             .pickerStyle(.segmented)
@@ -253,7 +253,7 @@ struct TaskEditorView: View {
                 Picker("重复规则", selection: $repeatRule) {
                     Text("不重复").tag(RepeatRule?.none)
                     ForEach(RepeatRule.allCases.filter { $0 != .custom }, id: \.self) { rule in
-                        Text(rule.displayName).tag(RepeatRule?.some(rule))
+                        Text(LocalizedStringKey(rule.displayName)).tag(RepeatRule?.some(rule))
                     }
                     Text("自定义").tag(RepeatRule?.some(.custom))
                 }
@@ -289,7 +289,7 @@ struct TaskEditorView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("每\(weekdayLabel(weekday))提醒")
+                    .accessibilityLabel(Text("每\(weekdayLabel(weekday))提醒"))
                     .accessibilityAddTraits(isSelected ? [.isSelected] : [])
                 }
             }
@@ -340,14 +340,14 @@ struct TaskEditorView: View {
                     Picker("图标", selection: iconSelection) {
                         Text("无图标").tag("")
                         ForEach(Self.iconOptions) { icon in
-                            Label(icon.name, systemImage: icon.symbol).tag(icon.symbol)
+                            Label(LocalizedStringKey(icon.name), systemImage: icon.symbol).tag(icon.symbol)
                         }
                     }
                     .pickerStyle(.inline)
                 } label: {
                     LabeledContent("图标") {
                         if let symbol = task.iconSystemName {
-                            Label(iconDisplayName(symbol), systemImage: symbol)
+                            Label(LocalizedStringKey(iconDisplayName(symbol)), systemImage: symbol)
                                 .foregroundStyle(.secondary)
                         } else {
                             Text("无图标").foregroundStyle(.secondary)
@@ -407,7 +407,7 @@ struct TaskEditorView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(name)颜色")
+        .accessibilityLabel(Text(LocalizedStringKey(name)) + Text("颜色"))
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 

@@ -24,9 +24,10 @@ object ReminderScheduler {
     const val EXTRA_REPEAT_RULE = "extra_repeat_rule"
     const val EXTRA_CUSTOM_WEEKDAYS = "extra_custom_weekdays"
     const val EXTRA_REMINDER_DATE = "extra_reminder_date"
+    const val EXTRA_LANGUAGE = "extra_language"
 
     /** 为任务注册提醒：先取消旧请求，再按重复规则设置闹钟 */
-    fun schedule(context: Context, task: TaskItem, goalId: String, goalName: String) {
+    fun schedule(context: Context, task: TaskItem, goalId: String, goalName: String, languageRaw: String) {
         cancel(context, task.id)
 
         val reminderDate = task.reminderDate ?: return
@@ -44,6 +45,7 @@ object ReminderScheduler {
                 reminderDate = reminderDate,
                 rule = rule,
                 weekdays = weekdays,
+                languageRaw = languageRaw,
                 fireTime = fireTime
             )
         }
@@ -58,11 +60,12 @@ object ReminderScheduler {
         goalName: String,
         reminderDate: Long,
         rule: RepeatRule,
-        weekdays: List<Int>
+        weekdays: List<Int>,
+        languageRaw: String
     ) {
         val fireTimes = nextFireTimes(rule, reminderDate, weekdays, System.currentTimeMillis())
         for (fireTime in fireTimes) {
-            setAlarm(context, taskId, goalId, taskName, goalName, reminderDate, rule, weekdays, fireTime)
+            setAlarm(context, taskId, goalId, taskName, goalName, reminderDate, rule, weekdays, languageRaw, fireTime)
         }
     }
 
@@ -150,6 +153,7 @@ object ReminderScheduler {
         reminderDate: Long,
         rule: RepeatRule,
         weekdays: List<Int>,
+        languageRaw: String,
         fireTime: Long
     ) {
         val alarm = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
@@ -162,7 +166,7 @@ object ReminderScheduler {
             ""
         }
 
-        val extras = BundleBuilder(taskId, goalId, taskName, goalName, reminderDate, rule, weekdays)
+        val extras = BundleBuilder(taskId, goalId, taskName, goalName, reminderDate, rule, weekdays, languageRaw)
         val pi = alarmPendingIntent(context, taskId, suffix, extras)
         try {
             alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, fireTime, pi)
@@ -196,7 +200,8 @@ object ReminderScheduler {
         private val goalName: String,
         private val reminderDate: Long,
         private val rule: RepeatRule,
-        private val weekdays: List<Int>
+        private val weekdays: List<Int>,
+        private val languageRaw: String
     ) {
         fun applyTo(intent: Intent) {
             intent.putExtra(EXTRA_TASK_ID, taskId)
@@ -206,6 +211,7 @@ object ReminderScheduler {
             intent.putExtra(EXTRA_REMINDER_DATE, reminderDate)
             intent.putExtra(EXTRA_REPEAT_RULE, rule.raw)
             intent.putExtra(EXTRA_CUSTOM_WEEKDAYS, weekdays.joinToString(","))
+            intent.putExtra(EXTRA_LANGUAGE, languageRaw)
         }
     }
 }

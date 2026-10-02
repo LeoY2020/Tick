@@ -36,6 +36,8 @@ public sealed class TaskNodeView : UserControl
             ColumnSpacing = 8,
             Padding = new Thickness(4, 2, 4, 2),
         };
+        // 首列：复选框（仅单任务）；随后颜色圆点、名称、右侧交互区
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -49,6 +51,14 @@ public sealed class TaskNodeView : UserControl
             e.Handled = true;
         };
 
+        // 复选框：勾选 = 完成，取消 = 未完成。进度任务不显示；被接管任务只读。
+        if (task.Type == TaskType.Single)
+        {
+            var checkBox = BuildCheckBox(task);
+            Grid.SetColumn(checkBox, 0);
+            grid.Children.Add(checkBox);
+        }
+
         // 颜色圆点（继承链解析）
         var dot = new Microsoft.UI.Xaml.Shapes.Ellipse
         {
@@ -57,20 +67,27 @@ public sealed class TaskNodeView : UserControl
             Fill = HexColor.Brush(ProgressEngine.EffectiveColor(task), isDark: false),
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Grid.SetColumn(dot, 0);
+        Grid.SetColumn(dot, 1);
 
-        // 名称
+        // 名称（删除态：删除线 + 降低不透明度）
         var name = new TextBlock
         {
             Text = task.Name,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Grid.SetColumn(name, 1);
+        if (task.Type == TaskType.Single && DisplayStatus(task) == TaskStatus.Deleted)
+        {
+            // 删除态：名称置为删除色并降低不透明度。
+            // 不使用 TextDecorations：该枚举在 Microsoft.WinUI 与 Windows SDK 中重复定义，直接引用会触发 CS0433 编译冲突。
+            name.Opacity = 0.5;
+            name.Foreground = StatusBrush(TaskStatus.Deleted);
+        }
+        Grid.SetColumn(name, 2);
 
         // 右侧：状态 / 进度（接管则只读）+ 菜单
         var right = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
-        Grid.SetColumn(right, 2);
+        Grid.SetColumn(right, 3);
         FillInteractionArea(right, task);
 
         grid.Children.Add(dot);
@@ -78,6 +95,111 @@ public sealed class TaskNodeView : UserControl
         grid.Children.Add(right);
         return grid;
     }
+
+    /// <summary>行首状态复选框：未完成=空心；半完成=填充任务色带白色横线；完成=填充任务色带白色对勾；删除=红色垃圾桶；点击循环 未完成→已完成→半完成→删除→未完成。有子任务时由子任务折算、只读。</summary>
+    private Button BuildCheckBox(TaskItem task)
+    {
+        bool takenOver = task.HasSubtasks;
+        TaskStatus status = DisplayStatus(task);
+
+        var box = new Border
+        {
+            Width = 20,
+            Height = 20,
+            CornerRadius = new CornerRadius(5),
+            BorderThickness = new Thickness(2),
+            BorderBrush = status == TaskStatus.Deleted ? StatusBrush(TaskStatus.Deleted) : StatusBoxBorderBrush(),
+            Background = StatusBoxFillBrush(status, task),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        // 完成：白色对勾；半完成：白色横线；删除：红色垃圾桶；未完成：留空
+        switch (status)
+        {
+            case TaskStatus.Done:
+                box.Child = new TextBlock
+                {
+                    Text = "\uE73E",
+                    FontFamily = new FontFamily("Segoe Fluent Icons"),
+                    FontSize = 12,
+                    Foreground = WhiteBrush,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                break;
+            case TaskStatus.HalfDone:
+                box.Child = new Microsoft.UI.Xaml.Shapes.Rectangle
+                {
+                    Width = 11,
+                    Height = 3,
+                    RadiusX = 1.5,
+                    RadiusY = 1.5,
+                    Fill = WhiteBrush,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                break;
+            case TaskStatus.Deleted:
+                box.Child = new FontIcon
+                {
+                    Glyph = "\uE74D",
+                    FontFamily = new FontFamily("Segoe Fluent Icons"),
+                    FontSize = 11,
+                    Foreground = WhiteBrush,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                break;
+        }
+
+        var btn = new Button
+        {
+            Content = box,
+            Background = TransparentBrush,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
+            MinWidth = 0,
+            MinHeight = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            IsEnabled = !takenOver,
+        };
+        if (takenOver)
+            ToolTipService.SetToolTip(btn, Localization.Tr("task.takenOver"));
+
+        btn.Click += (_, _) =>
+        {
+            if (takenOver)
+                return;
+            TaskStatus next = status switch
+            {
+                TaskStatus.NotDone => TaskStatus.Done,
+                TaskStatus.Done => TaskStatus.HalfDone,
+                TaskStatus.HalfDone => TaskStatus.Deleted,
+                _ => TaskStatus.NotDone,
+            };
+            _host.RequestSetStatus(task, next);
+        };
+        return btn;
+    }
+
+    /// <summary>行展示状态：被接管（有子任务）时由子任务折算，否则用手动状态。</summary>
+    private static TaskStatus DisplayStatus(TaskItem task)
+        => task.HasSubtasks ? ProgressEngine.EffectiveStatus(task) : task.Status;
+
+    private static SolidColorBrush StatusBoxBorderBrush()
+        => (SolidColorBrush?)Application.Current.Resources["StatusNotDoneBrush"] ?? NeutralBrush;
+
+    private static SolidColorBrush StatusBoxFillBrush(TaskStatus status, TaskItem task)
+        => status switch
+        {
+            TaskStatus.NotDone => TransparentBrush,
+            TaskStatus.Deleted => StatusBrush(TaskStatus.Deleted),
+            _ => HexColor.Brush(ProgressEngine.EffectiveColor(task), isDark: false),
+        };
+
+    private static readonly SolidColorBrush WhiteBrush = new(Windows.UI.Color.FromArgb(255, 255, 255, 255));
+    private static readonly SolidColorBrush TransparentBrush = new(Windows.UI.Color.FromArgb(0, 0, 0, 0));
+    private static readonly SolidColorBrush NeutralBrush = new(Windows.UI.Color.FromArgb(180, 150, 150, 155));
 
     private void FillInteractionArea(StackPanel panel, TaskItem task)
     {
@@ -99,15 +221,7 @@ public sealed class TaskNodeView : UserControl
             }
             else
             {
-                var toggle = new Button
-                {
-                    Content = new TextBlock { Text = task.Status.ToDisplayName(), Foreground = StatusBrush(task.Status) },
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Padding = new Thickness(8, 2, 8, 2),
-                };
-                ToolTipService.SetToolTip(toggle, "切换完成");
-                toggle.Click += (_, _) => _host.RequestToggle(task);
-                panel.Children.Add(toggle);
+                // 完成状态由行首复选框控制，这里不再重复放置切换按钮。
             }
         }
         else // progress
@@ -139,6 +253,12 @@ public sealed class TaskNodeView : UserControl
             }
         }
 
+        // 删除（垃圾桶图标）
+        var del = new Button { Content = new FontIcon { Glyph = "\uE74D", FontSize = 14 }, VerticalAlignment = VerticalAlignment.Center, Padding = new Thickness(6, 2, 6, 2) };
+        ToolTipService.SetToolTip(del, Localization.Tr("tasks.delete"));
+        del.Click += (_, _) => _host.RequestDelete(task);
+        panel.Children.Add(del);
+
         // 菜单入口（「…」）使用其自身的 flyout，避免与整行右键共用一个 Flyout 导致重设 Target 冲突
         var menu = new Button { Content = new FontIcon { Glyph = "\uE712" }, VerticalAlignment = VerticalAlignment.Center };
         var menuFlyout = new MenuFlyout();
@@ -168,7 +288,7 @@ public sealed class TaskNodeView : UserControl
         {
             flyout.Items.Add(new MenuFlyoutSeparator());
             var setMy = new MenuFlyoutSubItem { Text = Localization.Tr("task.status") };
-            foreach (var s in new[] { TaskStatus.Done, TaskStatus.HalfDone, TaskStatus.NotDone, TaskStatus.Deleted })
+            foreach (var s in new[] { TaskStatus.NotDone, TaskStatus.Done, TaskStatus.HalfDone, TaskStatus.Deleted })
             {
                 var item = new MenuFlyoutItem { Text = s.ToDisplayName() };
                 item.Click += (_, _) => _host.RequestSetStatus(task, s);

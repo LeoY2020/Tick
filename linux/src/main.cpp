@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
 
     if (!tick::Database::instance().initialize()) {
         QMessageBox::critical(nullptr, QStringLiteral("Tick"),
-                              QStringLiteral("无法打开数据库：%1")
+                              TR("无法打开数据库：%1", "Cannot open database: %1")
                                   .arg(tick::Database::instance().errorString()));
         return 1;
     }

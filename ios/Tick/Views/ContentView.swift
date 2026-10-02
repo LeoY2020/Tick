@@ -8,6 +8,13 @@ final class ExpandedTaskState: ObservableObject {
     @Published var expandedIDs: Set<UUID> = []
 }
 
+/// 待删除任务状态（提升到稳定父级统一呈现确认弹窗，避免 List 行复用/刷新导致弹窗自行收回）
+@MainActor
+final class TaskDeletionCoordinator: ObservableObject {
+    /// 待确认删除的任务（非 nil 时呈现确认对话框）
+    @Published var taskToDelete: TaskItem?
+}
+
 /// 主界面：侧边栏（目标列表）+ 目标详情（总进度 + 任务列表 + 底部添加按钮）
 struct ContentView: View {
     @Environment(\.modelContext) private var context
@@ -17,6 +24,10 @@ struct ContentView: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .detailOnly
     @State private var showSettings = false
     @State private var showAddTask = false
+    /// 空态「添加目标」：新建目标表单
+    @State private var editingGoal: Goal?
+    /// 当前目标编辑表单是否为新建
+    @State private var editingIsNew = false
     /// AI 对话：聊天 + 可选附件 + 生成任务
     @State private var showAIChat = false
     /// 是否为窄窗口：尺寸类 compact（iPhone）或窗口宽度偏窄（iPad 台前调度窄窗）。
@@ -31,6 +42,8 @@ struct ContentView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @StateObject private var expandedState = ExpandedTaskState()
+    /// 待删除任务的统一呈现（稳定父级持有，供 List / 行共享）
+    @StateObject private var deletionCoordinator = TaskDeletionCoordinator()
     @ObservedObject private var notifications = NotificationService.shared
     @ObservedObject private var backup = DataBackupManager.shared
 
@@ -76,9 +89,16 @@ struct ContentView: View {
                     SettingsView(settings: SettingsStore.shared)
                 }
             }
+            // 空态新建目标表单：挂在稳定的 NavigationSplitView 层，
+            // 避免插入目标后 emptyState 被 goalDetail 替换导致 sheet 立即消失
+            .sheet(item: $editingGoal) { goal in
+                GoalEditorView(goal: goal, isNew: editingIsNew) {
+                    editingGoal = nil
+                }
+            }
             .task {
                 // 首次启动空库检测与恢复（Keychain / CloudKit 双轨）
-                DataBackupManager.shared.restoreIfNeeded(context: context)
+                _ = DataBackupManager.shared.restoreIfNeeded(context: context)
             }
             .onChange(of: goals) { _, newGoals in
                 // 目标列表变化后保证有选中项
@@ -134,9 +154,7 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
             Text("请先在侧边栏添加目标")
                 .font(.headline)
-            Button {
-                columnVisibility = .all
-            } label: {
+            Button(action: addGoal) {
                 Label("添加目标", systemImage: "plus.circle")
             }
             .buttonStyle(.borderedProminent)
@@ -171,7 +189,7 @@ struct ContentView: View {
                                 Text(countdown)
                                     .font(.callout.weight(.semibold))
                                     .monospacedDigit()
-                                    .accessibilityLabel("剩余时间：\(countdown)")
+                                    .accessibilityLabel(Text("剩余时间：\(countdown)"))
                             }
                             Text(
                                 endDate,
@@ -211,7 +229,7 @@ struct ContentView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("总进度：已完成 \(Int(progress.completedWeight.rounded()))，共 \(progress.totalItems) 项，\(String(format: "%.1f", min(progress.fraction, 1) * 100))%")
+            .accessibilityLabel(Text("总进度：已完成 \(Int(progress.completedWeight.rounded()))，共 \(progress.totalItems) 项"))
 
             // 任务列表（无限层级）
             List {
@@ -221,6 +239,26 @@ struct ContentView: View {
             }
             .listStyle(.insetGrouped)
             .environmentObject(expandedState)
+            .environmentObject(deletionCoordinator)
+            // 删除确认统一在稳定的 List 层呈现（行被复用/刷新不会导致弹窗收回）
+            .confirmationDialog(
+                "删除任务",
+                isPresented: deletionDialogPresented,
+                titleVisibility: .visible
+            ) {
+                Button("删除", role: .destructive) {
+                    if let task = deletionCoordinator.taskToDelete {
+                        deleteTask(task)
+                    }
+                }
+                Button("取消", role: .cancel) {
+                    deletionCoordinator.taskToDelete = nil
+                }
+            } message: {
+                if let name = deletionCoordinator.taskToDelete?.name {
+                    Text("删除任务「\(name)」？其所有子任务将一并删除。")
+                }
+            }
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -310,6 +348,31 @@ struct ContentView: View {
             if let found = findTask(id: id, in: task.subtasks) { return found }
         }
         return nil
+    }
+
+    /// 空态新建目标：插入空目标并以新建模式打开编辑表单
+    private func addGoal() {
+        let goal = Goal()
+        context.insert(goal)
+        editingIsNew = true
+        editingGoal = goal
+    }
+
+    /// 级联删除任务：取消提醒 → 删除（后代一并删除）→ 保存 → 备份
+    private func deleteTask(_ task: TaskItem) {
+        NotificationService.shared.cancelReminders(taskID: task.id)
+        context.delete(task)
+        try? context.save()
+        DataBackupManager.shared.backupAppData(context: context)
+        deletionCoordinator.taskToDelete = nil
+    }
+
+    /// 由待删除任务派生的确认对话框呈现绑定
+    private var deletionDialogPresented: Binding<Bool> {
+        Binding(
+            get: { deletionCoordinator.taskToDelete != nil },
+            set: { if !$0 { deletionCoordinator.taskToDelete = nil } }
+        )
     }
 
     // MARK: - AI 对话

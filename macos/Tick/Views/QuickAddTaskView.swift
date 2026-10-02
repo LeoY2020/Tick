@@ -48,7 +48,7 @@ struct QuickAddTaskView: View {
                     }
                 }
             }
-            .navigationTitle(parent == nil ? "添加任务" : "添加子任务")
+            .navigationTitle(parent == nil ? Text("添加任务") : Text("添加子任务"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") { dismiss() }

@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QBrush>
 #include <QCloseEvent>
+#include <QFont>
 #include <QHeaderView>
 #include <QHBoxLayout>
 #include <QIcon>
@@ -256,13 +257,16 @@ void MainWindow::buildTree(const std::shared_ptr<TaskItem>& task, QTreeWidgetIte
     it->setData(0, Qt::UserRole, QString::fromStdString(task->id));
     it->setText(0, task->name);
 
+    // 有效状态（有子任务时由子任务折算；用于详情列与删除态判定）
+    const TaskStatus effStatus = ProgressEngine::effectiveStatus(*task);
+
     // 详情列
     QString detail;
     if (task->type == TaskType::Progress) {
         const auto progress = ProgressEngine::effectiveProgress(*task);
         detail = QStringLiteral("%1/%2").arg(progress.first).arg(progress.second);
     } else {
-        detail = taskStatusDisplayName(ProgressEngine::effectiveStatus(*task));
+        detail = taskStatusDisplayName(effStatus);
     }
     it->setText(1, detail);
 
@@ -270,6 +274,14 @@ void MainWindow::buildTree(const std::shared_ptr<TaskItem>& task, QTreeWidgetIte
     const bool dark = qApp->palette().color(QPalette::Window).lightnessF() < 0.5;
     const std::string hex = ProgressEngine::effectiveColor(*task, currentGoal_.get());
     it->setForeground(0, QBrush(resolveColor(QString::fromStdString(hex), dark)));
+
+    // 删除态视觉区分：任务名置灰 + 删除线，可通过右键「标记删除 / 取消」恢复
+    if (effStatus == TaskStatus::Deleted) {
+        it->setForeground(0, QBrush(Qt::gray));
+        QFont f = it->font(0);
+        f.setStrikeOut(true);
+        it->setFont(0, f);
+    }
 
     // 进度条（有效比率）
     const auto progress = ProgressEngine::effectiveProgress(*task);

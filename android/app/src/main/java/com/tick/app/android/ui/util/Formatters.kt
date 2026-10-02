@@ -1,6 +1,7 @@
 package com.tick.app.android.ui.util
 
 import androidx.compose.ui.graphics.Color
+import com.tick.app.android.ui.theme.Strings
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -28,10 +29,10 @@ object HexColor {
  * - 否则 → 显示天（不足一天显示 "今天"）。
  */
 object CountdownFormatter {
-    fun remaining(endDate: Long, preciseToHour: Boolean, en: Boolean): String? {
+    fun remaining(endDate: Long, preciseToHour: Boolean, strings: Strings): String? {
         val now = System.currentTimeMillis()
         if (endDate <= 0) return null
-        if (endDate <= now) return if (en) "Expired" else "已截止"
+        if (endDate <= now) return strings.countdownExpired
 
         val calNow = Calendar.getInstance()
         val calEnd = Calendar.getInstance().apply { timeInMillis = endDate }
@@ -42,12 +43,12 @@ object CountdownFormatter {
         val hours = (totalMinutes % (60 * 24)) / 60
 
         return if (preciseToHour) {
-            if (en) "${days}d ${hours}h" else "${days}天 ${hours}小时"
+            strings.countdownDaysHours.replace("{0}", days.toString()).replace("{1}", hours.toString())
         } else {
             val dayDiff = calEnd.get(Calendar.DAY_OF_YEAR) - calNow.get(Calendar.DAY_OF_YEAR)
             when {
-                dayDiff <= 0 -> if (en) "Today" else "今天"
-                else -> if (en) "${dayDiff}d" else "${dayDiff}天"
+                dayDiff <= 0 -> strings.countdownToday
+                else -> strings.countdownDays.replace("{0}", dayDiff.toString())
             }
         }
     }

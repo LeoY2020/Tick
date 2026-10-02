@@ -71,7 +71,6 @@ internal val PRESET_ICONS = listOf(
 @Composable
 fun GoalEditorSheet(
     goal: Goal?,
-    en: Boolean,
     onSave: (name: String, color: String, icon: String?, startDate: Long?, endDate: Long?,
            startPrecise: Boolean, endPrecise: Boolean, mode: ProgressCountingMode) -> Unit,
     onDismiss: () -> Unit
@@ -159,7 +158,7 @@ fun GoalEditorSheet(
                             contentAlignment = Alignment.Center
                         ) {
                             if (ic.isEmpty()) {
-                                Text("无", style = MaterialTheme.typography.labelSmall)
+                                Text(strings.none, style = MaterialTheme.typography.labelSmall)
                             } else {
                                 Icon(
                                     imageVector = iconForName(ic) ?: Icons.Outlined.Check,
@@ -178,11 +177,11 @@ fun GoalEditorSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (en) "Start" else "开始日期", Modifier.weight(1f))
+                    Text(strings.startDate, Modifier.weight(1f))
                     OutlinedButton(onClick = { showStartPicker = true }) {
                         Icon(Icons.Outlined.Event, contentDescription = null, Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text(if (startDate > 0) dateFmt.format(Date(startDate)) else (if (en) "Set" else "设置"))
+                        Text(if (startDate > 0) dateFmt.format(Date(startDate)) else strings.set)
                     }
                 }
 
@@ -195,7 +194,7 @@ fun GoalEditorSheet(
                     OutlinedButton(onClick = { showEndPicker = true }) {
                         Icon(Icons.Outlined.Event, contentDescription = null, Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text(if (endDate > 0) dateFmt.format(Date(endDate)) else (if (en) "Set" else "设置"))
+                        Text(if (endDate > 0) dateFmt.format(Date(endDate)) else strings.set)
                     }
                 }
 
@@ -208,14 +207,14 @@ fun GoalEditorSheet(
                         onClick = { mode = ProgressCountingMode.ALL_TASKS },
                         shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
                     ) {
-                        Text(if (en) "All" else "全部任务")
+                        Text(strings.countAllTasks)
                     }
                     SegmentedButton(
                         selected = mode == ProgressCountingMode.LEAF_TASKS,
                         onClick = { mode = ProgressCountingMode.LEAF_TASKS },
                         shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
                     ) {
-                        Text(if (en) "Leaf" else "叶子")
+                        Text(strings.countLeafTasks)
                     }
                 }
             }

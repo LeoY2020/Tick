@@ -1,5 +1,7 @@
 package com.tick.app.android.ui.screens
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +33,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tick.app.android.domain.ProgressEngine
@@ -54,6 +58,7 @@ import com.tick.app.android.model.TaskType
 import com.tick.app.android.model.status
 import com.tick.app.android.model.type
 import com.tick.app.android.ui.theme.LocalStrings
+import com.tick.app.android.ui.theme.Strings
 import com.tick.app.android.ui.util.CountdownFormatter
 import com.tick.app.android.ui.util.HexColor
 import com.tick.app.android.ui.util.iconForName
@@ -63,7 +68,6 @@ fun GoalDetailScreen(
     goal: Goal?,
     tree: List<TaskItem>,
     expandedTasks: Set<String>,
-    en: Boolean,
     onToggleExpand: (String) -> Unit,
     onAddRootTask: () -> Unit,
     onAddSubtask: (TaskItem) -> Unit,
@@ -84,9 +88,12 @@ fun GoalDetailScreen(
         return
     }
 
+    // 删除确认弹窗提升到 screen 层级：避免任务行重建时弹窗被重置/自动消失
+    var pendingDelete by remember { mutableStateOf<TaskItem?>(null) }
+
     val progress = ProgressEngine.goalProgress(goal, tree)
     val countdownText = CountdownFormatter.remaining(
-        goal.endDate ?: 0L, goal.endDatePreciseToHour, en
+        goal.endDate ?: 0L, goal.endDatePreciseToHour, strings
     )
 
     Column(
@@ -130,10 +137,15 @@ fun GoalDetailScreen(
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { progress.fraction.toFloat() },
-                    modifier = Modifier.fillMaxWidth(),
+                AnimatedProgressBar(
+                    fraction = progress.fraction,
                     color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    percentText(progress.fraction),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -156,17 +168,35 @@ fun GoalDetailScreen(
                     task = node,
                     depth = 0,
                     expandedTasks = expandedTasks,
-                    en = en,
                     onToggleExpand = onToggleExpand,
                     onAddSubtask = onAddSubtask,
                     onEditTask = onEditTask,
-                    onDeleteTask = onDeleteTask,
+                    onRequestDelete = { pendingDelete = it },
                     onToggleStatus = onToggleStatus,
                     onStepProgress = onStepProgress
                 )
             }
         }
         Spacer(Modifier.height(96.dp))
+    }
+
+    // 级联删除确认（screen 层级，随列表刷新保持一致）
+    pendingDelete?.let { target ->
+        val cascade = target.subtasks.isNotEmpty()
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text(strings.delete) },
+            text = {
+                Text(if (cascade) strings.reasonDeleteTaskCascade else strings.reasonDeleteTask)
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingDelete = null
+                    onDeleteTask(target)
+                }) { Text(strings.delete) }
+            },
+            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text(strings.cancel) } }
+        )
     }
 }
 
@@ -175,18 +205,17 @@ private fun TaskRowNode(
     task: TaskItem,
     depth: Int,
     expandedTasks: Set<String>,
-    en: Boolean,
     onToggleExpand: (String) -> Unit,
     onAddSubtask: (TaskItem) -> Unit,
     onEditTask: (TaskItem) -> Unit,
-    onDeleteTask: (TaskItem) -> Unit,
+    onRequestDelete: (TaskItem) -> Unit,
     onToggleStatus: (TaskItem) -> Unit,
     onStepProgress: (TaskItem, Double) -> Unit
 ) {
+    val strings = LocalStrings.current
     val hasSubtasks = task.subtasks.isNotEmpty()
     val isExpanded = task.id in expandedTasks
     var menuOpen by remember { mutableStateOf(false) }
-    var confirmDelete by remember { mutableStateOf(false) }
 
     Column {
         Row(
@@ -196,8 +225,7 @@ private fun TaskRowNode(
                 .clickable {
                     if (hasSubtasks) onToggleExpand(task.id)
                     else if (task.type == TaskType.SINGLE &&
-                        !ProgressEngine.hasActiveSubtasks(task) &&
-                        ProgressEngine.isDeleted(task).not()
+                        !ProgressEngine.hasActiveSubtasks(task)
                     ) onToggleStatus(task)
                 }
                 .padding(horizontal = 8.dp, vertical = 8.dp),
@@ -208,7 +236,7 @@ private fun TaskRowNode(
                 if (hasSubtasks) {
                     Icon(
                         imageVector = if (isExpanded) Icons.Outlined.ArrowDropDown else Icons.Outlined.KeyboardArrowRight,
-                        contentDescription = if (isExpanded) "collapse" else "expand",
+                        contentDescription = if (isExpanded) strings.collapse else strings.expand,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -235,39 +263,51 @@ private fun TaskRowNode(
             Spacer(Modifier.width(8.dp))
 
             // 内容
+            val deleted = ProgressEngine.isDeleted(task)
             Column(Modifier.weight(1f)) {
                 Text(
                     task.name,
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    color = if (ProgressEngine.isDeleted(task))
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                    textDecoration = if (deleted) TextDecoration.LineThrough else null,
+                    color = if (deleted)
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     else MaterialTheme.colorScheme.onSurface
                 )
                 if (task.type == TaskType.PROGRESS) {
                     Spacer(Modifier.height(4.dp))
                     val (cur, tot) = ProgressEngine.effectiveProgress(task)
-                    val ratio = if (tot > 0) (cur / tot).toFloat().coerceIn(0f, 1f) else 0f
-                    LinearProgressIndicator(
-                        progress = { ratio },
-                        modifier = Modifier.fillMaxWidth(),
+                    val ratio = if (tot > 0) (cur / tot).toDouble().coerceIn(0.0, 1.0) else 0.0
+                    AnimatedProgressBar(
+                        fraction = ratio,
                         color = effectiveColor,
                         trackColor = effectiveColor.copy(alpha = 0.15f)
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        percentText(ratio),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
             // 尾部控件
             if (task.type == TaskType.SINGLE) {
-                if (!ProgressEngine.hasActiveSubtasks(task)) {
-                    StatusCircle(
-                        status = task.status,
-                        color = effectiveColor,
-                        enabled = ProgressEngine.isDeleted(task).not()
+                if (ProgressEngine.hasActiveSubtasks(task)) {
+                    // 被有效子任务接管 → 只读展示折算状态
+                    EffectiveStatusPill(ProgressEngine.effectiveStatus(task), strings)
+                } else if (deleted) {
+                    // 删除态：可见的删除图标（再次点击任务行可恢复为未完成）
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = strings.statusDeleted,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    EffectiveStatusPill(ProgressEngine.effectiveStatus(task), en)
+                    StatusCircle(status = task.status, color = effectiveColor, enabled = true)
                 }
             } else {
                 if (!ProgressEngine.hasActiveSubtasks(task)) {
@@ -300,7 +340,7 @@ private fun TaskRowNode(
             Box {
                 Icon(
                     imageVector = Icons.Outlined.MoreVert,
-                    contentDescription = "menu",
+                    contentDescription = strings.settingsMenu,
                     modifier = Modifier
                         .clickable { menuOpen = true }
                         .padding(4.dp),
@@ -308,41 +348,22 @@ private fun TaskRowNode(
                 )
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(
-                        text = { Text(if (en) "Add subtask" else "添加子任务") },
+                        text = { Text(strings.addSubtask) },
                         leadingIcon = { Icon(Icons.Outlined.PlaylistAdd, contentDescription = null) },
                         onClick = { menuOpen = false; onAddSubtask(task) }
                     )
                     DropdownMenuItem(
-                        text = { Text(if (en) "Edit" else "编辑") },
+                        text = { Text(strings.edit) },
                         leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
                         onClick = { menuOpen = false; onEditTask(task) }
                     )
                     DropdownMenuItem(
-                        text = { Text(if (en) "Delete" else "删除") },
+                        text = { Text(strings.delete) },
                         leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) },
-                        onClick = { menuOpen = false; confirmDelete = true }
+                        onClick = { menuOpen = false; onRequestDelete(task) }
                     )
                 }
             }
-        }
-
-        // 级联删除确认
-        if (confirmDelete) {
-            val cascade = hasSubtasks
-            AlertDialog(
-                onDismissRequest = { confirmDelete = false },
-                title = { Text(if (en) "Delete task" else "删除任务") },
-                text = {
-                    Text(if (cascade) (if (en) "This task has subtasks. All descendants will be removed too." else "该任务包含子任务，删除将一并删除全部子任务。") else (if (en) "Delete this task?" else "确定删除该任务？"))
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        confirmDelete = false
-                        onDeleteTask(task)
-                    }) { Text(if (en) "Delete" else "删除") }
-                },
-                dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(if (en) "Cancel" else "取消") } }
-            )
         }
 
         if (hasSubtasks && isExpanded) {
@@ -351,11 +372,10 @@ private fun TaskRowNode(
                     task = sub,
                     depth = depth + 1,
                     expandedTasks = expandedTasks,
-                    en = en,
                     onToggleExpand = onToggleExpand,
                     onAddSubtask = onAddSubtask,
                     onEditTask = onEditTask,
-                    onDeleteTask = onDeleteTask,
+                    onRequestDelete = onRequestDelete,
                     onToggleStatus = onToggleStatus,
                     onStepProgress = onStepProgress
                 )
@@ -385,16 +405,16 @@ private fun StatusCircle(status: TaskStatus, color: Color, enabled: Boolean) {
         Modifier
             .size(22.dp)
             .background(fill, CircleShape)
-            .clickable(enabled = false) {}
     )
 }
 
 @Composable
-private fun EffectiveStatusPill(status: TaskStatus, en: Boolean) {
+private fun EffectiveStatusPill(status: TaskStatus, strings: Strings) {
     val label = when (status) {
-        TaskStatus.DONE -> if (en) "✓" else "完成"
-        TaskStatus.HALF_DONE -> if (en) "◐" else "半成"
-        else -> if (en) "○" else "未成"
+        TaskStatus.DONE -> strings.statusDone
+        TaskStatus.HALF_DONE -> strings.statusHalfDone
+        TaskStatus.DELETED -> strings.statusDeleted
+        TaskStatus.NOT_DONE -> strings.statusNotDone
     }
     Text(
         label,
@@ -408,3 +428,26 @@ private fun effectiveColorFor(task: TaskItem): Color {
     val hex = ProgressEngine.effectiveColor(task)
     return HexColor.parse(hex) ?: if (hex == "auto") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
 }
+
+/** 带动画（400ms 平滑过渡）与 trackColor 支持的确定进度条。 */
+@Composable
+private fun AnimatedProgressBar(
+    fraction: Double,
+    color: Color,
+    trackColor: Color = ProgressIndicatorDefaults.linearTrackColor
+) {
+    val animated by animateFloatAsState(
+        targetValue = fraction.toFloat().coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 400),
+        label = "progress"
+    )
+    LinearProgressIndicator(
+        progress = { animated },
+        modifier = Modifier.fillMaxWidth(),
+        color = color,
+        trackColor = trackColor
+    )
+}
+
+private fun percentText(fraction: Double): String =
+    "${(fraction.coerceIn(0.0, 1.0) * 100).toInt()}%"

@@ -1,3 +1,5 @@
+using Tick.Services;
+
 namespace Tick.Models;
 
 /// <summary>任务类型：单项 / 进度</summary>
@@ -79,64 +81,64 @@ public enum ColorSchemeSetting
     Dark,
 }
 
-/// <summary>枚举与中文显示名的映射扩展</summary>
+/// <summary>枚举显示名映射扩展（经 <see cref="Localization"/> 输出当前语言文本）</summary>
 public static class EnumDisplay
 {
     public static string ToDisplayName(this TaskType value) => value switch
     {
-        TaskType.Single => "单项",
-        TaskType.Progress => "进度",
-        _ => "单项",
+        TaskType.Single => Localization.Tr("task.single"),
+        TaskType.Progress => Localization.Tr("task.progress"),
+        _ => Localization.Tr("task.single"),
     };
 
     public static string ToDisplayName(this TaskStatus value) => value switch
     {
-        TaskStatus.NotDone => "未完成",
-        TaskStatus.HalfDone => "半完成",
-        TaskStatus.Done => "完成",
-        TaskStatus.Deleted => "删除",
-        _ => "未完成",
+        TaskStatus.NotDone => Localization.Tr("task.notDone"),
+        TaskStatus.HalfDone => Localization.Tr("task.halfDone"),
+        TaskStatus.Done => Localization.Tr("task.done"),
+        TaskStatus.Deleted => Localization.Tr("task.deleted"),
+        _ => Localization.Tr("task.notDone"),
     };
 
     public static string ToDisplayName(this ProgressCountingMode value) => value switch
     {
-        ProgressCountingMode.AllTasks => "全部任务",
-        ProgressCountingMode.LeafTasks => "仅叶子任务",
-        _ => "全部任务",
+        ProgressCountingMode.AllTasks => Localization.Tr("task.counting.all"),
+        ProgressCountingMode.LeafTasks => Localization.Tr("task.counting.leaf"),
+        _ => Localization.Tr("task.counting.all"),
     };
 
     public static string ToDisplayName(this RepeatRule value) => value switch
     {
-        RepeatRule.Never => "不重复",
-        RepeatRule.Daily => "每天",
-        RepeatRule.Weekly => "每周",
-        RepeatRule.Monthly => "每月",
-        RepeatRule.Custom => "自定义",
-        _ => "不重复",
+        RepeatRule.Never => Localization.Tr("repeat.never"),
+        RepeatRule.Daily => Localization.Tr("repeat.daily"),
+        RepeatRule.Weekly => Localization.Tr("repeat.weekly"),
+        RepeatRule.Monthly => Localization.Tr("repeat.monthly"),
+        RepeatRule.Custom => Localization.Tr("repeat.custom"),
+        _ => Localization.Tr("repeat.never"),
     };
 
     public static string ToDisplayName(this ColorSchemeSetting value) => value switch
     {
-        ColorSchemeSetting.System => "跟随系统",
-        ColorSchemeSetting.Light => "亮色",
-        ColorSchemeSetting.Dark => "暗色",
-        _ => "跟随系统",
+        ColorSchemeSetting.System => Localization.Tr("theme.system"),
+        ColorSchemeSetting.Light => Localization.Tr("theme.light"),
+        ColorSchemeSetting.Dark => Localization.Tr("theme.dark"),
+        _ => Localization.Tr("theme.system"),
     };
 
     public static string ToDisplayName(this AIModel value) => value switch
     {
-        AIModel.Qwen => "千问",
-        AIModel.DeepSeek => "DeepSeek",
-        AIModel.ChatGPT => "ChatGPT",
-        AIModel.Yuanbao => "元宝",
-        AIModel.GLM => "GLM",
-        AIModel.Kimi => "Kimi",
-        AIModel.Ernie => "文心",
-        AIModel.Grok => "Grok",
-        AIModel.StepFun => "阶跃星辰",
-        AIModel.MiniMax => "MiniMax",
-        AIModel.Custom => "自定义",
-        _ => "自定义",
+        AIModel.Qwen => Localization.Tr("ai.model.qwen"),
+        AIModel.DeepSeek => Localization.Tr("ai.model.deepseek"),
+        AIModel.ChatGPT => Localization.Tr("ai.model.chatgpt"),
+        AIModel.Yuanbao => Localization.Tr("ai.model.yuanbao"),
+        AIModel.GLM => Localization.Tr("ai.model.glm"),
+        AIModel.Kimi => Localization.Tr("ai.model.kimi"),
+        AIModel.Ernie => Localization.Tr("ai.model.ernie"),
+        AIModel.Grok => Localization.Tr("ai.model.grok"),
+        AIModel.StepFun => Localization.Tr("ai.model.stepfun"),
+        AIModel.MiniMax => Localization.Tr("ai.model.minimax"),
+        AIModel.Custom => Localization.Tr("ai.model.custom"),
+        _ => Localization.Tr("ai.model.custom"),
     };
 
     /// <summary>模型默认 OpenAI 兼容 Base URL（不含 /chat/completions）</summary>

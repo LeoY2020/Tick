@@ -55,7 +55,7 @@ public sealed class TaskEditorViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(Task.Name))
         {
-            Error = "任务名称不能为空";
+            Error = Localization.Tr("validation.task.nameEmpty");
             return false;
         }
         Error = "";

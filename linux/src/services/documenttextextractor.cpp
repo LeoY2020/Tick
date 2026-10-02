@@ -6,6 +6,8 @@
 #include <QStringConverter>
 #include <QStringList>
 
+#include "ui/translation.h"
+
 namespace tick {
 
 bool DocumentTextExtractor::isSupported(const QString& filePath) {
@@ -24,7 +26,8 @@ DocumentTextExtractor::Result DocumentTextExtractor::readAsText(const QString& f
     Result r;
     QFile f(filePath);
     if (!f.open(QIODevice::ReadOnly)) {
-        r.error = QStringLiteral("无法读取文本内容（请确认文件可读）");
+        r.error = TR("无法读取文本内容（请确认文件可读）",
+                    "Cannot read text content (please make sure the file is readable)");
         return r;
     }
     const QByteArray bytes = f.readAll();
@@ -57,7 +60,8 @@ DocumentTextExtractor::Result DocumentTextExtractor::readAsText(const QString& f
         return r;
     }
 
-    r.error = QStringLiteral("无法识别文件编码（请使用 UTF-8 编码保存后重试）");
+    r.error = TR("无法识别文件编码（请使用 UTF-8 编码保存后重试）",
+                "Unrecognized file encoding (please save as UTF-8 and retry)");
     return r;
 }
 
@@ -70,11 +74,13 @@ DocumentTextExtractor::Result DocumentTextExtractor::extractPDF(const QString& f
     if (!process.waitForFinished(15000)) {
         process.kill();
         process.waitForFinished(1000);
-        r.error = QStringLiteral("无法解析 PDF 内容（请确认系统已安装 poppler-utils）");
+        r.error = TR("无法解析 PDF 内容（请确认系统已安装 poppler-utils）",
+                    "Cannot parse PDF (please make sure poppler-utils is installed)");
         return r;
     }
     if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        r.error = QStringLiteral("无法解析 PDF 内容（可能是扫描件，无文字层可提取）");
+        r.error = TR("无法解析 PDF 内容（可能是扫描件，无文字层可提取）",
+                    "Cannot parse PDF (it may be a scanned file with no text layer)");
         return r;
     }
     const QByteArray out = process.readAllStandardOutput();
@@ -97,7 +103,7 @@ DocumentTextExtractor::Result DocumentTextExtractor::extractPDF(const QString& f
             return r;
         }
     }
-    r.error = QStringLiteral("无法解析 PDF 文本编码");
+    r.error = TR("无法解析 PDF 文本编码", "Cannot decode PDF text encoding");
     return r;
 }
 
@@ -110,7 +116,8 @@ DocumentTextExtractor::Result DocumentTextExtractor::extractText(const QString& 
         return readAsText(filePath, maxLength);
     }
     Result r;
-    r.error = QStringLiteral("暂不支持该文件类型，请使用文本、Markdown 或 PDF 文档");
+    r.error = TR("暂不支持该文件类型，请使用文本、Markdown 或 PDF 文档",
+                "Unsupported file type; please use a text, Markdown, or PDF document");
     return r;
 }
 

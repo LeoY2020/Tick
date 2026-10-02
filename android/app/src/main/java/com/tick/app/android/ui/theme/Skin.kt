@@ -5,30 +5,27 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 
 /**
- * 8 套 Android 厂商皮肤（单代码库 + enum Skin + 运行时设置页切换）。
- * brand 为各厂商标志色；深/浅色 ColorScheme 由 [Skin.colorScheme] 参数化派生。
+ * 7 套纯色主题（单代码库 + enum Skin + 运行时设置页切换）。
+ * brand 为各主题色；深/浅色 ColorScheme 由 [Skin.colorScheme] 参数化派生。
  */
 enum class Skin(
     val id: String,
     val displayName: String,
-    /** 品牌色（ARGB，0xFFRRGGBB） */
-    val brand: Long,
-    /** HyperOS 采用橙色调 + 半透明玻璃质感 */
-    val translucentGlass: Boolean = false
+    /** 主题色（ARGB，0xFFRRGGBB） */
+    val brand: Long
 ) {
-    COLOROS("coloros", "翡翠绿", 0xFF067A4A),
-    ONEUI("oneui", "蔚蓝", 0xFF3B82F6),
-    ORIGINOS("originos", "靛蓝", 0xFF2856D6),
-    REALMEUI("realmeui", "柠檬黄", 0xFFFFD200),
-    FLYME("flyme", "天蓝", 0xFF0084FF),
-    MIUI("miui", "活力橙", 0xFFFF6900),
-    HYPEROS("hyperos", "玻璃橙", 0xFFFF6900, translucentGlass = true),
-    MAGICOS("magicos", "湖蓝", 0xFF2E6BE6);
+    RED("red", "红色", 0xFFE53935),
+    ORANGE("orange", "活力橙", 0xFFFF6900),
+    LEMON("lemon", "柠檬黄", 0xFFFFD200),
+    EMERALD("emerald", "翡翠绿", 0xFF067A4A),
+    AZURE("azure", "蔚蓝", 0xFF3B82F6),
+    LAKE("lake", "湖蓝", 0xFF2E6BE6),
+    LILAC("lilac", "淡紫", 0xFF6750A4);
 
     companion object {
-        fun fromId(id: String?): Skin = Skin.entries.firstOrNull { it.id == id } ?: COLOROS
+        fun fromId(id: String?): Skin = Skin.entries.firstOrNull { it.id == id } ?: EMERALD
 
-        fun defaultId(): String = COLOROS.id
+        fun defaultId(): String = EMERALD.id
     }
 }
 

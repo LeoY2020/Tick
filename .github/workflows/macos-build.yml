@@ -52,8 +52,30 @@ jobs:
           xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
             -destination 'platform=macOS' \
             -configuration Release \
+            -derivedDataPath build \
             $XCARGS \
             build 2>&1 | xcbeautify --renderer github-actions
+
+      - name: Package DMG (unsigned)
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release/Tick.app"
+          test -d "$APP" || { echo "未找到构建产物：$APP"; exit 1; }
+          STAGE="dmg-stage"
+          DMG="Tick-1.0.0-beta1-macos.dmg"
+          rm -rf "$STAGE" "$DMG"
+          mkdir -p "$STAGE"
+          cp -R "$APP" "$STAGE/"
+          ln -s /Applications "$STAGE/Applications"
+          hdiutil create -volname "Tick" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+          ls -lh "$DMG"
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tick-1.0.0-beta1-macos-dmg
+          path: Tick-1.0.0-beta1-macos.dmg
+          retention-days: 30
 
       - name: Upload test results
         if: always()

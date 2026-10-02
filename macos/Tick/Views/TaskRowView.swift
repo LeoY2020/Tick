@@ -8,12 +8,13 @@ struct TaskRowView: View {
     let depth: Int
 
     @EnvironmentObject private var expandedState: ExpandedTaskState
+    /// 待删除任务统一呈现（由 ContentView 注入）
+    @EnvironmentObject private var deletionCoordinator: TaskDeletionCoordinator
     @Environment(\.modelContext) private var context
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var showAddSubtask = false
     @State private var showEditor = false
-    @State private var taskToDelete: TaskItem?
 
     var body: some View {
         if task.hasSubtasks {
@@ -70,6 +71,13 @@ struct TaskRowView: View {
             .accessibilityLabel("添加子任务")
         }
         .swipeActions(edge: .trailing) {
+            // 先声明者贴最右边缘：删除在最右，编辑在其左侧
+            Button(role: .destructive) {
+                deletionCoordinator.taskToDelete = task
+            } label: {
+                Label("删除", systemImage: "trash")
+            }
+            .accessibilityLabel("删除任务")
             Button {
                 showEditor = true
             } label: {
@@ -77,12 +85,6 @@ struct TaskRowView: View {
             }
             .tint(.blue)
             .accessibilityLabel("编辑任务")
-            Button(role: .destructive) {
-                taskToDelete = task
-            } label: {
-                Label("删除", systemImage: "trash")
-            }
-            .accessibilityLabel("删除任务")
         }
         .contextMenu {
             Button {
@@ -96,25 +98,9 @@ struct TaskRowView: View {
                 Label("添加子任务", systemImage: "plus.circle")
             }
             Button(role: .destructive) {
-                taskToDelete = task
+                deletionCoordinator.taskToDelete = task
             } label: {
                 Label("删除任务", systemImage: "trash")
-            }
-        }
-        .confirmationDialog(
-            "删除任务「\(task.name)」？其所有子任务将一并删除。",
-            isPresented: Binding(
-                get: { taskToDelete != nil },
-                set: { if !$0 { taskToDelete = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button("删除", role: .destructive) {
-                deleteTask()
-                taskToDelete = nil
-            }
-            Button("取消", role: .cancel) {
-                taskToDelete = nil
             }
         }
         .sheet(isPresented: $showAddSubtask) {
@@ -162,9 +148,10 @@ struct TaskRowView: View {
         }
         .buttonStyle(.plain)
         .disabled(task.hasSubtasks)
-        .accessibilityLabel(task.hasSubtasks
-            ? "状态由子任务计算：\(effective.displayName)"
-            : "切换状态，当前\(effective.displayName)")
+        .accessibilityLabel(
+            (task.hasSubtasks ? Text("状态由子任务计算：") : Text("切换状态，当前"))
+            + Text(LocalizedStringKey(effective.displayName))
+        )
     }
 
     /// 状态循环：未完成 → 完成 → 半完成 → 删除 → 未完成
@@ -249,26 +236,18 @@ struct TaskRowView: View {
         }
     }
 
-    /// 无障碍描述：任务名 + 状态/进度
-    private var accessibilityDescription: String {
+    /// 无障碍描述：任务名 + 状态/进度（状态名走本地化键）
+    private var accessibilityDescription: Text {
         if task.type == .single {
             let effective = ProgressEngine.effectiveStatus(of: task)
-            return "\(task.name)，\(effective.displayName)"
+            return Text(verbatim: task.name + "，") + Text(LocalizedStringKey(effective.displayName))
         }
         let progress = ProgressEngine.effectiveProgress(of: task)
-        return "\(task.name)，进度 \(Int(progress.current)) / \(Int(progress.total))"
+        return Text(verbatim: task.name + "，") + Text("进度 \(Int(progress.current)) / \(Int(progress.total))")
     }
 
     /// 持久化并同步 Keychain 备份
     private func persistAndBackup() {
-        try? context.save()
-        DataBackupManager.shared.backupAppData(context: context)
-    }
-
-    /// 级联删除：取消通知 → 删除（后代一并删除）→ 备份
-    private func deleteTask() {
-        NotificationService.shared.cancelReminders(taskID: task.id)
-        context.delete(task)
         try? context.save()
         DataBackupManager.shared.backupAppData(context: context)
     }

@@ -55,12 +55,16 @@ import com.tick.app.android.model.AppLanguage
 import com.tick.app.android.model.ThemeMode
 import com.tick.app.android.ui.theme.LocalStrings
 import com.tick.app.android.ui.theme.Skin
+import com.tick.app.android.ui.theme.Strings
 import com.tick.app.android.ui.viewmodel.TickViewModel
 import androidx.compose.runtime.LaunchedEffect
 
+/** 设置页展示的版本号（语言无关的纯文本，便于分辨安装包新旧；须与 build.gradle.kts 的 versionName 保持一致）。 */
+private const val APP_VERSION_TEXT = "v1.0.0 beta1"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(vm: TickViewModel, en: Boolean) {
+fun SettingsScreen(vm: TickViewModel) {
     val context = LocalContext.current
     val strings = LocalStrings.current
     val settings by vm.settings.collectAsStateWithLifecycle()
@@ -89,21 +93,13 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
                     onClick = { vm.setThemeMode(mode) },
                     shape = SegmentedButtonDefaults.itemShape(index = i, count = ThemeMode.entries.size)
                 ) {
-                    Text(themeLabel(mode, en))
+                    Text(themeLabel(mode, strings))
                 }
             }
         }
 
         Spacer(Modifier.height(20.dp))
         Text(strings.skin, style = MaterialTheme.typography.titleMedium)
-        if (settings.skinId == Skin.HYPEROS.id) {
-            Text(
-                strings.hyperosGlassNote,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(4.dp))
-        }
         Spacer(Modifier.height(8.dp))
         Skin.entries.forEach { skin ->
             Row(
@@ -119,7 +115,7 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
                         .background(skin.brand.toComposeColor(), CircleShape)
                 )
                 Spacer(Modifier.width(12.dp))
-                Text(skin.displayName, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                Text(strings.skinNames[skin.id] ?: skin.displayName, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
                 RadioButton(
                     selected = settings.skinId == skin.id,
                     onClick = { vm.setSkin(skin) }
@@ -138,7 +134,7 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
                     .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(lang.displayName, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                Text(languageLabel(lang, strings), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
                 RadioButton(selected = settings.language == lang, onClick = { vm.setLanguage(lang) })
             }
         }
@@ -150,7 +146,7 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Text(strings.aiConfig, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = { showAIDialog = true }) {
-                Text(if (en) settings.aiModel.displayName else settings.aiModel.displayName)
+                Text(modelLabel(settings.aiModel, strings))
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -177,6 +173,13 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
                 Text(strings.importData)
             }
         }
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = APP_VERSION_TEXT,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Spacer(Modifier.height(48.dp))
     }
 
@@ -186,7 +189,7 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
         if (ok != null) {
             Toast.makeText(
                 context,
-                if (ok) (if (en) "Done" else "完成") else (if (en) "Failed" else "操作失败"),
+                if (ok) strings.done else strings.failed,
                 Toast.LENGTH_SHORT
             ).show()
             vm.clearLastResult()
@@ -199,7 +202,6 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
             baseUrl = settings.baseUrl,
             modelName = settings.modelName,
             apiKey = vm.apiKey(),
-            en = en,
             onDismiss = { showAIDialog = false },
             onSave = { model, base, modelName, key ->
                 vm.setAiModel(model)
@@ -214,11 +216,30 @@ fun SettingsScreen(vm: TickViewModel, en: Boolean) {
 /** 适配皮肤 ARGB Long → Compose Color（避免引入 ui 包耦合，直接内联实现） */
 private fun Long.toComposeColor(): Color = Color(this)
 
-@Composable
-private fun themeLabel(mode: ThemeMode, en: Boolean): String = when (mode) {
-    ThemeMode.SYSTEM -> if (en) "System" else "跟随系统"
-    ThemeMode.LIGHT -> if (en) "Light" else "亮色"
-    ThemeMode.DARK -> if (en) "Dark" else "暗色"
+/** 主题模式显示名，随当前界面语言本地化。 */
+private fun themeLabel(mode: ThemeMode, strings: Strings): String = when (mode) {
+    ThemeMode.SYSTEM -> strings.themeSystem
+    ThemeMode.LIGHT -> strings.themeLight
+    ThemeMode.DARK -> strings.themeDark
+}
+
+/** AI 模型显示名：自定义走本地化文案，四家中文品牌名走术语表，其余保留品牌原名。 */
+private fun modelLabel(model: AIModel, strings: Strings): String = when (model) {
+    AIModel.CUSTOM -> strings.modelCustom
+    else -> strings.modelNames[model.id] ?: model.displayName
+}
+
+/** 语言选项的显示名，随当前界面语言本地化。 */
+private fun languageLabel(lang: AppLanguage, strings: Strings): String = when (lang) {
+    AppLanguage.SYSTEM -> strings.langSystem
+    AppLanguage.ZH_HANS -> strings.langZh
+    AppLanguage.ZH_HANT -> strings.langZhHant
+    AppLanguage.JA -> strings.langJa
+    AppLanguage.KO -> strings.langKo
+    AppLanguage.EN -> strings.langEn
+    AppLanguage.FR -> strings.langFr
+    AppLanguage.DE -> strings.langDe
+    AppLanguage.ES -> strings.langEs
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -228,7 +249,6 @@ private fun AIConfigDialog(
     baseUrl: String,
     modelName: String,
     apiKey: String,
-    en: Boolean,
     onDismiss: () -> Unit,
     onSave: (AIModel, String, String, String) -> Unit
 ) {
@@ -243,7 +263,7 @@ private fun AIConfigDialog(
         title = { Text(strings.aiConfig) },
         text = {
             Column {
-                ModelDropdown(model, en) { model = it }
+                ModelDropdown(model) { model = it }
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
                     value = base,
@@ -284,14 +304,15 @@ private fun AIConfigDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ModelDropdown(selected: AIModel, en: Boolean, onSelect: (AIModel) -> Unit) {
+private fun ModelDropdown(selected: AIModel, onSelect: (AIModel) -> Unit) {
+    val strings = LocalStrings.current
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         OutlinedTextField(
-            value = selected.displayName,
+            value = modelLabel(selected, strings),
             onValueChange = {},
             readOnly = true,
-            label = { Text(if (en) "Provider" else "服务商") },
+            label = { Text(strings.provider) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .menuAnchor()
@@ -300,7 +321,7 @@ private fun ModelDropdown(selected: AIModel, en: Boolean, onSelect: (AIModel) ->
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             AIModel.entries.forEach { m ->
                 DropdownMenuItem(
-                    text = { Text(m.displayName) },
+                    text = { Text(modelLabel(m, strings)) },
                     onClick = { onSelect(m); expanded = false }
                 )
             }

@@ -32,13 +32,13 @@ public static class DocumentTextExtractor
         {
             "txt" or "md" or "markdown" or "text" or "" => ReadAsText(path),
             "docx" => ExtractDocx(path),
-            "doc" => throw new DocumentExtractionException("旧版 .doc 暂不支持，请另存为 .docx 后重试"),
-            "pdf" => throw new DocumentExtractionException("PDF 附件暂未启用（需文本抽取库）"),
-            _ => throw new DocumentExtractionException("暂不支持该文件类型，请使用文本或 Markdown 文档"),
+            "doc" => throw new DocumentExtractionException(Localization.Tr("doc.unsupportedDoc")),
+            "pdf" => throw new DocumentExtractionException(Localization.Tr("doc.pdfDisabled")),
+            _ => throw new DocumentExtractionException(Localization.Tr("doc.unsupportedType")),
         };
 
         if (string.IsNullOrWhiteSpace(text))
-            throw new DocumentExtractionException("未能从文档中读取到文字内容");
+            throw new DocumentExtractionException(Localization.Tr("doc.noText"));
 
         return text.Length > maxLength ? text.Substring(0, maxLength) + "\n…" : text;
     }
@@ -90,7 +90,7 @@ public static class DocumentTextExtractor
         using var zip = ZipFile.OpenRead(path);
         var entry = zip.GetEntry("word/document.xml");
         if (entry is null)
-            throw new DocumentExtractionException("无法解析该 Word 文档");
+            throw new DocumentExtractionException(Localization.Tr("doc.invalidWord"));
 
         using var stream = entry.Open();
         using var reader = new StreamReader(stream, Encoding.UTF8);

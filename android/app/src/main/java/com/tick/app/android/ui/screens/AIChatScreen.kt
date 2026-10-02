@@ -43,7 +43,7 @@ import com.tick.app.android.ui.theme.LocalStrings
 import com.tick.app.android.ui.viewmodel.TickViewModel
 
 @Composable
-fun AIChatScreen(vm: TickViewModel, en: Boolean) {
+fun AIChatScreen(vm: TickViewModel) {
     val strings = LocalStrings.current
     val sessions by vm.chatSessions.collectAsStateWithLifecycle()
     val generating by vm.isGenerating.collectAsStateWithLifecycle()
@@ -70,14 +70,14 @@ fun AIChatScreen(vm: TickViewModel, en: Boolean) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                if (en) "AI Assistant" else "AI 助手",
+                strings.aiChat,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
             )
             TextButton(onClick = { attachmentName = null; attachmentUri = null; vm.newChatSession() }) {
                 Icon(Icons.Outlined.Add, contentDescription = null)
-                Text(if (en) "New chat" else "新对话")
+                Text(strings.newChat)
             }
         }
         HorizontalDivider()
@@ -98,7 +98,7 @@ fun AIChatScreen(vm: TickViewModel, en: Boolean) {
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp)
             ) {
                 items(messages, key = { it.id }) { msg ->
-                    MessageBubble(msg, en)
+                    MessageBubble(msg)
                 }
                 if (generating) {
                     item {
@@ -134,7 +134,7 @@ fun AIChatScreen(vm: TickViewModel, en: Boolean) {
             OutlinedTextField(
                 value = input,
                 onValueChange = { input = it },
-                placeholder = { Text(if (en) "Type a message…" else "输入消息…") },
+                placeholder = { Text(strings.inputMessage) },
                 maxLines = 4,
                 modifier = Modifier.weight(1f)
             )
@@ -165,7 +165,7 @@ fun AIChatScreen(vm: TickViewModel, en: Boolean) {
 }
 
 @Composable
-private fun MessageBubble(msg: AIChatMessage, en: Boolean) {
+private fun MessageBubble(msg: AIChatMessage) {
     val isUser = msg.role == "user"
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start) {
         Surface(

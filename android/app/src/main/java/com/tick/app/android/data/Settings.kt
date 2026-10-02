@@ -17,7 +17,7 @@ data class Settings(
     /** 配色方案（深色/浅色/跟随系统） */
     val themeModeRaw: String = ThemeMode.SYSTEM.raw,
     /** 所选皮肤 id（runtime 切换，见 ui.theme.Skin） */
-    val skinId: String = "coloros",
+    val skinId: String = "emerald",
     /** 语言（简体中文 / English / 跟随系统） */
     val languageRaw: String = AppLanguage.SYSTEM.raw,
     /** 所选 AI 模型 id */

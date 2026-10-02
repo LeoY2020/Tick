@@ -14,6 +14,15 @@
             <SolidColorBrush x:Key="StatusHalfBrush" Color="#FF9500" />
             <SolidColorBrush x:Key="StatusNotDoneBrush" Color="#8E8E93" />
             <SolidColorBrush x:Key="StatusDeletedBrush" Color="#FF3B30" />
+
+            <!-- 任务树行模板：
+                 TreeView 的默认行模板会把节点 Content 直接当字符串渲染
+                 （TreeViewNode 作为 DataContext，模板内是 TextBlock Text="{Binding Content}"，
+                 于是 Content.ToString() 成了行内容），自定义的 TaskNodeView 控件（复选框 / 颜色圆点 /
+                 删除 / 菜单）因此完全不显示。这里显式提供行模板，改为把节点 Content 当控件呈现。 -->
+            <DataTemplate x:Key="TaskTreeRowTemplate">
+                <ContentPresenter Content="{Binding Content}" HorizontalAlignment="Stretch" />
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

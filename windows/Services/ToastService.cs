@@ -77,7 +77,7 @@ public sealed class ToastService
                 var xml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastText02);
                 var textNodes = xml.GetElementsByTagName("text");
                 textNodes[0].AppendChild(xml.CreateTextNode(task.Name));
-                textNodes[1].AppendChild(xml.CreateTextNode($"目标：{goalName}"));
+                textNodes[1].AppendChild(xml.CreateTextNode(string.Format(Localization.Tr("toast.goalPrefix"), goalName)));
                 xml.DocumentElement.SetAttribute("launch", $"{task.Id}|{TaskGoalId(task) ?? Guid.Empty}");
 
                 var scheduled = new ScheduledToastNotification(xml, p.DeliveryTime);

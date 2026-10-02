@@ -214,7 +214,7 @@ object DataBackupManager {
         return try {
             com.tick.app.android.data.Settings(
                 themeModeRaw = o.optString("themeModeRaw", "system"),
-                skinId = o.optString("skinId", "coloros"),
+                skinId = o.optString("skinId", "emerald"),
                 languageRaw = o.optString("languageRaw", "system"),
                 aiModelId = o.optString("aiModelId", "deepseek"),
                 baseUrl = o.optString("baseUrl", ""),

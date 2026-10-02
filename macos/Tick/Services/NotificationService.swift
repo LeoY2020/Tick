@@ -72,7 +72,7 @@ final class NotificationService: NSObject, ObservableObject, @unchecked Sendable
                                                 taskID: taskID) {
             let content = UNMutableNotificationContent()
             content.title = taskName
-            content.body = "目标：\(goalName)"
+            content.body = String(localized: "目标：\(goalName)")
             content.sound = .default
             // 携带标识，用于点击通知后跳转
             content.userInfo = [

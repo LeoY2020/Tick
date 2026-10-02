@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
@@ -32,8 +33,15 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     schemeCombo_->setCurrentIndex(sIdx < 0 ? 0 : sIdx);
 
     langCombo_ = new QComboBox(this);
-    langCombo_->addItem(TR("简体中文", "Simplified Chinese"), QStringLiteral("zh"));
-    langCombo_->addItem(TR("English", "English"), QStringLiteral("en"));
+    // 语言选项以各自原生名显示
+    langCombo_->addItem(QStringLiteral("简体中文"), QStringLiteral("zh"));
+    langCombo_->addItem(QStringLiteral("繁體中文"), QStringLiteral("zh-Hant"));
+    langCombo_->addItem(QStringLiteral("日本語"), QStringLiteral("ja"));
+    langCombo_->addItem(QStringLiteral("한국어"), QStringLiteral("ko"));
+    langCombo_->addItem(QStringLiteral("English"), QStringLiteral("en"));
+    langCombo_->addItem(QStringLiteral("Français"), QStringLiteral("fr"));
+    langCombo_->addItem(QStringLiteral("Deutsch"), QStringLiteral("de"));
+    langCombo_->addItem(QStringLiteral("Español"), QStringLiteral("es"));
     const int lIdx = langCombo_->findData(repo.language());
     langCombo_->setCurrentIndex(lIdx < 0 ? 0 : lIdx);
 
@@ -87,12 +95,18 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     backupLayout->addWidget(exportBtn_);
     backupLayout->addWidget(importBtn_);
 
+    // 版本号（语言无关的纯文本，便于分辨安装包新旧；与 CMakeLists.txt 的 CPACK_PACKAGE_VERSION 保持一致）
+    auto versionLabel = new QLabel(QStringLiteral("v1.0.0 beta1"), this);
+    versionLabel->setAlignment(Qt::AlignCenter);
+    versionLabel->setStyleSheet(QStringLiteral("color: palette(mid);"));
+
     auto buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
 
     auto root = new QVBoxLayout(this);
     root->addWidget(themeGroup);
     root->addWidget(aiGroup);
     root->addWidget(backupGroup);
+    root->addWidget(versionLabel);
     root->addWidget(buttons);
 
     connect(exportBtn_, &QPushButton::clicked, this, &SettingsDialog::onExport);

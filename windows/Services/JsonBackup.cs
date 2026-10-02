@@ -27,7 +27,7 @@ public sealed class JsonBackup
     public static List<Goal> DeserializeIntoGoals(string json)
     {
         var doc = JsonSerializer.Deserialize<BackupDocument>(json, Options)
-                  ?? throw new JsonException("备份文件格式无效");
+                  ?? throw new JsonException(Localization.Tr("backup.invalid"));
         var result = new List<Goal>();
         foreach (var dto in doc.Goals ?? new List<GoalDto>())
             result.Add(dto.ToGoal());

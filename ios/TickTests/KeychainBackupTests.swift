@@ -7,11 +7,14 @@ import SwiftData
 final class KeychainBackupTests: XCTestCase {
     /// 唯一随机服务名实例：隔离 Keychain 条目，避免污染真实备份数据
     var keychain: KeychainBackupService!
+    /// 本次测试使用的服务名（用于推算旧版条目账号名等）
+    var serviceName: String!
     var container: ModelContainer!
     var context: ModelContext!
 
     override func setUpWithError() throws {
-        keychain = KeychainBackupService(service: "com.tick.tests.\(UUID().uuidString)")
+        serviceName = "com.tick.tests.\(UUID().uuidString)"
+        keychain = KeychainBackupService(service: serviceName)
         let schema = Schema([Goal.self, TaskItem.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         container = try ModelContainer(for: schema, configurations: [config])
@@ -22,6 +25,7 @@ final class KeychainBackupTests: XCTestCase {
         context = nil
         container = nil
         keychain = nil
+        serviceName = nil
     }
 
     // MARK: - a) Keychain 数据往返
@@ -229,5 +233,81 @@ final class KeychainBackupTests: XCTestCase {
         XCTAssertEqual(defaults.colorSchemeRaw, "system")
         XCTAssertEqual(defaults.languageRaw, "system")
         XCTAssertFalse(defaults.iCloudSyncEnabled)
+    }
+
+    // MARK: - e) 应用数据分片存储
+
+    /// 大数据（40KB，跨 14 个分片）分片写入后拼接读取应完全一致，
+    /// 且清单记录的分片数与总字节数正确、旧格式单条目被清理
+    func testShardedAppDataRoundTrip() throws {
+        // 40KB > 单条目软上限：旧实现（整份塞 1 个条目）会写入失败
+        let large = Data((0..<40_960).map { UInt8($0 % 251) })
+
+        do {
+            try keychain.saveAppData(large)
+        } catch {
+            throw XCTSkip("当前环境 Keychain 不可写，跳过分片往返验证：\(error.localizedDescription)")
+        }
+        try XCTSkipUnless(keychain.loadAppData() != nil,
+                          "当前环境 Keychain 读取受限，跳过分片往返验证")
+
+        XCTAssertEqual(keychain.loadAppData(), large, "分片写入后拼接读取应一致")
+
+        let manifest = try XCTUnwrap(keychain.loadManifest(), "写入后应存在分片清单")
+        XCTAssertEqual(manifest.totalBytes, 40_960)
+        XCTAssertEqual(manifest.chunkCount, 14, "40KB / 3KB 应切分为 14 片")
+        XCTAssertGreaterThan(manifest.chunkCount, 1, "大数据应跨多个 Keychain 条目")
+
+        XCTAssertNil(try? keychain.load(account: serviceName + "appData"),
+                     "新写入应清理旧格式单条目")
+    }
+
+    /// 数据变短（40KB → 1KB）后：读取到新数据、清单分片数降为 1、多余旧分片被清理
+    func testShardCleanupWhenDataShrinks() throws {
+        let large = Data(repeating: 0xAB, count: 40_960)
+        let small = Data("small-\(UUID().uuidString)".utf8)
+
+        do {
+            try keychain.saveAppData(large)
+            try keychain.saveAppData(small)
+        } catch {
+            throw XCTSkip("当前环境 Keychain 不可写，跳过分片清理验证：\(error.localizedDescription)")
+        }
+        try XCTSkipUnless(keychain.loadAppData() != nil,
+                          "当前环境 Keychain 读取受限，跳过分片清理验证")
+
+        XCTAssertEqual(keychain.loadAppData(), small, "变短后应读取到新数据")
+        XCTAssertEqual(keychain.loadManifest()?.chunkCount, 1, "变短后分片数应为 1")
+        XCTAssertNil(try? keychain.load(account: keychain.chunkKey(1)),
+                     "数据变短后多余的旧分片应被清理")
+    }
+
+    /// 升级兼容：仅有旧版单条目（无清单）时，loadAppData 应回退读到旧数据
+    func testLegacySingleItemBackupStillRestorable() throws {
+        let legacy = Data("legacy-\(UUID().uuidString)".utf8)
+
+        do {
+            // 模拟升级前写入的旧格式备份
+            try keychain.save(legacy, account: serviceName + "appData")
+        } catch {
+            throw XCTSkip("当前环境 Keychain 不可写，跳过旧格式兼容验证：\(error.localizedDescription)")
+        }
+
+        XCTAssertNil(keychain.loadManifest(), "旧格式备份不应有分片清单")
+        XCTAssertEqual(keychain.loadAppData(), legacy, "无清单时应回退读取旧版单条目")
+    }
+
+    /// 清单存在但分片缺失（拼接长度与清单不符）→ 视为损坏，loadAppData 返回 nil
+    func testManifestWithoutChunksIsTreatedAsCorrupted() throws {
+        let manifest = ChunkManifest(version: 1, chunkCount: 2, totalBytes: 100)
+
+        do {
+            try keychain.save(try JSONEncoder().encode(manifest),
+                              account: serviceName + "appData.meta")
+        } catch {
+            throw XCTSkip("当前环境 Keychain 不可写，跳过损坏数据验证：\(error.localizedDescription)")
+        }
+
+        XCTAssertNil(keychain.loadAppData(), "分片缺失时应视为损坏返回 nil")
     }
 }

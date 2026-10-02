@@ -72,11 +72,17 @@ enum class ThemeMode(val raw: String, val displayName: String) {
     }
 }
 
-/** 设置——语言（简体中文 / English，跟随系统可选）。 */
+/** 设置——语言（简体中文/繁體中文/日本語/한국어/English/Français/Deutsch/Español，跟随系统可选）。 */
 enum class AppLanguage(val raw: String, val displayName: String, val localeTag: String?) {
     SYSTEM("system", "跟随系统", null),
     ZH_HANS("zhHans", "简体中文", "zh"),
-    EN("en", "English", "en");
+    ZH_HANT("zhHant", "繁體中文", "zh-Hant"),
+    JA("ja", "日本語", "ja"),
+    KO("ko", "한국어", "ko"),
+    EN("en", "English", "en"),
+    FR("fr", "Français", "fr"),
+    DE("de", "Deutsch", "de"),
+    ES("es", "Español", "es");
 
     companion object {
         fun fromRaw(raw: String?): AppLanguage = entries.firstOrNull { it.raw == raw } ?: SYSTEM

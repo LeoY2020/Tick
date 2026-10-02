@@ -6,6 +6,7 @@ import { Database } from '../data/Database';
 import { GoalRepository, TaskRepository } from '../data/Repositories';
 import { Goal } from '../model/Goal';
 import { TaskItem } from '../model/TaskItem';
+import { I18n } from '../model/I18n';
 
 /** 备份文件 JSON 结构（goals + 扁平 tasks） */
 interface BackupGoalJSON {
@@ -95,10 +96,10 @@ export class BackupService {
     try {
       envelope = JSON.parse(jsonText) as BackupEnvelope;
     } catch (e) {
-      throw new Error('备份文件内容不是有效的 JSON');
+      throw new Error(I18n.t('backup.error.invalidJson'));
     }
     if (envelope === undefined || envelope === null || envelope.goals === undefined) {
-      throw new Error('备份文件缺少数据');
+      throw new Error(I18n.t('backup.error.missingData'));
     }
 
     let goalCount = 0;

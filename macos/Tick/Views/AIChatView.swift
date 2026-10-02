@@ -24,7 +24,8 @@ struct AIChatView: View {
     @State private var showFileImporter = false
     @State private var showHistory = false
     @State private var errorMessage: String?
-    @State private var resultMessage: String?
+    /// 生成任务数（非 nil 时呈现结果提示）
+    @State private var generatedCount: Int?
 
     private static let documentTypes: [UTType] = [
         .plainText, .text, .pdf,
@@ -78,7 +79,7 @@ struct AIChatView: View {
             .alert("已完成", isPresented: resultAlertBinding) {
                 Button("好", role: .cancel) {}
             } message: {
-                Text(resultMessage ?? "")
+                Text("已为「\(goal.name)」生成 \(generatedCount ?? 0) 个任务")
             }
             .onDisappear { persistMessages() }
         }
@@ -246,7 +247,7 @@ struct AIChatView: View {
                     messages.append(ChatMessage(role: .assistant, text: reply.message))
                     if reply.shouldGenerateTasks && !reply.tasks.isEmpty {
                         insertTaskTree(reply.tasks)
-                        resultMessage = "已为「\(goal.name)」生成 \(reply.tasks.count) 个任务"
+                        generatedCount = reply.tasks.count
                     }
                     isBusy = false
                     persistMessages()
@@ -297,7 +298,11 @@ struct AIChatView: View {
                         load(session)
                     } label: {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(session.title.isEmpty ? "对话" : session.title)
+                            if session.title.isEmpty {
+                                Text("对话")
+                            } else {
+                                Text(session.title)
+                            }
                             Text("\(session.messageCount) 条消息")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -369,8 +374,8 @@ struct AIChatView: View {
 
     private var resultAlertBinding: Binding<Bool> {
         Binding(
-            get: { resultMessage != nil },
-            set: { if !$0 { resultMessage = nil } }
+            get: { generatedCount != nil },
+            set: { if !$0 { generatedCount = nil } }
         )
     }
 }

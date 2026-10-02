@@ -1,5 +1,6 @@
 import fs from '@ohos.file.fs';
 import { fileUri } from '@ohos.file.fileuri';
+import { I18n } from '../model/I18n';
 
 /**
  * 从导入的附件文档抽取纯文本（供 AI 生成任务清单）。
@@ -25,9 +26,9 @@ export class DocumentTextExtractor {
       case 'pdf':
       case 'doc':
       case 'docx':
-        throw new Error('当前版本暂仅支持文本 / Markdown 附件（PDF / Word 需第三方解析库）');
+        throw new Error(I18n.t('doc.error.unsupportedFormat'));
       default:
-        throw new Error('暂不支持该文件类型，请使用文本或 Markdown 文档');
+        throw new Error(I18n.t('doc.error.unsupportedType'));
     }
   }
 
@@ -35,11 +36,11 @@ export class DocumentTextExtractor {
     try {
       const text = await fs.readText(path);
       if (text.trim().length === 0) {
-        throw new Error('无法读取文本内容（文件为空或非文本格式）');
+        throw new Error(I18n.t('doc.error.readEmpty'));
       }
       return text;
     } catch (e) {
-      throw new Error('无法读取文本内容（请确认文件为 UTF-8 文本 / Markdown 格式）');
+      throw new Error(I18n.t('doc.error.readFailed'));
     }
   }
 

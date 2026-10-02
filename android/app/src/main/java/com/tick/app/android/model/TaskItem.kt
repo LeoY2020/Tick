@@ -67,7 +67,14 @@ data class TaskItem(
     val goalId: String? = null
 ) {
     // 以下为内存树引用，仅用于进度计算 / UI 展示，不持久化。
-    /** 子任务（内存树） */
+    /**
+     * 子任务（内存树）。
+     *
+     * 注意：类体属性不参与 data class 的 equals/hashCode，即整棵子树的差异不会
+     * 反映在根任务的相等性上。UI 侧因此改用带自增版本号的 TaskTreeSnapshot
+     * 来判定任务树是否变化（见 TickViewModel.goalTree），避免"仅子任务变化"
+     * 时被 StateFlow 判等去重而导致界面不刷新。
+     */
     @Ignore var subtasks: List<TaskItem> = emptyList()
     /** 父任务（内存树） */
     @Ignore var parentTask: TaskItem? = null

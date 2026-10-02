@@ -9,7 +9,8 @@ namespace tick {
 
 // 预设色板（12 色，与 iOS 版对齐）
 struct ColorInfo {
-    QString name;
+    QString name;    // 简体中文 key（用于翻译查表）
+    QString nameEn;  // 英文回退
     QString hex;
 };
 
