@@ -122,3 +122,99 @@
 "共 %lld 项" = "%lld elementos";
 "总进度：已完成 %lld，共 %lld 项" = "Progreso general: %lld completadas, %lld elementos";
 "当前进度 %lld" = "Progreso actual: %lld";
+
+/* Añadido: confirmación de eliminación / notificaciones / accesibilidad */
+"删除任务「%@」？其所有子任务将一并删除。" = "¿Eliminar la tarea “%@”? También se eliminarán todas sus subtareas.";
+"剩余时间：%@" = "Tiempo restante: %@";
+"状态由子任务计算：" = "Estado calculado a partir de las subtareas: ";
+"切换状态，当前" = "Cambiar estado, actualmente ";
+"进度 %lld / %lld" = "Progreso %lld / %lld";
+"每%@提醒" = "Recordatorio cada %@";
+"删除目标「%@」？其下所有任务将被一并删除。" = "¿Eliminar el objetivo “%@”? También se eliminarán todas sus tareas.";
+"目标%@" = "Objetivo %@";
+"目标：%@" = "Objetivo: %@";
+
+/* Añadido: chat de IA */
+"AI 对话" = "Chat de IA";
+"关闭" = "Cerrar";
+"新建聊天" = "Nuevo chat";
+"AI 历史" = "Historial de IA";
+"错误" = "Error";
+"好" = "OK";
+"正在思考…" = "Pensando…";
+"移除附件" = "Eliminar adjunto";
+"上传附件" = "Subir adjunto";
+"和 AI 说点什么…" = "Dile algo a la IA…";
+"发送" = "Enviar";
+"对话" = "Chat";
+"%lld 条消息" = "%lld mensajes";
+"已为「%@」生成 %lld 个任务" = "%lld tareas generadas para “%@”";
+
+/* Añadido: ajustes - modelo de IA */
+"使用模型" = "Modelo";
+"AI 模型" = "Modelo de IA";
+"导入文档自动生成任务清单时使用所选模型。Apple Intelligence 为设备端模型，无需 API Key。" = "El modelo seleccionado se usa al importar un documento para generar automáticamente una lista de tareas. Apple Intelligence es un modelo en el dispositivo y no necesita API Key.";
+"接口地址（Base URL）" = "Dirección (Base URL)";
+"模型名" = "Nombre del modelo";
+"API Key" = "API Key";
+"未配置密钥，导入文档时将提示配置" = "No hay clave configurada. Se te pedirá configurar una al importar un documento.";
+"自定义模型" = "Modelo personalizado";
+"API Key 仅保存在本机钥匙串中，卸载重装后仍保留。" = "La API Key se guarda solo en el llavero de este dispositivo y se conserva tras reinstalar.";
+"iCloud" = "iCloud";
+"千问" = "Qwen";
+"元宝" = "Yuanbao";
+"文心" = "ERNIE";
+"阶跃星辰" = "StepFun";
+
+/* Añadido: fecha / color automático / fechas de anulación */
+"精确到小时" = "Preciso a la hora";
+"开始时间精确到小时" = "Hora de inicio precisa a la hora";
+"截止时间精确到小时" = "Hora de fin precisa a la hora";
+"自动颜色" = "Color automático";
+"覆盖开始日期" = "Anular fecha de inicio";
+"覆盖截止日期" = "Anular fecha de fin";
+
+/* Añadido: nombres de iconos */
+"旗帜" = "Bandera";
+"星标" = "Estrella";
+"爱心" = "Corazón";
+"书本" = "Libro";
+"公文包" = "Maletín";
+"跑步" = "Correr";
+"健身" = "Fitness";
+"铅笔" = "Lápiz";
+"画笔" = "Pincel";
+"音乐" = "Música";
+"相机" = "Cámara";
+"飞机" = "Avión";
+"汽车" = "Coche";
+"购物" = "Compras";
+"银行卡" = "Tarjeta bancaria";
+"礼物" = "Regalo";
+"学业" = "Estudios";
+"自然" = "Naturaleza";
+"月亮" = "Luna";
+"太阳" = "Sol";
+"时钟" = "Reloj";
+"日程" = "Calendario";
+"家庭" = "Familia";
+"电话" = "Teléfono";
+"邮件" = "Correo";
+"游戏" = "Juego";
+"酒杯" = "Copa de vino";
+"咖啡" = "Café";
+"餐饮" = "Comida";
+
+/* Añadido: nombres de la paleta */
+"黑色" = "Negro";
+"红色" = "Rojo";
+"橙色" = "Naranja";
+"黄色" = "Amarillo";
+"绿色" = "Verde";
+"薄荷绿" = "Verde menta";
+"青色" = "Cian";
+"蓝色" = "Azul";
+"靛蓝" = "Índigo";
+"紫色" = "Morado";
+"粉色" = "Rosa";
+"棕色" = "Marrón";

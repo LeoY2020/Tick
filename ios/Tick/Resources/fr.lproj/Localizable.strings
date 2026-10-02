@@ -122,3 +122,99 @@
 "共 %lld 项" = "%lld élément(s)";
 "总进度：已完成 %lld，共 %lld 项" = "Progression globale : %lld terminé(s), %lld élément(s)";
 "当前进度 %lld" = "Progression actuelle : %lld";
+
+/* Ajout : confirmation de suppression / notifications / accessibilité */
+"删除任务「%@」？其所有子任务将一并删除。" = "Supprimer la tâche “%@” ? Toutes ses sous-tâches seront également supprimées.";
+"剩余时间：%@" = "Temps restant : %@";
+"状态由子任务计算：" = "État calculé à partir des sous-tâches : ";
+"切换状态，当前" = "Changer l'état, actuellement ";
+"进度 %lld / %lld" = "Progression %lld / %lld";
+"每%@提醒" = "Rappel chaque %@";
+"删除目标「%@」？其下所有任务将被一并删除。" = "Supprimer l'objectif “%@” ? Toutes les tâches qu'il contient seront également supprimées.";
+"目标%@" = "Objectif %@";
+"目标：%@" = "Objectif : %@";
+
+/* Ajout : chat IA */
+"AI 对话" = "Chat IA";
+"关闭" = "Fermer";
+"新建聊天" = "Nouveau chat";
+"AI 历史" = "Historique IA";
+"错误" = "Erreur";
+"好" = "OK";
+"正在思考…" = "Réflexion…";
+"移除附件" = "Supprimer la pièce jointe";
+"上传附件" = "Téléverser une pièce jointe";
+"和 AI 说点什么…" = "Dites quelque chose à l'IA…";
+"发送" = "Envoyer";
+"对话" = "Chat";
+"%lld 条消息" = "%lld messages";
+"已为「%@」生成 %lld 个任务" = "%lld tâches générées pour “%@”";
+
+/* Ajout : réglages - modèle IA */
+"使用模型" = "Modèle";
+"AI 模型" = "Modèle IA";
+"导入文档自动生成任务清单时使用所选模型。Apple Intelligence 为设备端模型，无需 API Key。" = "Le modèle sélectionné est utilisé lors de l'importation d'un document pour générer automatiquement une liste de tâches. Apple Intelligence est un modèle sur l'appareil et ne nécessite pas de clé API.";
+"接口地址（Base URL）" = "Adresse (Base URL)";
+"模型名" = "Nom du modèle";
+"API Key" = "API Key";
+"未配置密钥，导入文档时将提示配置" = "Aucune clé configurée. Une invite s'affichera lors de l'importation d'un document.";
+"自定义模型" = "Modèle personnalisé";
+"API Key 仅保存在本机钥匙串中，卸载重装后仍保留。" = "La clé API est stockée uniquement dans le trousseau de cet appareil et est conservée après réinstallation.";
+"iCloud" = "iCloud";
+"千问" = "Qwen";
+"元宝" = "Yuanbao";
+"文心" = "ERNIE";
+"阶跃星辰" = "StepFun";
+
+/* Ajout : date / couleur automatique / dates de remplacement */
+"精确到小时" = "Précis à l'heure";
+"开始时间精确到小时" = "Heure de début précise à l'heure";
+"截止时间精确到小时" = "Heure de fin précise à l'heure";
+"自动颜色" = "Couleur automatique";
+"覆盖开始日期" = "Remplacer la date de début";
+"覆盖截止日期" = "Remplacer la date de fin";
+
+/* Ajout : noms des icônes */
+"旗帜" = "Drapeau";
+"星标" = "Étoile";
+"爱心" = "Cœur";
+"书本" = "Livre";
+"公文包" = "Mallette";
+"跑步" = "Course";
+"健身" = "Musculation";
+"铅笔" = "Crayon";
+"画笔" = "Pinceau";
+"音乐" = "Musique";
+"相机" = "Appareil photo";
+"飞机" = "Avion";
+"汽车" = "Voiture";
+"购物" = "Achats";
+"银行卡" = "Carte bancaire";
+"礼物" = "Cadeau";
+"学业" = "Études";
+"自然" = "Nature";
+"月亮" = "Lune";
+"太阳" = "Soleil";
+"时钟" = "Horloge";
+"日程" = "Calendrier";
+"家庭" = "Famille";
+"电话" = "Téléphone";
+"邮件" = "E-mail";
+"游戏" = "Jeu";
+"酒杯" = "Verre à vin";
+"咖啡" = "Café";
+"餐饮" = "Repas";
+
+/* Ajout : noms de la palette */
+"黑色" = "Noir";
+"红色" = "Rouge";
+"橙色" = "Orange";
+"黄色" = "Jaune";
+"绿色" = "Vert";
+"薄荷绿" = "Vert menthe";
+"青色" = "Cyan";
+"蓝色" = "Bleu";
+"靛蓝" = "Indigo";
+"紫色" = "Violet";
+"粉色" = "Rose";
+"棕色" = "Marron";

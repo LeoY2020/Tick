@@ -122,3 +122,99 @@
 "共 %lld 项" = "%lld Elemente";
 "总进度：已完成 %lld，共 %lld 项" = "Gesamtfortschritt: %lld erledigt, %lld Elemente";
 "当前进度 %lld" = "Aktueller Fortschritt: %lld";
+
+/* Hinzugefügt: Löschbestätigung / Benachrichtigungen / Barrierefreiheit */
+"删除任务「%@」？其所有子任务将一并删除。" = "Aufgabe „%@“ löschen? Alle zugehörigen Unteraufgaben werden ebenfalls gelöscht.";
+"剩余时间：%@" = "Verbleibende Zeit: %@";
+"状态由子任务计算：" = "Status wird aus Unteraufgaben berechnet: ";
+"切换状态，当前" = "Status umschalten, aktuell ";
+"进度 %lld / %lld" = "Fortschritt %lld / %lld";
+"每%@提醒" = "Erinnerung jeden %@";
+"删除目标「%@」？其下所有任务将被一并删除。" = "Ziel „%@“ löschen? Alle darunter liegenden Aufgaben werden ebenfalls gelöscht.";
+"目标%@" = "Ziel %@";
+"目标：%@" = "Ziel: %@";
+
+/* Hinzugefügt: KI-Chat */
+"AI 对话" = "KI-Chat";
+"关闭" = "Schließen";
+"新建聊天" = "Neuer Chat";
+"AI 历史" = "KI-Verlauf";
+"错误" = "Fehler";
+"好" = "OK";
+"正在思考…" = "Denkt nach…";
+"移除附件" = "Anhang entfernen";
+"上传附件" = "Anhang hochladen";
+"和 AI 说点什么…" = "Schreib der KI etwas…";
+"发送" = "Senden";
+"对话" = "Chat";
+"%lld 条消息" = "%lld Nachrichten";
+"已为「%@」生成 %lld 个任务" = "%lld Aufgaben für „%@“ erstellt";
+
+/* Hinzugefügt: Einstellungen - KI-Modell */
+"使用模型" = "Modell";
+"AI 模型" = "KI-Modell";
+"导入文档自动生成任务清单时使用所选模型。Apple Intelligence 为设备端模型，无需 API Key。" = "Das ausgewählte Modell wird verwendet, wenn ein Dokument importiert wird, um automatisch eine Aufgabenliste zu erstellen. Apple Intelligence ist ein geräteinternes Modell und benötigt keinen API Key.";
+"接口地址（Base URL）" = "Endpunkt (Base URL)";
+"模型名" = "Modellname";
+"API Key" = "API Key";
+"未配置密钥，导入文档时将提示配置" = "Kein Schlüssel konfiguriert. Beim Importieren eines Dokuments werden Sie zum Konfigurieren aufgefordert.";
+"自定义模型" = "Benutzerdefiniertes Modell";
+"API Key 仅保存在本机钥匙串中，卸载重装后仍保留。" = "Der API Key wird nur im Schlüsselbund dieses Geräts gespeichert und bleibt nach einer Neuinstallation erhalten.";
+"iCloud" = "iCloud";
+"千问" = "Qwen";
+"元宝" = "Yuanbao";
+"文心" = "ERNIE";
+"阶跃星辰" = "StepFun";
+
+/* Hinzugefügt: Datum / automatische Farbe / Überschreibungsdaten */
+"精确到小时" = "Auf die Stunde genau";
+"开始时间精确到小时" = "Startzeit auf die Stunde genau";
+"截止时间精确到小时" = "Endzeit auf die Stunde genau";
+"自动颜色" = "Automatische Farbe";
+"覆盖开始日期" = "Startdatum überschreiben";
+"覆盖截止日期" = "Enddatum überschreiben";
+
+/* Hinzugefügt: Symbolnamen */
+"旗帜" = "Flagge";
+"星标" = "Stern";
+"爱心" = "Herz";
+"书本" = "Buch";
+"公文包" = "Aktentasche";
+"跑步" = "Laufen";
+"健身" = "Fitness";
+"铅笔" = "Bleistift";
+"画笔" = "Pinsel";
+"音乐" = "Musik";
+"相机" = "Kamera";
+"飞机" = "Flugzeug";
+"汽车" = "Auto";
+"购物" = "Einkaufen";
+"银行卡" = "Bankkarte";
+"礼物" = "Geschenk";
+"学业" = "Studium";
+"自然" = "Natur";
+"月亮" = "Mond";
+"太阳" = "Sonne";
+"时钟" = "Uhr";
+"日程" = "Kalender";
+"家庭" = "Familie";
+"电话" = "Telefon";
+"邮件" = "E-Mail";
+"游戏" = "Spiel";
+"酒杯" = "Weinglas";
+"咖啡" = "Kaffee";
+"餐饮" = "Essen";
+
+/* Hinzugefügt: Palettennamen */
+"黑色" = "Schwarz";
+"红色" = "Rot";
+"橙色" = "Orange";
+"黄色" = "Gelb";
+"绿色" = "Grün";
+"薄荷绿" = "Minzgrün";
+"青色" = "Türkis";
+"蓝色" = "Blau";
+"靛蓝" = "Indigo";
+"紫色" = "Violett";
+"粉色" = "Pink";
+"棕色" = "Braun";

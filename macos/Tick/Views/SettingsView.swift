@@ -75,7 +75,7 @@ struct SettingsView: View {
         Section {
             Picker("使用模型", selection: $settings.selectedModel) {
                 ForEach(AIModel.allCases) { model in
-                    Text(model.displayName).tag(model)
+                    Text(LocalizedStringKey(model.displayName)).tag(model)
                 }
             }
             .pickerStyle(.menu)
@@ -99,14 +99,18 @@ struct SettingsView: View {
                 SecureField("API Key", text: apiKeyBinding)
                     
                     .autocorrectionDisabled()
-                    .accessibilityLabel("\(settings.selectedModel.displayName) API Key")
+                    .accessibilityLabel(Text(LocalizedStringKey(settings.selectedModel.displayName)) + Text(verbatim: " API Key"))
                 if apiKeyText.isEmpty {
                     Text("未配置密钥，导入文档时将提示配置")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             } header: {
-                Text(settings.selectedModel == .custom ? "自定义模型" : "API Key")
+                if settings.selectedModel == .custom {
+                    Text("自定义模型")
+                } else {
+                    Text("API Key")
+                }
             } footer: {
                 Text("API Key 仅保存在本机钥匙串中，卸载重装后仍保留。")
             }

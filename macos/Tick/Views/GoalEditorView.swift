@@ -126,7 +126,7 @@ struct GoalEditorView: View {
                         Picker("图标", selection: iconSelection) {
                             Text("无图标").tag("")
                             ForEach(Self.icons) { option in
-                                Label(option.name, systemImage: option.symbol)
+                                Label(LocalizedStringKey(option.name), systemImage: option.symbol)
                                     .tag(option.symbol)
                             }
                         }
@@ -137,7 +137,7 @@ struct GoalEditorView: View {
                         }
                     }
                     .accessibilityLabel("选择图标")
-                    .accessibilityValue(currentIconName)
+                    .accessibilityValue(Text(LocalizedStringKey(currentIconName)))
                 }
 
                 // MARK: 日期
@@ -164,7 +164,7 @@ struct GoalEditorView: View {
                 Section {
                     Picker("统计方式", selection: $goal.progressCountingMode) {
                         ForEach(ProgressCountingMode.allCases, id: \.self) { mode in
-                            Text(mode.displayName).tag(mode)
+                            Text(LocalizedStringKey(mode.displayName)).tag(mode)
                         }
                     }
                     .pickerStyle(.inline)
@@ -175,7 +175,7 @@ struct GoalEditorView: View {
                     Text("全部任务：所有层级任务均计入总量与进度；仅叶子任务：只统计任务树末端节点")
                 }
             }
-            .navigationTitle(isNew ? "新建目标" : "编辑目标")
+            .navigationTitle(isNew ? Text("新建目标") : Text("编辑目标"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消", action: cancel)
@@ -267,7 +267,7 @@ struct GoalEditorView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(swatch.name)颜色")
+        .accessibilityLabel(Text(LocalizedStringKey(swatch.name)) + Text("颜色"))
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
@@ -275,7 +275,7 @@ struct GoalEditorView: View {
     @ViewBuilder
     private var currentIconLabel: some View {
         if let symbol = goal.iconSystemName {
-            Label(currentIconName, systemImage: symbol)
+            Label(LocalizedStringKey(currentIconName), systemImage: symbol)
                 .foregroundStyle(.secondary)
         } else {
             Text("无图标")
