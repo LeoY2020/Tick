@@ -48,6 +48,7 @@ import com.tick.app.android.model.repeatRule
 import com.tick.app.android.model.status
 import com.tick.app.android.model.type
 import com.tick.app.android.ui.theme.LocalStrings
+import com.tick.app.android.ui.theme.Strings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import java.util.Calendar
 
@@ -55,7 +56,6 @@ import java.util.Calendar
 @Composable
 fun TaskEditorDialog(
     task: TaskItem,
-    en: Boolean,
     onSave: (
         name: String, type: TaskType, status: TaskStatus, totalAmount: Double, currentAmount: Double,
         startDate: Long?, endDate: Long?, reminderDate: Long?,
@@ -124,7 +124,7 @@ fun TaskEditorDialog(
                                 onClick = { status = s },
                                 shape = SegmentedButtonDefaults.itemShape(index = i, count = 3)
                             ) {
-                                Text(statusLabel(s, en))
+                                Text(statusLabel(s, strings))
                             }
                         }
                     }
@@ -142,13 +142,13 @@ fun TaskEditorDialog(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(strings.current, Modifier.weight(1f))
                         OutlinedButton(onClick = { current = (current - 1).coerceAtLeast(0.0) }) {
-                            Icon(Icons.Outlined.Remove, contentDescription = "minus", Modifier.size(18.dp))
+                            Icon(Icons.Outlined.Remove, contentDescription = strings.decrease, Modifier.size(18.dp))
                         }
                         Spacer(Modifier.width(8.dp))
                         Text("$current", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.width(8.dp))
                         OutlinedButton(onClick = { current = (current + 1).coerceAtMost(total.toDouble().let { if (it.isNaN()) current else it }) }) {
-                            Icon(Icons.Outlined.Add, contentDescription = "plus", Modifier.size(18.dp))
+                            Icon(Icons.Outlined.Add, contentDescription = strings.increase, Modifier.size(18.dp))
                         }
                     }
                 }
@@ -175,7 +175,7 @@ fun TaskEditorDialog(
                             FilterChip(
                                 selected = repeatRule == r,
                                 onClick = { repeatRule = r },
-                                label = { Text(repeatLabel(r, en)) }
+                                label = { Text(repeatLabel(r, strings)) }
                             )
                         }
                     }
@@ -189,7 +189,7 @@ fun TaskEditorDialog(
                                     onClick = {
                                         weekdays = if (selected) weekdays - wd else weekdays + wd
                                     },
-                                    label = { Text(weekdayLabel(wd)) }
+                                    label = { Text(weekdayLabel(wd, strings)) }
                                 )
                             }
                         }
@@ -242,31 +242,24 @@ fun TaskEditorDialog(
     }
 }
 
-private fun statusLabel(status: TaskStatus, en: Boolean): String = when (status) {
-    TaskStatus.NOT_DONE -> if (en) "Not done" else "未完成"
-    TaskStatus.HALF_DONE -> if (en) "Half" else "半完成"
-    TaskStatus.DONE -> if (en) "Done" else "完成"
-    TaskStatus.DELETED -> if (en) "Deleted" else "删除"
+private fun statusLabel(status: TaskStatus, strings: Strings): String = when (status) {
+    TaskStatus.NOT_DONE -> strings.statusNotDone
+    TaskStatus.HALF_DONE -> strings.statusHalfDone
+    TaskStatus.DONE -> strings.statusDone
+    TaskStatus.DELETED -> strings.statusDeleted
 }
 
-private fun repeatLabel(r: RepeatRule, en: Boolean): String = when (r) {
-    RepeatRule.NEVER -> if (en) "None" else "不重复"
-    RepeatRule.DAILY -> if (en) "Daily" else "每天"
-    RepeatRule.WEEKLY -> if (en) "Weekly" else "每周"
-    RepeatRule.MONTHLY -> if (en) "Monthly" else "每月"
-    RepeatRule.CUSTOM -> if (en) "Custom" else "自定义"
+private fun repeatLabel(r: RepeatRule, strings: Strings): String = when (r) {
+    RepeatRule.NEVER -> strings.repeatNever
+    RepeatRule.DAILY -> strings.repeatDaily
+    RepeatRule.WEEKLY -> strings.repeatWeekly
+    RepeatRule.MONTHLY -> strings.repeatMonthly
+    RepeatRule.CUSTOM -> strings.repeatCustom
 }
 
-private fun weekdayLabel(wd: Int): String = when (wd) {
-    1 -> "日"
-    2 -> "一"
-    3 -> "二"
-    4 -> "三"
-    5 -> "四"
-    6 -> "五"
-    7 -> "六"
-    else -> ""
-}
+/** 周几短名：wd 1=周日 … 7=周六（与 Calendar.DAY_OF_WEEK 一致）。 */
+private fun weekdayLabel(wd: Int, strings: Strings): String =
+    strings.weekdayShort.getOrElse((wd - 1).coerceIn(0, 6)) { "" }
 
 private fun timeLabel(millis: Long): String {
     val cal = Calendar.getInstance().apply { timeInMillis = millis }

@@ -71,7 +71,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
-import com.tick.app.android.model.AppLanguage
 import com.tick.app.android.model.Goal
 import com.tick.app.android.model.TaskItem
 import com.tick.app.android.model.TaskType
@@ -117,7 +116,6 @@ fun TickAppRoot(vm: TickViewModel) {
     val expandedTasks by vm.expandedTasks.collectAsStateWithLifecycle()
 
     val skin = Skin.fromId(settings.skinId)
-    val en = settings.language == AppLanguage.EN
 
     CompositionLocalProvider(LocalStrings provides Strings.of(settings.language)) {
         TickTheme(skin = skin, themeMode = settings.themeMode) {
@@ -128,8 +126,7 @@ fun TickAppRoot(vm: TickViewModel) {
                 selectedGoalId = selectedGoalId,
                 tree = treeSnapshot.tasks,
                 expandedTasks = expandedTasks,
-                isEmpty = goals.isEmpty(),
-                en = en
+                isEmpty = goals.isEmpty()
             )
         }
     }
@@ -144,8 +141,7 @@ private fun AppContent(
     selectedGoalId: String?,
     tree: List<TaskItem>,
     expandedTasks: Set<String>,
-    isEmpty: Boolean,
-    en: Boolean
+    isEmpty: Boolean
 ) {
     val strings = LocalStrings.current
     var screen by rememberSaveable { mutableStateOf(Screen.MAIN) }
@@ -241,7 +237,7 @@ private fun AppContent(
                         if (screen == Screen.MAIN && selectedGoal != null) {
                             Box {
                                 IconButton(onClick = { topBarMenu = true }) {
-                                    Icon(Icons.Outlined.MoreVert, contentDescription = "goal menu")
+                                    Icon(Icons.Outlined.MoreVert, contentDescription = strings.settingsMenu)
                                 }
                                 DropdownMenu(expanded = topBarMenu, onDismissRequest = { topBarMenu = false }) {
                                     DropdownMenuItem(
@@ -310,7 +306,6 @@ private fun AppContent(
                                 goal = selectedGoal,
                                 tree = tree,
                                 expandedTasks = expandedTasks,
-                                en = en,
                                 onToggleExpand = vm::toggleExpand,
                                 onAddRootTask = {
                                     quickAddParent = null
@@ -327,8 +322,8 @@ private fun AppContent(
                             )
                         }
                     }
-                    Screen.SETTINGS -> SettingsScreen(vm, en = en)
-                    Screen.AICHAT -> AIChatScreen(vm, en = en)
+                    Screen.SETTINGS -> SettingsScreen(vm)
+                    Screen.AICHAT -> AIChatScreen(vm)
                 }
             }
         }
@@ -337,7 +332,6 @@ private fun AppContent(
     if (showGoalEditor) {
         GoalEditorSheet(
             goal = editingGoal,
-            en = en,
             onSave = { name, color, icon, s, e, sp, ep, mode ->
                 if (editingGoal == null) {
                     vm.createGoal(name, color, icon, s, e, sp, ep, mode)
@@ -352,7 +346,6 @@ private fun AppContent(
     editingTask?.let { t ->
         TaskEditorDialog(
             task = t,
-            en = en,
             onSave = { name, type, status, totalA, currentA, s, e, reminder, rule, weekdays ->
                 vm.saveTask(t.id, name, type, status, totalA, currentA, s, e, reminder, rule, weekdays)
             },
@@ -362,7 +355,6 @@ private fun AppContent(
 
     if (showQuickAdd) {
         QuickAddTaskDialog(
-            en = en,
             onSubmit = { name, type, totalAmount, currentAmount ->
                 val goalId = selectedGoalId ?: return@QuickAddTaskDialog
                 vm.addTask(goalId, quickAddParent?.id, name, type, totalAmount, currentAmount)
@@ -392,7 +384,6 @@ private fun AppContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun QuickAddTaskDialog(
-    en: Boolean,
     onSubmit: (name: String, type: TaskType, totalAmount: Double, currentAmount: Double) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -443,7 +434,7 @@ private fun QuickAddTaskDialog(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(strings.current, Modifier.weight(1f))
                         OutlinedButton(onClick = { current = (current - 1).coerceAtLeast(0.0) }) {
-                            Icon(Icons.Outlined.Remove, contentDescription = "minus", Modifier.size(18.dp))
+                            Icon(Icons.Outlined.Remove, contentDescription = strings.decrease, Modifier.size(18.dp))
                         }
                         Spacer(Modifier.width(8.dp))
                         Text("$current", style = MaterialTheme.typography.titleMedium)
@@ -454,7 +445,7 @@ private fun QuickAddTaskDialog(
                                 if (cap != null && !cap.isNaN()) it.coerceAtMost(cap) else it
                             }
                         }) {
-                            Icon(Icons.Outlined.Add, contentDescription = "plus", Modifier.size(18.dp))
+                            Icon(Icons.Outlined.Add, contentDescription = strings.increase, Modifier.size(18.dp))
                         }
                     }
                 }

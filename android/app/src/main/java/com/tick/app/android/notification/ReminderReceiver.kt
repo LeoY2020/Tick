@@ -11,8 +11,10 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.tick.app.android.model.AppLanguage
 import com.tick.app.android.model.RepeatRule
 import com.tick.app.android.ui.MainActivity
+import com.tick.app.android.ui.theme.Strings
 
 /**
  * 提醒广播接收器：触发通知展示，并为重复规则安排下一次提醒。
@@ -27,6 +29,7 @@ class ReminderReceiver : BroadcastReceiver() {
         val reminderDate = intent.getLongExtra(ReminderScheduler.EXTRA_REMINDER_DATE, 0L)
         val ruleRaw = intent.getStringExtra(ReminderScheduler.EXTRA_REPEAT_RULE)
         val weekdaysRaw = intent.getStringExtra(ReminderScheduler.EXTRA_CUSTOM_WEEKDAYS)
+        val languageRaw = intent.getStringExtra(ReminderScheduler.EXTRA_LANGUAGE)
 
         val rule = RepeatRule.fromRaw(ruleRaw) ?: RepeatRule.NEVER
         val weekdays = (weekdaysRaw ?: "")
@@ -34,12 +37,13 @@ class ReminderReceiver : BroadcastReceiver() {
             .mapNotNull { it.trim().toIntOrNull() }
             .filter { it in 1..7 }
 
-        showNotification(context, taskId, goalId, taskName, goalName)
+        showNotification(context, taskId, goalId, taskName, goalName, languageRaw)
 
         // 重复规则 → 安排下一次触发
         if (rule != RepeatRule.NEVER) {
             ReminderScheduler.rescheduleNext(
-                context, taskId, goalId, taskName, goalName, reminderDate, rule, weekdays
+                context, taskId, goalId, taskName, goalName, reminderDate, rule, weekdays,
+                languageRaw ?: AppLanguage.SYSTEM.raw
             )
         }
     }
@@ -49,14 +53,16 @@ class ReminderReceiver : BroadcastReceiver() {
         taskId: String,
         goalId: String,
         taskName: String,
-        goalName: String
+        goalName: String,
+        languageRaw: String?
     ) {
+        val strings = Strings.of(AppLanguage.fromRaw(languageRaw))
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "任务提醒",
+                strings.reminderChannelName,
                 NotificationManager.IMPORTANCE_HIGH
             )
             manager.createNotificationChannel(channel)
@@ -84,7 +90,7 @@ class ReminderReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_today)
             .setContentTitle(taskName)
-            .setContentText("目标：$goalName")
+            .setContentText("${strings.goals}: $goalName")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(contentPi)
