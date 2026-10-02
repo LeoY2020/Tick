@@ -38,19 +38,23 @@ export class CountdownFormatter {
       year -= 1;
     }
 
-    const zhL = (s: string): string => I18n.L(s, s === '年' ? 'yr ' : s === '月' ? 'mo ' : s === '日' ? 'd ' : s === '时' ? 'h' : s);
-
     if (year >= 1) {
-      return month > 0 ? `${year}${zhL('年')}${month}${zhL('月')}` : `${year}${zhL('年')}`;
+      return month > 0
+        ? `${year}${I18n.t('unit.year')}${month}${I18n.t('unit.month')}`
+        : `${year}${I18n.t('unit.year')}`;
     }
     if (month >= 1) {
-      return day > 0 ? `${month}${zhL('月')}${day}${zhL('日')}` : `${month}${zhL('月')}`;
+      return day > 0
+        ? `${month}${I18n.t('unit.month')}${day}${I18n.t('unit.day')}`
+        : `${month}${I18n.t('unit.month')}`;
     }
     if (day >= 1) {
-      return (preciseToHour && hour > 0) ? `${day}${zhL('日')}${hour}${zhL('时')}` : `${day}${zhL('日')}`;
+      return (preciseToHour && hour > 0)
+        ? `${day}${I18n.t('unit.day')}${hour}${I18n.t('unit.hour')}`
+        : `${day}${I18n.t('unit.day')}`;
     }
     if (hour > 0) {
-      return preciseToHour ? `${hour}${zhL('时')}` : undefined;
+      return preciseToHour ? `${hour}${I18n.t('unit.hour')}` : undefined;
     }
     return undefined;
   }

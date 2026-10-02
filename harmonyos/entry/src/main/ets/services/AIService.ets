@@ -4,6 +4,7 @@ import Want from '@ohos.app.ability.Want';
 import { ChatMessage, TaskNode, ChatReply, ChatEnvelope } from '../model/ChatModels';
 import { SettingsModel } from '../model/Settings';
 import { genId, now } from '../model/Util';
+import { I18n } from '../model/I18n';
 
 /**
  * AI 聊天系统提示词：要求输出 JSON envelope（任务入库 + 展示文字），由 AI 自行判断是否生成任务。
@@ -81,7 +82,7 @@ export class HuaweiAssistant {
 
   /** 调用小艺/盘古生成回复（需授权；未授权时直接抛出，由上层回退） */
   static async chatCompletion(history: ChatMessage[], settings: SettingsModel): Promise<string> {
-    throw new AIServiceError('小艺（盘古）通道尚未接入：缺少华为开发者证书与 AGC 授权。');
+    throw new AIServiceError(I18n.t('ai.error.notAuthorized'));
   }
 
   /** 小艺快捷入口：通过意图路由唤起小艺智能体（占位，需 AGC 授权后替换） */
@@ -110,7 +111,7 @@ export class AIService {
   ): Promise<ChatReply> {
     const merged = AIService.mergeHistory(history, attachmentText);
     if (merged.length === 0) {
-      throw new AIServiceError('模型未生成有效内容');
+      throw new AIServiceError(I18n.t('ai.error.empty'));
     }
     let raw = '';
     if (settings.aiModel === 'xiaoyi') {
@@ -141,7 +142,7 @@ export class AIService {
     const modelName = (settings.modelName ?? '').trim();
     const apiKey = (settings.apiKey ?? '').trim();
     if (base.length === 0 || modelName.length === 0 || apiKey.length === 0) {
-      throw new AIServiceError('小艺（盘古）尚未授权，且未配置 OpenAI 兼容 API 的 Base URL / 模型名 / API Key。请在 设置 → AI 模型 中配置后再试。');
+      throw new AIServiceError(I18n.t('ai.error.notConfigured'));
     }
     const url = AIService.normalizeChatCompletionsUrl(base);
     return AIService.sendOpenAIRequest(url, modelName, apiKey, history);
@@ -152,7 +153,7 @@ export class AIService {
   private static async cloudRequest(history: ChatMessage[], settings: SettingsModel): Promise<string> {
     const apiKey = (settings.apiKey ?? '').trim();
     if (apiKey.length === 0) {
-      throw new AIServiceError('请先在 设置 → AI 模型 中填写该模型的 API Key');
+      throw new AIServiceError(I18n.t('ai.error.apiKeyMissing'));
     }
     const provider = AIService.resolveProvider(settings);
     return AIService.sendOpenAIRequest(provider.url, provider.modelId, apiKey, history);
@@ -181,7 +182,7 @@ export class AIService {
     const base = (settings.baseUrl ?? '').trim();
     const modelId = (settings.modelName ?? '').trim();
     if (base.length === 0) {
-      throw new AIServiceError('请先在 设置 → AI 模型 中填写自定义 Base URL');
+      throw new AIServiceError(I18n.t('ai.error.baseUrlMissing'));
     }
     return { url: AIService.normalizeChatCompletionsUrl(base), modelId };
   }
@@ -231,7 +232,7 @@ export class AIService {
       const response = await httpRequest.request(url, options);
       const status: number = response.responseCode;
       if (status < 200 || status >= 300) {
-        throw new AIServiceError('网络请求失败：HTTP ' + status.toString());
+        throw new AIServiceError(I18n.t('ai.error.httpStatus', status.toString()));
       }
       const raw: string = response.result as string;
       return AIService.parseOpenAIResponse(raw);
@@ -245,14 +246,14 @@ export class AIService {
     try {
       data = JSON.parse(raw) as OpenAIResponse;
     } catch (e) {
-      throw new AIServiceError('模型服务返回了异常响应');
+      throw new AIServiceError(I18n.t('ai.error.badResponse'));
     }
     if (data === undefined || data === null || data.choices === undefined || data.choices.length === 0) {
-      throw new AIServiceError('模型服务返回了异常响应');
+      throw new AIServiceError(I18n.t('ai.error.badResponse'));
     }
     const content = data.choices[0].message.content;
     if (content === undefined || content === null || content.trim().length === 0) {
-      throw new AIServiceError('模型未生成有效内容');
+      throw new AIServiceError(I18n.t('ai.error.empty'));
     }
     return content;
   }
@@ -283,7 +284,7 @@ export class AIService {
         const message: string = env.message === undefined ? '' : env.message;
         if (generate) {
           const nodes: TaskNode[] = tasks.filter((n: TaskNode) => n.name !== undefined && n.name.trim().length > 0);
-          const replyMessage = message.length > 0 ? message : ('已为你生成 ' + nodes.length + ' 个任务。');
+          const replyMessage = message.length > 0 ? message : I18n.t('ai.generatedCount', nodes.length.toString());
           return { shouldGenerateTasks: true, tasks: nodes, message: replyMessage };
         }
         if (message.length > 0) {

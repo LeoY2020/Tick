@@ -13,8 +13,6 @@ import { DesignTokens, COLOR_PALETTE, PaletteColor, Theme, ThemePalette } from '
 
 const D = DesignTokens;
 
-const WEEKDAY_LABELS: string[] = ['日', '一', '二', '三', '四', '五', '六'];
-
 /** 任务编辑面板状态 */
 class TaskEditBuffer {
   mode: 'new' | 'newChild' | 'edit' = 'new';
@@ -191,10 +189,10 @@ struct Index {
     Column({ space: D.spaceMd }) {
       Text('🎯')
         .fontSize(52)
-      Text(I18n.L('请先添加一个目标', 'Add a goal to start'))
+      Text(I18n.t('goals.empty'))
         .fontSize(D.fontSizeBody)
         .fontColor(this.tSecondary())
-      Button(I18n.L('添加目标', 'Add Goal'))
+      Button(I18n.t('goals.add'))
         .height(40)
         .borderRadius(D.radiusL)
         .backgroundColor(D.colorPrimary)
@@ -221,7 +219,7 @@ struct Index {
         .textAlign(TextAlign.Start)
       if (this.selectedEndDate !== undefined) {
         Column({ space: 2 }) {
-          Text(I18n.L('剩余时间', 'Remaining'))
+          Text(I18n.t('tasks.remaining'))
             .fontSize(D.fontSizeCaption)
             .fontColor(this.tSecondary())
           if (CountdownFormatter.countdown(this.selectedEndDate, this.selectedEndPrecise) !== undefined) {
@@ -251,7 +249,7 @@ struct Index {
         .borderRadius(3)
         .width('100%')
       Row() {
-        Text(`${I18n.L('已完成', 'Done')} ${Math.round(p.completedWeight)} ${I18n.L('共', 'of')} ${p.totalItems} ${I18n.L('项', 'items')}`)
+        Text(I18n.t('tasks.completed', Math.round(p.completedWeight).toString(), p.totalItems.toString()))
           .fontSize(D.fontSizeCaption)
           .fontColor(this.tSecondary())
         Blank()
@@ -367,11 +365,11 @@ struct Index {
   @Builder
   rowMenu(row: TaskRow) {
     Menu() {
-      MenuItem({ content: I18n.L('编辑', 'Edit') })
+      MenuItem({ content: I18n.t('tasks.edit') })
         .onClick(() => this.openEditTask(row.task))
-      MenuItem({ content: I18n.L('添加子任务', 'Add Subtask') })
+      MenuItem({ content: I18n.t('tasks.addSubtask') })
         .onClick(() => this.openAddChild(row.task))
-      MenuItem({ content: I18n.L('删除', 'Delete') })
+      MenuItem({ content: I18n.t('common.delete') })
         .onClick(() => this.confirmDelete(row.task))
     }
   }
@@ -384,7 +382,7 @@ struct Index {
       Column().width('100%').height('100%').backgroundColor('#40000000').onClick(() => { this.sidebarShown = false })
       // 面板
       Column() {
-        Text(I18n.L('目标', 'Goals'))
+        Text(I18n.t('nav.goals'))
           .fontSize(D.fontSizeTitle)
           .fontWeight(FontWeight.Bold)
           .fontColor(this.tPrimary())
@@ -424,7 +422,7 @@ struct Index {
         .layoutWeight(1)
         .width('100%')
 
-        Button(I18n.L('新建目标', 'New Goal'))
+        Button(I18n.t('goals.new'))
           .width('100%')
           .height(40)
           .borderRadius(D.radiusL)
@@ -435,7 +433,7 @@ struct Index {
             this.sidebarShown = false
             this.openAddGoal()
           })
-        Button(I18n.L('设置', 'Settings'))
+        Button(I18n.t('nav.settings'))
           .width('100%')
           .height(40)
           .borderRadius(D.radiusL)
@@ -458,9 +456,9 @@ struct Index {
   @Builder
   deleteGoalSwipe(g: Goal) {
     Menu() {
-      MenuItem({ content: I18n.L('删除目标', 'Delete Goal') })
+      MenuItem({ content: I18n.t('goals.delete') })
         .onClick(() => this.confirmDeleteGoal(g))
-      MenuItem({ content: I18n.L('编辑目标', 'Edit Goal') })
+      MenuItem({ content: I18n.t('goals.edit') })
         .onClick(() => this.openEditGoal(g))
     }
   }
@@ -469,7 +467,7 @@ struct Index {
   @Builder
   taskSheetBuilder() {
     Column({ space: D.spaceMd }) {
-      TextInput({ placeholder: I18n.L('任务名称', 'Task name'), text: this.taskBuf.name })
+      TextInput({ placeholder: I18n.t('task.namePlaceholder'), text: this.taskBuf.name })
         .height(44)
         .borderRadius(D.radiusM)
         .backgroundColor(this.currentCard())
@@ -477,14 +475,14 @@ struct Index {
 
       // 类型选择
       Row({ space: D.spaceSm }) {
-        this.typeChip('single', I18n.L('单项', 'Single'))
-        this.typeChip('progress', I18n.L('进度', 'Progress'))
+        this.typeChip('single', I18n.t('task.single'))
+        this.typeChip('progress', I18n.t('task.progress'))
       }.width('100%')
 
       if (this.taskBuf.type === 'progress') {
         Row({ space: D.spaceMd }) {
           Column({ space: 4 }) {
-            Text(I18n.L('总量', 'Total')).fontSize(D.fontSizeCaption).fontColor(this.tSecondary())
+            Text(I18n.t('task.total')).fontSize(D.fontSizeCaption).fontColor(this.tSecondary())
             TextInput({ text: this.taskBuf.totalAmount.toString() })
               .type(InputType.Number)
               .height(40)
@@ -496,7 +494,7 @@ struct Index {
               })
           }.layoutWeight(1)
           Column({ space: 4 }) {
-            Text(I18n.L('当前', 'Current')).fontSize(D.fontSizeCaption).fontColor(this.tSecondary())
+            Text(I18n.t('task.current')).fontSize(D.fontSizeCaption).fontColor(this.tSecondary())
             TextInput({ text: this.taskBuf.currentAmount.toString() })
               .type(InputType.Number)
               .height(40)
@@ -510,10 +508,10 @@ struct Index {
         }.width('100%')
       } else {
         Row({ space: D.spaceSm }) {
-          Text(I18n.L('状态', 'Status')).fontSize(D.fontSizeBody2).fontColor(this.tSecondary())
-          this.statusChip('notDone', I18n.L('未完成', 'Not Done'))
-          this.statusChip('done', I18n.L('完成', 'Done'))
-          this.statusChip('deleted', I18n.L('删除', 'Deleted'))
+          Text(I18n.t('task.status')).fontSize(D.fontSizeBody2).fontColor(this.tSecondary())
+          this.statusChip('notDone', I18n.t('task.notDone'))
+          this.statusChip('done', I18n.t('task.done'))
+          this.statusChip('deleted', I18n.t('task.deleted'))
         }.width('100%')
       }
 
@@ -543,7 +541,7 @@ struct Index {
       // 提醒
       Column({ space: D.spaceSm }) {
         Row() {
-          Text(I18n.L('提醒', 'Reminder')).fontSize(D.fontSizeBody2).fontColor(this.tSecondary())
+          Text(I18n.t('task.reminder')).fontSize(D.fontSizeBody2).fontColor(this.tSecondary())
           Blank()
           Toggle({ type: ToggleType.Switch, isOn: this.taskBuf.hasReminder })
             .onChange((on: boolean) => { this.taskBuf.hasReminder = on })
@@ -551,16 +549,16 @@ struct Index {
         if (this.taskBuf.hasReminder) {
           // 重复规则
           Row({ space: D.spaceSm }) {
-            this.repeatChip('never', I18n.L('不重复', 'Once'))
-            this.repeatChip('daily', I18n.L('每天', 'Daily'))
-            this.repeatChip('weekly', I18n.L('每周', 'Weekly'))
-            this.repeatChip('monthly', I18n.L('每月', 'Monthly'))
-            this.repeatChip('custom', I18n.L('自定义', 'Custom'))
+            this.repeatChip('never', I18n.t('repeat.never'))
+            this.repeatChip('daily', I18n.t('repeat.daily'))
+            this.repeatChip('weekly', I18n.t('repeat.weekly'))
+            this.repeatChip('monthly', I18n.t('repeat.monthly'))
+            this.repeatChip('custom', I18n.t('repeat.custom'))
           }.width('100%')
           if (this.taskBuf.repeatRule === 'custom') {
             Row({ space: D.spaceSm }) {
               ForEach([1, 2, 3, 4, 5, 6, 7], (w: number) => {
-                Text(WEEKDAY_LABELS[w - 1])
+                Text(I18n.t('weekday.' + w.toString()))
                   .fontSize(D.fontSizeCaption)
                   .fontColor(this.taskBuf.weekdays.indexOf(w) >= 0 ? Color.White : this.tPrimary())
                   .backgroundColor(this.taskBuf.weekdays.indexOf(w) >= 0 ? D.colorPrimary : this.colorPressed())
@@ -575,7 +573,7 @@ struct Index {
         }
       }.width('100%')
 
-      Button(I18n.L('保存', 'Save'))
+      Button(I18n.t('common.save'))
         .width('100%')
         .height(44)
         .borderRadius(D.radiusL)
@@ -637,7 +635,7 @@ struct Index {
   @Builder
   goalSheetBuilder() {
     Column({ space: D.spaceMd }) {
-      TextInput({ placeholder: I18n.L('目标名称', 'Goal name'), text: this.goalBuf.name })
+      TextInput({ placeholder: I18n.t('goals.namePlaceholder'), text: this.goalBuf.name })
         .height(44)
         .borderRadius(D.radiusM)
         .backgroundColor(this.currentCard())
@@ -645,7 +643,7 @@ struct Index {
 
       // 颜色
       Column({ space: D.spaceSm }) {
-        Text(I18n.L('颜色', 'Color')).fontSize(D.fontSizeBody2).fontColor(this.tSecondary()).width('100%')
+        Text(I18n.t('task.color')).fontSize(D.fontSizeBody2).fontColor(this.tSecondary()).width('100%')
         Scroll() {
           Row({ space: D.spaceSm }) {
             ForEach(COLOR_PALETTE, (c: PaletteColor) => {
@@ -670,16 +668,16 @@ struct Index {
       }.width('100%')
 
       Column({ space: 4 }) {
-        Text(I18n.L('进度统计模式', 'Progress counting')).fontSize(D.fontSizeBody2).fontColor(this.tSecondary()).width('100%')
+        Text(I18n.t('goals.countingMode')).fontSize(D.fontSizeBody2).fontColor(this.tSecondary()).width('100%')
         Row({ space: D.spaceSm }) {
-          Text(I18n.L('全部任务', 'All tasks'))
+          Text(I18n.t('goals.countAllTasks'))
             .fontSize(D.fontSizeCaption)
             .fontColor(this.goalBuf.countingMode === 'allTasks' ? Color.White : this.tPrimary())
             .backgroundColor(this.goalBuf.countingMode === 'allTasks' ? D.colorPrimary : this.colorPressed())
             .padding({ left: D.spaceMd, right: D.spaceMd, top: 6, bottom: 6 })
             .borderRadius(D.radiusPill)
             .onClick(() => { this.goalBuf.countingMode = 'allTasks' })
-          Text(I18n.L('仅叶子任务', 'Leaf tasks only'))
+          Text(I18n.t('goals.countLeafTasks'))
             .fontSize(D.fontSizeCaption)
             .fontColor(this.goalBuf.countingMode === 'leafTasks' ? Color.White : this.tPrimary())
             .backgroundColor(this.goalBuf.countingMode === 'leafTasks' ? D.colorPrimary : this.colorPressed())
@@ -689,7 +687,7 @@ struct Index {
         }.width('100%')
       }.width('100%')
 
-      Button(I18n.L('保存', 'Save'))
+      Button(I18n.t('common.save'))
         .width('100%')
         .height(44)
         .borderRadius(D.radiusL)
@@ -923,7 +921,7 @@ struct Index {
     const buf = this.taskBuf
     const name = buf.name.trim()
     if (name.length === 0) {
-      promptAction.showToast({ message: I18n.L('请输入任务名称', 'Enter a task name') })
+      promptAction.showToast({ message: I18n.t('tasks.nameRequired') })
       return
     }
     const reminderMs = buf.hasReminder ? buf.reminderMs : undefined
@@ -998,7 +996,7 @@ struct Index {
   private async saveGoalEditor(): Promise<void> {
     const name = this.goalBuf.name.trim()
     if (name.length === 0) {
-      promptAction.showToast({ message: I18n.L('请输入目标名称', 'Enter a goal name') })
+      promptAction.showToast({ message: I18n.t('goals.nameRequired') })
       return
     }
     if (this.goalBuf.isNew) {
@@ -1022,14 +1020,14 @@ struct Index {
 
   private confirmDeleteGoal(g: Goal): void {
     AlertDialog.show({
-      title: I18n.L('删除目标', 'Delete Goal'),
-      message: I18n.L(`删除目标「${g.name}」？其下所有任务将一并删除。`, `Delete "${g.name}" and all its tasks?`),
+      title: I18n.t('goals.delete'),
+      message: I18n.t('goals.deleteConfirm', g.name),
       primaryButton: {
-        value: I18n.L('取消', 'Cancel'),
+        value: I18n.t('common.cancel'),
         action: () => { }
       },
       secondaryButton: {
-        value: I18n.L('删除', 'Delete'),
+        value: I18n.t('common.delete'),
         fontColor: D.colorDanger,
         action: async () => {
           await AppViewModel.deleteGoal(g.id)
@@ -1045,14 +1043,14 @@ struct Index {
 
   private confirmDelete(row: TaskRow): void {
     AlertDialog.show({
-      title: I18n.L('删除任务', 'Delete Task'),
-      message: I18n.L(`删除任务「${row.task.name}」？其所有子任务将一并删除。`, `Delete "${row.task.name}" and all its subtasks?`),
+      title: I18n.t('tasks.delete'),
+      message: I18n.t('tasks.deleteConfirm', row.task.name),
       primaryButton: {
-        value: I18n.L('取消', 'Cancel'),
+        value: I18n.t('common.cancel'),
         action: () => { }
       },
       secondaryButton: {
-        value: I18n.L('删除', 'Delete'),
+        value: I18n.t('common.delete'),
         fontColor: D.colorDanger,
         action: async () => {
           const pid = row.task.parentTaskId

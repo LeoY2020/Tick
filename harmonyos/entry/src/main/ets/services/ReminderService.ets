@@ -4,6 +4,7 @@ import common from '@ohos.app.ability.common';
 import { TaskItem } from '../model/TaskItem';
 import { RepeatRule } from '../model/Enums';
 import { toWeekdayCode } from '../model/Util';
+import { I18n } from '../model/I18n';
 
 /** 提醒触发配置（纯逻辑，可测试） */
 export interface TriggerPlacement {
@@ -167,7 +168,7 @@ export class ReminderService {
       reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_CALENDAR,
       dateTime: dateTime,
       title: title,
-      content: '目标：' + goalName
+      content: I18n.t('reminder.content', goalName)
     };
     if (p.year === undefined) {
       if (p.weekday !== undefined) {

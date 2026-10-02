@@ -3,6 +3,8 @@
  * 并提供显示名、归一化、星期解析等纯函数工具。
  */
 
+import { I18n } from './I18n';
+
 /** 任务类型：单项 / 进度 */
 export type TaskType = 'single' | 'progress';
 
@@ -46,72 +48,72 @@ export type AIModelKind =
   | 'custom';
 
 export function taskTypeDisplayName(type: TaskType): string {
-  return type === 'single' ? '单项' : '进度';
+  return type === 'single' ? I18n.t('task.single') : I18n.t('task.progress');
 }
 
 export function taskStatusDisplayName(status: TaskStatus): string {
   switch (status) {
     case 'notDone':
-      return '未完成';
+      return I18n.t('task.notDone');
     case 'halfDone':
-      return '半完成';
+      return I18n.t('task.halfDone');
     case 'done':
-      return '完成';
+      return I18n.t('task.done');
     case 'deleted':
-      return '删除';
+      return I18n.t('task.deleted');
   }
 }
 
 export function progressCountingModeDisplayName(mode: ProgressCountingMode): string {
-  return mode === 'allTasks' ? '全部任务' : '仅叶子任务';
+  return mode === 'allTasks' ? I18n.t('goals.countAllTasks') : I18n.t('goals.countLeafTasks');
 }
 
 export function repeatRuleDisplayName(rule: RepeatRule): string {
   switch (rule) {
     case 'never':
-      return '不重复';
+      return I18n.t('repeat.never');
     case 'daily':
-      return '每天';
+      return I18n.t('repeat.daily');
     case 'weekly':
-      return '每周';
+      return I18n.t('repeat.weekly');
     case 'monthly':
-      return '每月';
+      return I18n.t('repeat.monthly');
     case 'custom':
-      return '自定义';
+      return I18n.t('repeat.custom');
   }
 }
 
 export function colorSchemeDisplayName(scheme: ColorSchemeSetting): string {
   switch (scheme) {
     case 'system':
-      return '跟随系统';
+      return I18n.t('theme.system');
     case 'light':
-      return '亮色';
+      return I18n.t('theme.light');
     case 'dark':
-      return '暗色';
+      return I18n.t('theme.dark');
   }
 }
 
 export function aiModelDisplayName(model: AIModelKind): string {
   switch (model) {
     case 'xiaoyi':
-      return '小艺（盘古，需授权）';
+      return I18n.t('ai.model.xiaoyi');
     case 'qwen':
-      return '千问';
+      return I18n.t('ai.model.qwen');
     case 'deepseek':
-      return 'DeepSeek';
+      return I18n.t('ai.model.deepseek');
     case 'chatgpt':
-      return 'ChatGPT';
+      return I18n.t('ai.model.chatgpt');
     case 'yuanbao':
-      return '元宝';
+      return I18n.t('ai.model.yuanbao');
     case 'glm':
-      return 'GLM';
+      return I18n.t('ai.model.glm');
     case 'kimi':
-      return 'Kimi';
+      return I18n.t('ai.model.kimi');
     case 'ernie':
-      return '文心';
+      return I18n.t('ai.model.ernie');
     case 'custom':
-      return '自定义';
+      return I18n.t('common.custom');
   }
 }
 

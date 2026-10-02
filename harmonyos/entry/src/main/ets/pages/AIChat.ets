@@ -27,18 +27,18 @@ struct AIChat {
     Column() {
       // 顶部栏
       Row() {
-        Button(I18n.L('‹ 返回', '‹ Back'))
+        Button(I18n.t('common.back'))
           .fontSize(D.fontSizeBody2)
           .fontColor(this.tPrimary())
           .backgroundColor(Color.Transparent)
           .onClick(() => router.back())
         Blank()
-        Text(I18n.L('AI 对话', 'AI Chat'))
+        Text(I18n.t('ai.chatTitle'))
           .fontSize(D.fontSizeTitle)
           .fontWeight(FontWeight.Bold)
           .fontColor(this.tPrimary())
         Blank()
-        Button(I18n.L('附件', 'Attach'))
+        Button(I18n.t('ai.attach'))
           .fontSize(D.fontSizeBody2)
           .fontColor(Color.White)
           .backgroundColor(D.colorPrimary)
@@ -50,7 +50,7 @@ struct AIChat {
 
       // 显示选中的附件名
       if (this.attachmentName.length > 0) {
-        Text(`${I18n.L('附件', 'Attach')}: ${this.attachmentName}`)
+        Text(`${I18n.t('ai.attach')}: ${this.attachmentName}`)
           .fontSize(D.fontSizeCaption)
           .fontColor(this.tSecondary())
           .maxLines(1)
@@ -74,7 +74,7 @@ struct AIChat {
 
       // 输入区
       Row({ space: D.spaceSm }) {
-        TextInput({ placeholder: I18n.L('输入消息…', 'Type a message…'), text: this.inputText })
+        TextInput({ placeholder: I18n.t('ai.input'), text: this.inputText })
           .layoutWeight(1)
           .height(42)
           .borderRadius(D.radiusPill)
@@ -82,7 +82,7 @@ struct AIChat {
           .fontColor(this.tPrimary())
           .onChange((v: string) => { this.inputText = v })
           .onSubmit(() => this.send())
-        Button(I18n.L('发送', 'Send'))
+        Button(I18n.t('ai.send'))
           .height(42)
           .borderRadius(D.radiusPill)
           .backgroundColor(D.colorPrimary)
@@ -92,7 +92,7 @@ struct AIChat {
       }.width('100%').padding(D.spaceMd)
 
       if (this.busy) {
-        Text(I18n.L('AI 思考中…', 'AI is thinking…'))
+        Text(I18n.t('ai.sending'))
           .fontSize(D.fontSizeCaption)
           .fontColor(this.tSecondary())
           .padding({ bottom: D.spaceSm })
@@ -196,7 +196,7 @@ struct AIChat {
       this.attachmentName = this.fileNameOf(uri)
     } catch (e) {
       const err = e as Error
-      const msg = err !== undefined && err.message !== undefined ? err.message : I18n.L('附件解析失败', 'Failed to parse attachment')
+      const msg = err !== undefined && err.message !== undefined ? err.message : I18n.t('ai.attachParseFailed')
       promptAction.showToast({ message: msg })
       // 友好提示:PDF 等格式解析失败
     }
@@ -234,7 +234,7 @@ struct AIChat {
       await this.persist()
     } catch (e) {
       const err = e as AIServiceError
-      const msg = err !== undefined && err.message !== undefined ? err.message : I18n.L('请求失败', 'Request failed')
+      const msg = err !== undefined && err.message !== undefined ? err.message : I18n.t('ai.requestFailed')
       const errMsg: ChatMessage = this.makeMessage('assistant', msg)
       this.messages.push(errMsg)
       await this.persist()
@@ -265,7 +265,7 @@ struct AIChat {
   }
 
   private defaultReplyText(): string {
-    return I18n.L('已完成生成', 'Done')
+    return I18n.t('ai.done')
   }
 
   private filterEmpty(nodes: TaskNode[]): TaskNode[] {
@@ -299,7 +299,7 @@ struct AIChat {
 
   private async persist(): Promise<void> {
     if (this.session === undefined) {
-      this.session = new AIChatSession('AI 对话')
+      this.session = new AIChatSession(I18n.t('ai.chatTitle'))
     }
     this.session.messagesData = JSON.stringify(this.messages)
     this.session.messageCount = this.messages.length
