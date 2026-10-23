@@ -55,6 +55,30 @@ struct Index {
   @Builder
   page() {
     Stack({ alignContent: Alignment.BottomEnd }) {
+      // 光感渐变背景
+      Column()
+        .width('100%')
+        .height('100%')
+        .linearGradient({
+          angle: 180,
+          colors: [[this.bgTopC(), 0], [this.currentBackground(), 0.55], [this.bgBottomC(), 1]]
+        })
+      // 环境光斑（静态柔光，避免每帧重算模糊）
+      Circle()
+        .width(300)
+        .height(300)
+        .fill(this.glowAC())
+        .blur(120)
+        .opacity(0.8)
+        .position({ x: -80, y: -60 })
+      Circle()
+        .width(260)
+        .height(260)
+        .fill(this.glowBC())
+        .blur(110)
+        .opacity(0.6)
+        .position({ x: 180, y: 300 })
+
       Column() {
         this.headerBar()
         if (this.selectedGoalId.length === 0) {
@@ -73,29 +97,35 @@ struct Index {
             }
             .layoutWeight(1)
             .width('100%')
-            .divider({ strokeWidth: 0.5, color: this.dividerC() })
+            .padding({ bottom: D.spaceLg })
           }
           .layoutWeight(1)
         }
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(this.currentBackground())
+      .backgroundColor(Color.Transparent)
 
-      // 底部添加任务按钮
+      // 底部添加任务按钮（光感渐变 + 辉光）
       if (this.selectedGoalId.length > 0) {
-        Button() {
-          Text('+')
-            .fontSize(28)
-            .fontColor(Color.White)
-            .fontWeight(FontWeight.Medium)
+        Stack({ alignContent: Alignment.Center }) {
+          Circle()
+            .width(58)
+            .height(58)
+            .linearGradient({
+              angle: 135,
+              colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
+            })
+            .shadow({ radius: 22, color: this.glowAC(), offsetY: 10 })
+          Image($r('app.media.ic_plus'))
+            .width(24)
+            .height(24)
+            .fillColor(Color.White)
         }
-        .width(52)
-        .height(52)
-        .borderRadius(D.radiusPill)
-        .backgroundColor(D.colorPrimary)
-        .shadow({ radius: 12, color: '#330A59F7', offsetY: 4 })
-        .margin({ bottom: 24, right: 20 })
+        .width(58)
+        .height(58)
+        .margin({ bottom: 28, right: 22 })
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
         .onClick(() => this.openAddTopTask())
       }
 
@@ -121,61 +151,67 @@ struct Index {
   // ===== 顶部导航栏 =====
   @Builder
   headerBar() {
-    Row() {
-      Row() {
-        Button() {
-          Text('☰')
-            .fontSize(22)
-            .fontColor(this.tPrimary())
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor(Color.Transparent)
-        .onClick(() => {
-          this.sidebarShown = true
-        })
-      }.layoutWeight(1)
-
-      Column() {
-        if (this.selectedGoalName.length > 0) {
-          Text(this.selectedGoalName)
-            .fontSize(D.fontSizeTitle)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.tPrimary())
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        } else {
-          Text('Tick')
-            .fontSize(D.fontSizeTitle)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.tPrimary())
-        }
+    Row({ space: D.spaceSm }) {
+      Button() {
+        Image($r('app.media.ic_menu'))
+          .width(22)
+          .height(22)
+          .fillColor(this.tPrimary())
       }
-      .layoutWeight(2)
+      .width(40)
+      .height(40)
+      .borderRadius(D.radiusPill)
+      .backgroundColor(this.glassC())
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
+      .onClick(() => {
+        this.sidebarShown = true
+      })
+
+      Column({ space: 1 }) {
+        Text(this.selectedGoalName.length > 0 ? this.selectedGoalName : 'Tick')
+          .fontSize(D.fontSizeTitle)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.tPrimary())
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text('TICK · 光感')
+          .fontSize(10)
+          .fontColor(this.tTertiary())
+          .letterSpacing(1.4)
+      }
+      .layoutWeight(1)
       .alignItems(HorizontalAlign.Center)
 
-      Row({ space: 2 }) {
+      Row({ space: 8 }) {
         Button() {
-          Text('AI')
-            .fontSize(14)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Color.White)
+          Image($r('app.media.ic_ai'))
+            .width(20)
+            .height(20)
+            .fillColor(Color.White)
         }
-        .width(36)
-        .height(36)
+        .width(38)
+        .height(38)
         .borderRadius(D.radiusPill)
-        .backgroundColor(D.colorPrimary)
+        .linearGradient({
+          angle: 135,
+          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
+        })
+        .shadow({ radius: 14, color: this.glowAC(), offsetY: 5 })
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
         .onClick(() => {
           router.pushUrl({ url: 'pages/AIChat', params: { goalId: this.selectedGoalId } })
         })
         Button() {
-          Text('⚙')
-            .fontSize(20)
-            .fontColor(this.tPrimary())
+          Image($r('app.media.ic_settings'))
+            .width(21)
+            .height(21)
+            .fillColor(this.tPrimary())
         }
         .width(40)
         .height(40)
-        .backgroundColor(Color.Transparent)
+        .borderRadius(D.radiusPill)
+        .backgroundColor(this.glassC())
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
         .onClick(() => {
           router.pushUrl({ url: 'pages/Settings' })
         })
@@ -184,24 +220,56 @@ struct Index {
       .justifyContent(FlexAlign.End)
     }
     .width('100%')
-    .padding({ left: D.spaceMd, right: D.spaceMd, top: D.spaceMd, bottom: D.spaceSm })
+    .padding({ left: D.spaceXs, right: D.spaceXs, top: D.spaceXs, bottom: D.spaceXs })
+    .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
+    .backgroundColor(this.glassC())
+    .borderRadius(D.radiusXl)
+    .border({ width: 1, color: this.borderC() })
+    .shadow({ radius: 20, color: this.shadowC(), offsetY: 8 })
   }
 
   // ===== 空态 =====
   @Builder
   emptyState() {
-    Column({ space: D.spaceMd }) {
-      Text('🎯')
-        .fontSize(52)
+    Column({ space: D.spaceLg }) {
+      Stack({ alignContent: Alignment.Center }) {
+        Circle()
+          .width(108)
+          .height(108)
+          .linearGradient({
+            angle: 135,
+            colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
+          })
+          .shadow({ radius: 28, color: this.glowAC(), offsetY: 12 })
+        Image($r('app.media.ic_target'))
+          .width(48)
+          .height(48)
+          .fillColor(Color.White)
+      }
       Text(I18n.t('goals.empty'))
         .fontSize(D.fontSizeBody)
         .fontColor(this.tSecondary())
-      Button(I18n.t('goals.add'))
-        .height(40)
-        .borderRadius(D.radiusL)
-        .backgroundColor(D.colorPrimary)
-        .fontColor(Color.White)
-        .onClick(() => this.openAddGoal())
+      Button() {
+        Row({ space: 6 }) {
+          Image($r('app.media.ic_plus'))
+            .width(18)
+            .height(18)
+            .fillColor(Color.White)
+          Text(I18n.t('goals.add'))
+            .fontSize(D.fontSizeBody2)
+            .fontColor(Color.White)
+        }
+      }
+      .height(44)
+      .padding({ left: D.spaceXl, right: D.spaceXl })
+      .borderRadius(D.radiusPill)
+      .linearGradient({
+        angle: 135,
+        colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
+      })
+      .shadow({ radius: 16, color: this.glowAC(), offsetY: 6 })
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+      .onClick(() => this.openAddGoal())
     }
     .width('100%')
     .layoutWeight(1)
@@ -212,57 +280,111 @@ struct Index {
   // ===== 目标标题 + 倒计时 =====
   @Builder
   goalHeader() {
-    Row() {
-      Text(this.selectedGoalName)
-        .fontSize(D.fontSizeTitle)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.tPrimary())
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .layoutWeight(1)
-        .textAlign(TextAlign.Start)
+    Row({ space: D.spaceMd }) {
+      // 目标徽标
+      Stack({ alignContent: Alignment.Center }) {
+        Circle()
+          .width(46)
+          .height(46)
+          .linearGradient({
+            angle: 135,
+            colors: [[this.resolveColor(this.selectedGoalColor), 0], [this.heroBC(), 1]]
+          })
+          .shadow({ radius: 14, color: this.glowAC(), offsetY: 6 })
+        Image($r('app.media.ic_target'))
+          .width(22)
+          .height(22)
+          .fillColor(Color.White)
+      }
+
+      Column({ space: 3 }) {
+        Text(this.selectedGoalName)
+          .fontSize(D.fontSizeTitle)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.tPrimary())
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(I18n.t('tasks.remaining'))
+          .fontSize(D.fontSizeCaption)
+          .fontColor(this.tSecondary())
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
       if (this.selectedEndDate !== undefined) {
         Column({ space: 2 }) {
-          Text(I18n.t('tasks.remaining'))
-            .fontSize(D.fontSizeCaption)
-            .fontColor(this.tSecondary())
           if (CountdownFormatter.countdown(this.selectedEndDate, this.selectedEndPrecise) !== undefined) {
             Text(CountdownFormatter.countdown(this.selectedEndDate, this.selectedEndPrecise) as string)
-              .fontSize(14)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(D.colorPrimary)
+              .fontSize(15)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(this.heroAC())
           }
           Text(CountdownFormatter.endDateLabel(this.selectedEndDate, this.selectedEndPrecise))
-            .fontSize(D.fontSizeCaption)
+            .fontSize(10)
             .fontColor(this.tTertiary())
-        }.alignItems(HorizontalAlign.End)
+        }
+        .alignItems(HorizontalAlign.End)
+        .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+        .borderRadius(D.radiusL)
+        .backgroundColor(this.accentSoftC())
       }
     }
     .width('100%')
-    .padding({ left: D.spaceLg, right: D.spaceLg, top: D.spaceSm })
+    .padding(D.spaceMd)
+    .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
+    .backgroundColor(this.glassC())
+    .borderRadius(D.radiusXl)
+    .border({ width: 1, color: this.borderC() })
+    .shadow({ radius: 18, color: this.shadowC(), offsetY: 8 })
+    .transition(TransitionEffect.OPACITY
+      .animation({ duration: D.animNormal, curve: Curve.EaseOut })
+      .combine(TransitionEffect.translate({ y: 12 })))
   }
 
   // ===== 目标总进度 =====
   @Builder
   goalProgressArea() {
-    Column({ space: 6 }) {
-      Progress({ value: this.goalFraction() * 100, total: 100, type: ProgressType.Linear })
-        .color(this.resolveColor(this.selectedGoalColor))
-        .height(6)
-        .borderRadius(3)
-        .width('100%')
+    Column({ space: D.spaceSm }) {
+      // 渐变轨道 + 光感扫光
+      Stack({ alignContent: Alignment.Start }) {
+        Progress({ value: this.goalFraction() * 100, total: 100, type: ProgressType.Linear })
+          .color(this.heroAC())
+          .backgroundColor(this.trackC())
+          .height(10)
+          .borderRadius(5)
+          .width('100%')
+        // 流动高光（周期重复从左到右扫过）
+        Row()
+          .width(110)
+          .height(10)
+          .linearGradient({
+            angle: 90,
+            colors: [['#00FFFFFF', 0], ['#73FFFFFF', 0.5], ['#00FFFFFF', 1]]
+          })
+          .offset({ x: this.sweepX })
+      }
+      .width('100%')
+      .height(10)
+      .clip(true)
+
       Row() {
         Text(I18n.t('tasks.completed', Math.round(this.goalCompletedWeight()).toString(), this.goalTotalItems().toString()))
           .fontSize(D.fontSizeCaption)
           .fontColor(this.tSecondary())
         Blank()
         Text(`${(this.goalFraction() * 100).toFixed(1)}%`)
-          .fontSize(D.fontSizeCaption)
-          .fontColor(this.tSecondary())
+          .fontSize(D.fontSizeBody2)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.heroAC())
       }.width('100%')
     }
     .width('100%')
-    .padding({ left: D.spaceLg, right: D.spaceLg, top: D.spaceSm, bottom: D.spaceSm })
+    .padding(D.spaceMd)
+    .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
+    .backgroundColor(this.glassC())
+    .borderRadius(D.radiusXl)
+    .border({ width: 1, color: this.borderC() })
+    .shadow({ radius: 18, color: this.shadowC(), offsetY: 8 })
   }
 
   // ===== 单个任务行 =====
@@ -271,19 +393,20 @@ struct Index {
     Row({ space: D.spaceSm }) {
       // 展开箭头
       if (row.hasChildren) {
-        Text(row.expanded ? '▾' : '▸')
-          .fontSize(14)
-          .fontColor(this.tSecondary())
-          .width(18)
+        Image(row.expanded ? $r('app.media.ic_chevron_down') : $r('app.media.ic_chevron_right'))
+          .width(16)
+          .height(16)
+          .fillColor(this.tSecondary())
           .onClick(() => this.toggleExpand(row.task.id))
       } else {
-        Blank().width(18)
+        Blank().width(16)
       }
-      // 颜色圆点
+      // 颜色圆点（带柔和外发光）
       Circle()
-        .width(10)
-        .height(10)
+        .width(9)
+        .height(9)
         .fill(this.resolveColor(AppViewModel.effectiveColor(row.task)))
+        .shadow({ radius: 6, color: this.resolveColor(AppViewModel.effectiveColor(row.task)) })
       // 名称
       Text(row.task.name)
         .fontSize(D.fontSizeBody)
@@ -297,10 +420,15 @@ struct Index {
       this.trailingControl(row)
     }
     .width('100%')
-    .padding({ left: Math.min(row.depth * 18, 90), right: D.spaceMd, top: D.spaceSm, bottom: D.spaceSm })
-    .margin({ left: D.spaceMd, right: D.spaceMd })
-    .borderRadius(D.radiusM)
-    .backgroundColor(this.currentCard())
+    .padding({ left: Math.min(row.depth * 16, 80), right: D.spaceMd, top: 12, bottom: 12 })
+    .margin({ left: D.spaceMd, right: D.spaceMd, top: 5 })
+    .borderRadius(D.radiusL)
+    .backgroundColor(this.glassC())
+    .border({ width: 1, color: this.borderC() })
+    .shadow({ radius: 10, color: this.shadowC(), offsetY: 3 })
+    .transition(TransitionEffect.OPACITY
+      .animation({ duration: D.animNormal, curve: Curve.EaseOut })
+      .combine(TransitionEffect.translate({ y: 8 })))
   }
 
   // ===== 行尾控件 =====
@@ -316,13 +444,17 @@ struct Index {
   // ===== 单项状态控件 =====
   @Builder
   singleControl(row: TaskRow) {
-    Column() {
-      Text(this.statusSymbol(AppViewModel.effectiveStatus(row.task)))
-        .fontSize(20)
-        .fontColor(this.statusColor(AppViewModel.effectiveStatus(row.task)))
+    Row() {
+      Image(this.statusIcon(AppViewModel.effectiveStatus(row.task)))
+        .width(26)
+        .height(26)
+        .fillColor(this.statusColor(AppViewModel.effectiveStatus(row.task)))
+        .animation({ duration: D.animNormal, curve: Curve.EaseOut })
     }
-    .width(36)
-    .alignItems(HorizontalAlign.Center)
+    .width(40)
+    .height(40)
+    .justifyContent(FlexAlign.Center)
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.85 })
     .onClick(() => {
       if (!row.hasChildren) {
         this.cycleStatus(row.task)
@@ -335,13 +467,18 @@ struct Index {
   progressControl(row: TaskRow) {
     Row({ space: 6 }) {
       if (!row.hasChildren) {
-        Button('-')
-          .width(24)
-          .height(24)
-          .fontSize(16)
-          .fontColor(this.tPrimary())
-          .backgroundColor(this.colorPressed())
-          .onClick(() => this.adjustProgress(row.task, -1))
+        Button() {
+          Image($r('app.media.ic_minus'))
+            .width(14)
+            .height(14)
+            .fillColor(this.tPrimary())
+        }
+        .width(28)
+        .height(28)
+        .borderRadius(D.radiusPill)
+        .backgroundColor(this.trackC())
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+        .onClick(() => this.adjustProgress(row.task, -1))
       }
       Text(this.taskProgressLabel(row.task))
         .fontSize(D.fontSizeCaption)
@@ -349,15 +486,22 @@ struct Index {
       Progress({ value: this.taskProgressPercent(row.task), total: 100, type: ProgressType.Linear })
         .width(56)
         .height(4)
-        .color(D.colorPrimary)
+        .borderRadius(2)
+        .color(this.resolveColor(AppViewModel.effectiveColor(row.task)))
+        .backgroundColor(this.trackC())
       if (!row.hasChildren) {
-        Button('+')
-          .width(24)
-          .height(24)
-          .fontSize(16)
-          .fontColor(this.tPrimary())
-          .backgroundColor(this.colorPressed())
-          .onClick(() => this.adjustProgress(row.task, 1))
+        Button() {
+          Image($r('app.media.ic_plus'))
+            .width(14)
+            .height(14)
+            .fillColor(this.tPrimary())
+        }
+        .width(28)
+        .height(28)
+        .borderRadius(D.radiusPill)
+        .backgroundColor(this.trackC())
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+        .onClick(() => this.adjustProgress(row.task, 1))
       }
     }
   }
@@ -405,13 +549,17 @@ struct Index {
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
                   .layoutWeight(1)
                 if (this.selectedGoalId === g.id) {
-                  Text('✓').fontSize(16).fontColor(D.colorPrimary)
+                  Image($r('app.media.ic_check'))
+                    .width(16)
+                    .height(16)
+                    .fillColor(this.heroAC())
                 }
               }
               .width('100%')
               .padding(D.spaceSm)
               .borderRadius(D.radiusM)
-              .backgroundColor(this.selectedGoalId === g.id ? '#140A59F7' : Color.Transparent)
+              .backgroundColor(this.selectedGoalId === g.id ? this.accentSoftC() : Color.Transparent)
+              .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
               .onClick(() => {
                 this.selectGoal(g.id)
                 this.sidebarShown = false
@@ -423,24 +571,39 @@ struct Index {
         .layoutWeight(1)
         .width('100%')
 
-        Button(I18n.t('goals.new'))
-          .width('100%')
-          .height(40)
-          .borderRadius(D.radiusL)
-          .backgroundColor(D.colorPrimary)
-          .fontColor(Color.White)
-          .margin({ top: D.spaceMd })
-          .onClick(() => {
-            this.sidebarShown = false
-            this.openAddGoal()
-          })
+        Button() {
+          Row({ space: 6 }) {
+            Image($r('app.media.ic_plus'))
+              .width(16)
+              .height(16)
+              .fillColor(Color.White)
+            Text(I18n.t('goals.new'))
+              .fontSize(D.fontSizeBody2)
+              .fontColor(Color.White)
+          }
+        }
+        .width('100%')
+        .height(44)
+        .borderRadius(D.radiusPill)
+        .linearGradient({
+          angle: 135,
+          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
+        })
+        .shadow({ radius: 14, color: this.glowAC(), offsetY: 6 })
+        .margin({ top: D.spaceMd })
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+        .onClick(() => {
+          this.sidebarShown = false
+          this.openAddGoal()
+        })
         Button(I18n.t('nav.settings'))
           .width('100%')
           .height(40)
-          .borderRadius(D.radiusL)
-          .backgroundColor(this.colorPressed())
+          .borderRadius(D.radiusPill)
+          .backgroundColor(this.trackC())
           .fontColor(this.tPrimary())
           .margin({ top: D.spaceSm })
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
           .onClick(() => {
             this.sidebarShown = false
             router.pushUrl({ url: 'pages/Settings' })
@@ -449,8 +612,15 @@ struct Index {
       .width(280)
       .height('100%')
       .padding(D.spaceLg)
-      .backgroundColor(this.currentCard())
+      .linearGradient({
+        angle: 160,
+        colors: [[this.currentCard(), 0], [this.currentBgSoft(), 1]]
+      })
       .borderRadius({ topRight: D.radiusXl, bottomRight: D.radiusXl })
+      .shadow({ radius: 28, color: this.shadowC(), offsetX: 8 })
+      .transition(TransitionEffect.OPACITY
+        .animation({ duration: D.animNormal, curve: Curve.EaseOut })
+        .combine(TransitionEffect.translate({ x: -40 })))
     }
   }
 
@@ -526,7 +696,11 @@ struct Index {
                 .height(28)
                 .fill(c.hex)
               if (this.taskBuf.colorHex === c.hex) {
-                Text('✓').fontSize(12).fontColor(Color.White).position({ x: 9, y: 5 })
+                Image($r('app.media.ic_check'))
+                  .width(14)
+                  .height(14)
+                  .fillColor(Color.White)
+                  .position({ x: 9, y: 9 })
               }
             }
             .width(32)
@@ -654,7 +828,11 @@ struct Index {
                   .height(28)
                   .fill(c.hex)
                 if (this.goalBuf.colorHex === c.hex) {
-                  Text('✓').fontSize(12).fontColor(Color.White).position({ x: 9, y: 5 })
+                  Image($r('app.media.ic_check'))
+                    .width(14)
+                    .height(14)
+                    .fillColor(Color.White)
+                    .position({ x: 9, y: 9 })
                 }
               }
               .width(32)
@@ -722,12 +900,24 @@ struct Index {
   @State taskSheetVisible: boolean = false
   @State goalSheetVisible: boolean = false
   @State colorScheme: 'system' | 'light' | 'dark' = 'system'
+  /** 进度条光感扫光位置 */
+  @State sweepX: number = -110
 
   aboutToAppear(): void {
     this.refreshGoals()
     this.loadSettings()
+    this.startLightSweep()
     // 每分钟刷新倒计时
     this.timer = setInterval(() => { this.revision++ }, 30000)
+  }
+
+  /** 光感动效：进度条高光无限循环扫过 */
+  private startLightSweep(): void {
+    setTimeout(() => {
+      animateTo({ duration: D.animSweep, curve: Curve.Linear, iterations: -1 }, () => {
+        this.sweepX = 400
+      })
+    }, 500)
   }
 
   aboutToDisappear(): void {
@@ -862,16 +1052,16 @@ struct Index {
     return AppViewModel.isDeleted(task)
   }
 
-  private statusSymbol(s: TaskStatus): string {
+  private statusIcon(s: TaskStatus): Resource {
     switch (s) {
       case 'done':
-        return '●'
+        return $r('app.media.ic_check_circle')
       case 'halfDone':
-        return '◐'
+        return $r('app.media.ic_half')
       case 'deleted':
-        return '🗑'
+        return $r('app.media.ic_trash')
       default:
-        return '○'
+        return $r('app.media.ic_circle_outline')
     }
   }
 
@@ -1131,12 +1321,56 @@ struct Index {
     return this.pal().textTertiary
   }
 
-  private dividerC(): string {
-    return this.pal().divider
-  }
-
   private colorPressed(): string {
     return this.isDark() ? '#33FFFFFF' : D.colorPressed
+  }
+
+  private bgTopC(): string {
+    return this.pal().bgTop
+  }
+
+  private bgBottomC(): string {
+    return this.pal().bgBottom
+  }
+
+  private currentBgSoft(): string {
+    return this.pal().cardSoft
+  }
+
+  private heroAC(): string {
+    return this.pal().heroA
+  }
+
+  private heroBC(): string {
+    return this.pal().heroB
+  }
+
+  private glowAC(): string {
+    return this.pal().glowA
+  }
+
+  private glowBC(): string {
+    return this.pal().glowB
+  }
+
+  private glassC(): string {
+    return this.isDark() ? '#E8171A24' : '#EFFFFFFF'
+  }
+
+  private borderC(): string {
+    return this.pal().border
+  }
+
+  private trackC(): string {
+    return this.pal().track
+  }
+
+  private shadowC(): string {
+    return this.pal().shadow
+  }
+
+  private accentSoftC(): string {
+    return this.pal().accentSoft
   }
 
   private resolveColor(hex: string): string {

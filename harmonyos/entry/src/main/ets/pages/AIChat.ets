@@ -29,38 +29,77 @@ struct AIChat {
   @Builder
   page() {
     Column() {
-      // 顶部栏
-      Row() {
-        Button(I18n.t('common.back'))
-          .fontSize(D.fontSizeBody2)
-          .fontColor(this.tPrimary())
-          .backgroundColor(Color.Transparent)
-          .onClick(() => router.back())
-        Blank()
+      // 顶部栏（玻璃卡片）
+      Row({ space: D.spaceSm }) {
+        Button() {
+          Image($r('app.media.ic_back'))
+            .width(20)
+            .height(20)
+            .fillColor(this.tPrimary())
+        }
+        .width(40)
+        .height(40)
+        .borderRadius(D.radiusPill)
+        .backgroundColor(this.glass())
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
+        .onClick(() => router.back())
+
         Text(I18n.t('ai.chatTitle'))
           .fontSize(D.fontSizeTitle)
           .fontWeight(FontWeight.Bold)
           .fontColor(this.tPrimary())
-        Blank()
-        Button(I18n.t('ai.attach'))
-          .fontSize(D.fontSizeBody2)
-          .fontColor(Color.White)
-          .backgroundColor(D.colorPrimary)
-          .height(32)
-          .borderRadius(D.radiusPill)
-          .padding({ left: D.spaceMd, right: D.spaceMd })
-          .onClick(() => this.attach())
-      }.width('100%').padding({ left: D.spaceMd, right: D.spaceMd, top: D.spaceMd, bottom: D.spaceSm })
+          .layoutWeight(1)
+          .textAlign(TextAlign.Center)
+
+        Button() {
+          Row({ space: 5 }) {
+            Image($r('app.media.ic_clip'))
+              .width(15)
+              .height(15)
+              .fillColor(Color.White)
+            Text(I18n.t('ai.attach'))
+              .fontSize(D.fontSizeCaption)
+              .fontColor(Color.White)
+          }
+        }
+        .height(36)
+        .borderRadius(D.radiusPill)
+        .padding({ left: 12, right: 12 })
+        .linearGradient({
+          angle: 135,
+          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
+        })
+        .shadow({ radius: 12, color: this.glowAC(), offsetY: 5 })
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.94 })
+        .onClick(() => this.attach())
+      }
+      .width('100%')
+      .padding({ left: D.spaceXs, right: D.spaceXs, top: D.spaceXs, bottom: D.spaceXs })
+      .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
+      .backgroundColor(this.glass())
+      .borderRadius(D.radiusXl)
+      .border({ width: 1, color: this.borderC() })
+      .shadow({ radius: 20, color: this.shadowC(), offsetY: 8 })
 
       // 显示选中的附件名
       if (this.attachmentName.length > 0) {
-        Text(`${I18n.t('ai.attach')}: ${this.attachmentName}`)
-          .fontSize(D.fontSizeCaption)
-          .fontColor(this.tSecondary())
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .width('100%')
-          .padding({ left: D.spaceLg, right: D.spaceLg })
+        Row({ space: 6 }) {
+          Image($r('app.media.ic_clip'))
+            .width(13)
+            .height(13)
+            .fillColor(this.heroAC())
+          Text(this.attachmentName)
+            .fontSize(D.fontSizeCaption)
+            .fontColor(this.tSecondary())
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+        }
+        .width('100%')
+        .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+        .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
+        .borderRadius(D.radiusPill)
+        .backgroundColor(this.accentSoft())
       }
 
       // 消息列表
@@ -69,6 +108,9 @@ struct AIChat {
           ListItem() {
             this.messageBubble(msg)
           }
+          .transition(TransitionEffect.OPACITY
+            .animation({ duration: D.animNormal, curve: Curve.EaseOut })
+            .combine(TransitionEffect.translate({ y: 10 })))
         }, (msg: ChatMessage) => msg.id)
       }
       .layoutWeight(1)
@@ -76,52 +118,114 @@ struct AIChat {
       .padding({ left: D.spaceMd, right: D.spaceMd, top: D.spaceMd })
       .scrollBar(BarState.Off)
 
-      // 输入区
+      // 输入区（浮起玻璃面板）
       Row({ space: D.spaceSm }) {
         TextInput({ placeholder: I18n.t('ai.input'), text: this.inputText })
           .layoutWeight(1)
-          .height(42)
+          .height(44)
           .borderRadius(D.radiusPill)
-          .backgroundColor(this.card())
+          .backgroundColor(this.track())
           .fontColor(this.tPrimary())
           .onChange((v: string) => { this.inputText = v })
           .onSubmit(() => this.send())
-        Button(I18n.t('ai.send'))
-          .height(42)
-          .borderRadius(D.radiusPill)
-          .backgroundColor(D.colorPrimary)
-          .fontColor(Color.White)
-          .padding({ left: D.spaceLg, right: D.spaceLg })
-          .onClick(() => this.send())
-      }.width('100%').padding(D.spaceMd)
+        Button() {
+          Image($r('app.media.ic_send'))
+            .width(19)
+            .height(19)
+            .fillColor(Color.White)
+        }
+        .width(44)
+        .height(44)
+        .borderRadius(D.radiusPill)
+        .linearGradient({
+          angle: 135,
+          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
+        })
+        .shadow({ radius: 14, color: this.glowAC(), offsetY: 5 })
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+        .onClick(() => this.send())
+      }
+      .width('100%')
+      .padding(D.spaceXs)
+      .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm, bottom: D.spaceSm })
+      .backgroundColor(this.glass())
+      .borderRadius(D.radiusXl)
+      .border({ width: 1, color: this.borderC() })
+      .shadow({ radius: 20, color: this.shadowC(), offsetY: 8 })
 
       if (this.busy) {
-        Text(I18n.t('ai.sending'))
-          .fontSize(D.fontSizeCaption)
-          .fontColor(this.tSecondary())
-          .padding({ bottom: D.spaceSm })
+        Row({ space: 6 }) {
+          LoadingProgress()
+            .width(16)
+            .height(16)
+            .color(this.heroAC())
+          Text(I18n.t('ai.sending'))
+            .fontSize(D.fontSizeCaption)
+            .fontColor(this.tSecondary())
+        }
+        .padding({ bottom: D.spaceSm })
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.bg())
+    .linearGradient({
+      angle: 180,
+      colors: [[this.bgTop(), 0], [this.bg(), 0.55], [this.bgBottom(), 1]]
+    })
   }
 
   @Builder
   messageBubble(msg: ChatMessage) {
-    Row() {
-      if (msg.role === 'user') {
+    Row({ space: 8 }) {
+      if (msg.role === 'assistant') {
+        Stack({ alignContent: Alignment.Center }) {
+          Circle()
+            .width(26)
+            .height(26)
+            .linearGradient({
+              angle: 135,
+              colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
+            })
+          Image($r('app.media.ic_ai'))
+            .width(14)
+            .height(14)
+            .fillColor(Color.White)
+        }
+        .margin({ top: D.spaceXs })
+      } else {
         Blank()
       }
-      Column() {
-        Text(msg.text)
-          .fontSize(D.fontSizeBody)
-          .backgroundColor(msg.role === 'user' ? D.colorPrimary : this.card())
-          .fontColor(msg.role === 'user' ? Color.White : this.tPrimary())
-          .padding(D.spaceMd)
-          .borderRadius(D.radiusL)
+
+      if (msg.role === 'user') {
+        Column() {
+          Text(msg.text)
+            .fontSize(D.fontSizeBody)
+            .fontColor(Color.White)
+            .lineHeight(22)
+        }
+        .constraintSize({ maxWidth: '78%' })
+        .padding({ left: 14, right: 14, top: 10, bottom: 10 })
+        .borderRadius({ topLeft: D.radiusL, topRight: D.radiusL, bottomLeft: D.radiusL, bottomRight: 6 })
+        .linearGradient({
+          angle: 135,
+          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
+        })
+        .shadow({ radius: 14, color: this.glowAC(), offsetY: 4 })
+      } else {
+        Column() {
+          Text(msg.text)
+            .fontSize(D.fontSizeBody)
+            .fontColor(this.tPrimary())
+            .lineHeight(22)
+        }
+        .constraintSize({ maxWidth: '78%' })
+        .padding({ left: 14, right: 14, top: 10, bottom: 10 })
+        .borderRadius({ topLeft: D.radiusL, topRight: D.radiusL, bottomLeft: 6, bottomRight: D.radiusL })
+        .backgroundColor(this.card())
+        .border({ width: 1, color: this.borderC() })
+        .shadow({ radius: 12, color: this.shadowC(), offsetY: 3 })
       }
-      .constraintSize({ maxWidth: '80%' })
+
       if (msg.role === 'assistant') {
         Blank()
       }
@@ -336,5 +440,45 @@ struct AIChat {
 
   private tSecondary(): string {
     return this.pal().textSecondary
+  }
+
+  private bgTop(): string {
+    return this.pal().bgTop
+  }
+
+  private bgBottom(): string {
+    return this.pal().bgBottom
+  }
+
+  private heroAC(): string {
+    return this.pal().heroA
+  }
+
+  private heroBC(): string {
+    return this.pal().heroB
+  }
+
+  private glowAC(): string {
+    return this.pal().glowA
+  }
+
+  private glass(): string {
+    return this.isDark() ? '#E8171A24' : '#EFFFFFFF'
+  }
+
+  private borderC(): string {
+    return this.pal().border
+  }
+
+  private track(): string {
+    return this.pal().track
+  }
+
+  private shadowC(): string {
+    return this.pal().shadow
+  }
+
+  private accentSoft(): string {
+    return this.pal().accentSoft
   }
 }

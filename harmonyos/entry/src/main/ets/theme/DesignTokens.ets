@@ -7,6 +7,12 @@ export class DesignTokens {
   // ---- 配色（HarmonyOS Design 色板）----
   /** 主色（蓝） */
   static readonly colorPrimary: string = '#0A59F7';
+  /** 主色浅调（用于渐变高光） */
+  static readonly colorPrimaryLight: string = '#4F8CFF';
+  /** 主色深调 */
+  static readonly colorPrimaryDeep: string = '#0B3ED1';
+  /** 强调色（紫，用于光感渐变） */
+  static readonly colorAccent: string = '#7B61FF';
   /** 成功（绿） */
   static readonly colorSuccess: string = '#00A47C';
   /** 警告（橙） */
@@ -31,6 +37,16 @@ export class DesignTokens {
   static readonly colorDivider: string = '#1A000000';
   /** 按压态蒙层（5% 黑） */
   static readonly colorPressed: string = '#0D000000';
+
+  // ---- 动效（HarmonyOS 光感动效） ----
+  /** 按压反馈时长 */
+  static readonly animFast: number = 160;
+  /** 常规过渡时长 */
+  static readonly animNormal: number = 320;
+  /** 光感流动周期 */
+  static readonly animSweep: number = 2600;
+  /** 环境光漂移周期 */
+  static readonly animAmbient: number = 9000;
 
   // ---- 圆角 ----
   static readonly radiusS: number = 8;
@@ -86,11 +102,28 @@ export const COLOR_PALETTE: PaletteColor[] = [
 /** 深浅色面板（用于「跟随系统/亮/暗」配色设置） */
 export interface ThemePalette {
   bg: string;
+  bgTop: string;
+  bgBottom: string;
   card: string;
+  cardSoft: string;
+  border: string;
+  track: string;
   textPrimary: string;
   textSecondary: string;
   textTertiary: string;
   divider: string;
+  /** 光感渐变主色 */
+  heroA: string;
+  /** 光感渐变副色 */
+  heroB: string;
+  /** 环境光斑 A（带透明度） */
+  glowA: string;
+  /** 环境光斑 B（带透明度） */
+  glowB: string;
+  /** 卡片阴影色 */
+  shadow: string;
+  /** 选中态浅底 */
+  accentSoft: string;
 }
 
 /**
@@ -114,21 +147,43 @@ export class Theme {
   static palette(dark: boolean): ThemePalette {
     if (dark) {
       return {
-        bg: '#0F0F14',
-        card: '#1C1C22',
-        textPrimary: '#E6E6E9',
-        textSecondary: '#B3B3BC',
-        textTertiary: '#80808C',
-        divider: '#26FFFFFF'
+        bg: '#0A0B10',
+        bgTop: '#151933',
+        bgBottom: '#07080D',
+        card: '#171A24',
+        cardSoft: '#1E2231',
+        border: '#24FFFFFF',
+        track: '#2A2F3D',
+        textPrimary: '#ECEDF2',
+        textSecondary: '#B0B4C2',
+        textTertiary: '#7B8093',
+        divider: '#26FFFFFF',
+        heroA: '#5B8DFF',
+        heroB: '#9B7BFF',
+        glowA: '#4D5B8DFF',
+        glowB: '#337B61FF',
+        shadow: '#66000000',
+        accentSoft: '#2E2F4D'
       };
     }
     return {
-      bg: DesignTokens.colorBgPage,
+      bg: '#F3F5FA',
+      bgTop: '#FBFCFE',
+      bgBottom: '#E9EEF8',
       card: '#FFFFFF',
-      textPrimary: '#182431',
-      textSecondary: '#99182431',
-      textTertiary: '#66182431',
-      divider: DesignTokens.colorDivider
+      cardSoft: '#F5F7FC',
+      border: '#14000000',
+      track: '#E7EBF4',
+      textPrimary: '#101420',
+      textSecondary: '#667085',
+      textTertiary: '#98A2B3',
+      divider: '#12000000',
+      heroA: '#0A59F7',
+      heroB: '#7B61FF',
+      glowA: '#330A59F7',
+      glowB: '#267B61FF',
+      shadow: '#140A1B3F',
+      accentSoft: '#EBF0FF'
     };
   }
 }
