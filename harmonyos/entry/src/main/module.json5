@@ -22,6 +22,9 @@
         "startWindowIcon": "$media:app_icon",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
+        "supportWindowMode": ["fullscreen", "split", "floating"],
+        "minWindowWidth": 320,
+        "minWindowHeight": 480,
         "skills": [
           {
             "entities": ["entity.system.home"],

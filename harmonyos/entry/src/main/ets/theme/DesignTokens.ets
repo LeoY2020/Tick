@@ -86,6 +86,10 @@ export class DesignTokens {
 export class Adaptive {
   /** 内容最大宽度：超宽窗口时内容居中，避免长行难以阅读 */
   static readonly contentMaxWidth: number = 720;
+  /** 宽屏（常驻导航栏 + 内容区）时的内容最大宽度 */
+  static readonly contentMaxWidthWide: number = 1080;
+  /** 宽屏阈值：平板横屏 / 2in1 / 三折叠展开 */
+  static readonly breakpointExpanded: number = 840;
   /** 半模态最小可用高度 */
   private static readonly sheetMinHeight: number = 320;
 

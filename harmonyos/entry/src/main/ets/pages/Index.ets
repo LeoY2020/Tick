@@ -55,43 +55,50 @@ struct Index {
   @Builder
   page() {
     Stack({ alignContent: Alignment.BottomEnd }) {
-      // 居中内容区：宽屏时限制最大宽度，窄屏时铺满
       Row() {
-        Column() {
-          this.headerBar()
-          if (this.selectedGoalId.length === 0) {
-            this.emptyState()
-          } else {
-            this.goalHeader()
-            this.goalProgressArea()
-            Column() {
-              List({ space: D.spaceSm }) {
-                ForEach(this.buildRows(), (row: TaskRow) => {
-                  ListItem() {
-                    this.taskRow(row)
-                  }
-                  .bindContextMenu(this.rowMenu(row), ResponseType.LongPress)
-                }, (row: TaskRow) => row.task.id)
+        // 宽屏（平板 / 2in1 / 三折叠展开）常驻导航栏，窄屏改为抽屉
+        if (this.isExpanded()) {
+          this.navigationRail()
+        }
+        Row() {
+          Column() {
+            this.headerBar()
+            if (this.selectedGoalId.length === 0) {
+              this.emptyState()
+            } else {
+              this.goalHeader()
+              this.goalProgressArea()
+              Column() {
+                List({ space: D.spaceSm }) {
+                  ForEach(this.buildRows(), (row: TaskRow) => {
+                    ListItem() {
+                      this.taskRow(row)
+                    }
+                    .bindContextMenu(this.rowMenu(row), ResponseType.LongPress)
+                  }, (row: TaskRow) => row.task.id)
+                }
+                .layoutWeight(1)
+                .width('100%')
+                .padding({ bottom: D.spaceLg })
               }
               .layoutWeight(1)
-              .width('100%')
-              .padding({ bottom: D.spaceLg })
             }
-            .layoutWeight(1)
           }
+          .width(this.contentWidth())
+          .height('100%')
+          // 任务编辑半模态绑定在内容区（与目标半模态分开，避免同组件只能挂一个 sheet）
+          .bindSheet($$this.taskSheetVisible, this.taskSheetBuilder(), {
+            height: Adaptive.sheetHeight(this.viewHeight, 560),
+            showClose: true,
+            dragBar: true
+          })
         }
-        .width(this.contentWidth())
+        .layoutWeight(1)
         .height('100%')
-        // 任务编辑半模态绑定在内容区（与目标半模态分开，避免同组件只能挂一个 sheet）
-        .bindSheet($$this.taskSheetVisible, this.taskSheetBuilder(), {
-          height: Adaptive.sheetHeight(this.viewHeight, 560),
-          showClose: true,
-          dragBar: true
-        })
+        .justifyContent(FlexAlign.Center)
       }
       .width('100%')
       .height('100%')
-      .justifyContent(FlexAlign.Center)
 
       // 主操作按钮：品牌色实心圆（无渐变、无辉光），尺寸随窗口连续缩放
       if (this.selectedGoalId.length > 0) {
@@ -105,12 +112,13 @@ struct Index {
         .borderRadius(D.radiusPill)
         .backgroundColor($r('sys.color.brand'))
         .margin({ bottom: 28, right: this.sideInset() + this.gutter() })
+        .hoverEffect(HoverEffect.Auto)
         .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.94 })
         .onClick(() => this.openAddTopTask())
       }
 
-      // 目标抽屉侧边栏
-      if (this.sidebarShown) {
+      // 目标抽屉侧边栏（宽屏下由常驻导航栏替代）
+      if (this.sidebarShown && !this.isExpanded()) {
         this.sidebar()
       }
     }
@@ -131,19 +139,22 @@ struct Index {
   @Builder
   headerBar() {
     Row({ space: D.spaceXs }) {
-      Button() {
-        SymbolGlyph($r('sys.symbol.open_sidebar'))
-          .fontSize(22)
-          .fontColor([this.tPrimary()])
+      // 宽屏下目标列表常驻在左侧导航栏，不再需要抽屉按钮
+      if (!this.isExpanded()) {
+        Button() {
+          SymbolGlyph($r('sys.symbol.open_sidebar'))
+            .fontSize(22)
+            .fontColor([this.tPrimary()])
+        }
+        .width(44)
+        .height(44)
+        .borderRadius(D.radiusPill)
+        .backgroundColor(Color.Transparent)
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+        .onClick(() => {
+          this.sidebarShown = true
+        })
       }
-      .width(44)
-      .height(44)
-      .borderRadius(D.radiusPill)
-      .backgroundColor(Color.Transparent)
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-      .onClick(() => {
-        this.sidebarShown = true
-      })
 
       Text(this.selectedGoalName.length > 0 ? this.selectedGoalName : 'Tick')
         .fontSize(D.fontSizeTitle)
@@ -347,6 +358,7 @@ struct Index {
     .margin({ left: this.gutter(), right: this.gutter(), top: 4 })
     .borderRadius(D.radiusL)
     .backgroundColor($r('sys.color.comp_background_list_card'))
+    .hoverEffect(HoverEffect.Auto)
     .transition(TransitionEffect.OPACITY
       .animation({ duration: D.animNormal, curve: Curve.EaseInOut })
       .combine(TransitionEffect.translate({ y: 6 })))
@@ -438,93 +450,100 @@ struct Index {
     }
   }
 
-  // ===== 目标抽屉侧边栏 =====
+  // ===== 目标抽屉 / 常驻导航栏 =====
+  @Builder
+  sidebarContent() {
+    Column() {
+      Text(I18n.t('nav.goals'))
+        .fontSize(D.fontSizeTitle)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(this.tPrimary())
+        .width('100%')
+        .margin({ bottom: D.spaceMd })
+      List({ space: D.spaceSm }) {
+        ForEach(this.goals, (g: Goal) => {
+          ListItem() {
+            Row() {
+              Circle()
+                .width(8)
+                .height(8)
+                .fill(this.resolveColor(g.colorHex))
+              Text(g.name)
+                .fontSize(D.fontSizeBody)
+                .fontColor(this.tPrimary())
+                .fontWeight(this.selectedGoalId === g.id ? FontWeight.Medium : FontWeight.Normal)
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .layoutWeight(1)
+              if (this.selectedGoalId === g.id) {
+                SymbolGlyph($r('sys.symbol.checkmark'))
+                  .fontSize(16)
+                  .fontColor([$r('sys.color.brand')])
+              }
+            }
+            .width('100%')
+            .padding(D.spaceSm)
+            .borderRadius(D.radiusM)
+            .backgroundColor(this.selectedGoalId === g.id ? $r('sys.color.comp_background_tertiary') : Color.Transparent)
+            .hoverEffect(HoverEffect.Auto)
+            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+            .onClick(() => {
+              this.selectGoal(g.id)
+              this.sidebarShown = false
+            })
+          }
+          .swipeAction({ end: this.deleteGoalSwipe(g) })
+        }, (g: Goal) => g.id)
+      }
+      .layoutWeight(1)
+      .width('100%')
+
+      Button() {
+        Row({ space: 6 }) {
+          SymbolGlyph($r('sys.symbol.plus'))
+            .fontSize(16)
+            .fontColor([$r('sys.color.font_on_primary')])
+          Text(I18n.t('goals.new'))
+            .fontSize(D.fontSizeBody2)
+            .fontColor($r('sys.color.font_on_primary'))
+        }
+      }
+      .width('100%')
+      .height(40)
+      .borderRadius(D.radiusM)
+      .backgroundColor($r('sys.color.brand'))
+      .margin({ top: D.spaceMd })
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+      .onClick(() => this.openAddGoal())
+      Button(I18n.t('nav.settings'))
+        .width('100%')
+        .height(40)
+        .borderRadius(D.radiusM)
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .fontColor(this.tPrimary())
+        .margin({ top: D.spaceSm })
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+        .onClick(() => {
+          this.sidebarShown = false
+          router.pushUrl({ url: 'pages/Settings' })
+        })
+    }
+    .width('100%')
+    .height('100%')
+    .padding(D.spaceLg)
+  }
+
   @Builder
   sidebar() {
     Stack({ alignContent: Alignment.TopStart }) {
       // 遮罩
       Column().width('100%').height('100%').backgroundColor('#40000000').onClick(() => { this.sidebarShown = false })
-      // 面板
+      // 抽屉面板
       Column() {
-        Text(I18n.t('nav.goals'))
-          .fontSize(D.fontSizeTitle)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.tPrimary())
-          .width('100%')
-          .margin({ bottom: D.spaceMd })
-        List({ space: D.spaceSm }) {
-          ForEach(this.goals, (g: Goal) => {
-            ListItem() {
-              Row() {
-                Circle()
-                  .width(8)
-                  .height(8)
-                  .fill(this.resolveColor(g.colorHex))
-                Text(g.name)
-                  .fontSize(D.fontSizeBody)
-                  .fontColor(this.tPrimary())
-                  .fontWeight(this.selectedGoalId === g.id ? FontWeight.Medium : FontWeight.Normal)
-                  .maxLines(1)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                  .layoutWeight(1)
-                if (this.selectedGoalId === g.id) {
-                  SymbolGlyph($r('sys.symbol.checkmark'))
-                    .fontSize(16)
-                    .fontColor([$r('sys.color.brand')])
-                }
-              }
-              .width('100%')
-              .padding(D.spaceSm)
-              .borderRadius(D.radiusM)
-              .backgroundColor(this.selectedGoalId === g.id ? $r('sys.color.comp_background_tertiary') : Color.Transparent)
-              .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
-              .onClick(() => {
-                this.selectGoal(g.id)
-                this.sidebarShown = false
-              })
-            }
-            .swipeAction({ end: this.deleteGoalSwipe(g) })
-          }, (g: Goal) => g.id)
-        }
-        .layoutWeight(1)
-        .width('100%')
-
-        Button() {
-          Row({ space: 6 }) {
-            SymbolGlyph($r('sys.symbol.plus'))
-              .fontSize(16)
-              .fontColor([$r('sys.color.font_on_primary')])
-            Text(I18n.t('goals.new'))
-              .fontSize(D.fontSizeBody2)
-              .fontColor($r('sys.color.font_on_primary'))
-          }
-        }
-        .width('100%')
-        .height(40)
-        .borderRadius(D.radiusM)
-        .backgroundColor($r('sys.color.brand'))
-        .margin({ top: D.spaceMd })
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
-        .onClick(() => {
-          this.sidebarShown = false
-          this.openAddGoal()
-        })
-        Button(I18n.t('nav.settings'))
-          .width('100%')
-          .height(40)
-          .borderRadius(D.radiusM)
-          .backgroundColor($r('sys.color.comp_background_tertiary'))
-          .fontColor(this.tPrimary())
-          .margin({ top: D.spaceSm })
-          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
-          .onClick(() => {
-            this.sidebarShown = false
-            router.pushUrl({ url: 'pages/Settings' })
-          })
+        this.sidebarContent()
       }
       .width(Adaptive.sidebarWidth(this.viewWidth))
       .height('100%')
-      .padding(D.spaceLg)
       .backgroundColor($r('sys.color.background_primary'))
       .borderRadius({ topRight: D.radiusXl, bottomRight: D.radiusXl })
       .shadow({ radius: 24, color: '#33000000', offsetX: 6 })
@@ -532,6 +551,19 @@ struct Index {
         .animation({ duration: D.animNormal, curve: Curve.EaseInOut })
         .combine(TransitionEffect.translate({ x: -32 })))
     }
+  }
+
+  /** 宽屏常驻导航栏（平板 / 2in1 / 三折叠展开）：不再遮挡内容 */
+  @Builder
+  navigationRail() {
+    Column() {
+      this.sidebarContent()
+    }
+    .width(this.railWidth())
+    .height('100%')
+    .backgroundColor($r('sys.color.background_primary'))
+    .transition(TransitionEffect.OPACITY
+      .animation({ duration: D.animNormal, curve: Curve.EaseInOut }))
   }
 
   @Builder
@@ -1201,19 +1233,39 @@ struct Index {
   /** 窗口尺寸变化时平滑同步（避免亚像素抖动引发无谓重绘） */
   private syncViewSize(w: number, h: number): void {
     if (w > 0 && Math.abs(w - this.viewWidth) > 0.5) {
+      const wasExpanded = this.isExpanded()
       this.viewWidth = w
+      // 展开为大屏（三折叠展开 / 平板横屏 / 2in1 拉宽）时收起抽屉，改用常驻导航栏
+      if (!wasExpanded && this.isExpanded()) {
+        this.sidebarShown = false
+      }
     }
     if (h > 0 && Math.abs(h - this.viewHeight) > 0.5) {
       this.viewHeight = h
     }
   }
 
+  /** 宽屏模式：平板横屏、2in1、三折叠展开 */
+  private isExpanded(): boolean {
+    return this.viewWidth >= Adaptive.breakpointExpanded
+  }
+
+  /** 常驻导航栏宽度（连续变化，240 → 320） */
+  private railWidth(): number {
+    return Math.min(320, Math.max(240, this.viewWidth * 0.24))
+  }
+
+  /** 内容可用宽度（扣除常驻导航栏） */
+  private availableWidth(): number {
+    return this.isExpanded() ? Math.max(0, this.viewWidth - this.railWidth()) : this.viewWidth
+  }
+
   private contentWidth(): number {
-    return Adaptive.contentWidth(this.viewWidth)
+    return Math.min(this.availableWidth(), Adaptive.contentMaxWidthWide)
   }
 
   private sideInset(): number {
-    return Adaptive.sideInset(this.viewWidth)
+    return Math.max(0, (this.availableWidth() - this.contentWidth()) / 2)
   }
 
   private gutter(): number {

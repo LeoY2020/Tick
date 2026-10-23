@@ -53,6 +53,13 @@ export default class EntryAbility extends UIAbility {
         }
         hilog.info(DOMAIN, TAG, 'loadContent succeeded');
       });
+      // 2in1 / 平板上允许自由缩放窗口，并限制最小尺寸，避免布局被压坏
+      try {
+        const mainWindow = windowStage.getMainWindowSync();
+        await mainWindow.setWindowLimits({ minWidth: 320, minHeight: 480 });
+      } catch (e) {
+        hilog.warn(DOMAIN, TAG, 'setWindowLimits not supported: %{public}s', JSON.stringify(e));
+      }
     };
     init();
   }
