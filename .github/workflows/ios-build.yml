@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   build-and-test:
-    name: Build & Test (Xcode 27)
+    name: Build & Test (Xcode 27.1 / iOS 27.1 SDK)
     # GitHub 官方 Xcode 27 专用镜像（预览版，自带 Xcode 27）
     runs-on: xcode-27
     env:
@@ -29,18 +29,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Show toolchain
+      - name: Select Xcode 27.1 (iOS 27.1 SDK)
         run: |
+          # iPhone Duo 需以 iOS 27.1 SDK 构建才能铺满内屏并启用垂直工具栏，
+          # 故 CI 固定切换到 Xcode 27.1；镜像中没有时明确失败而不是静默降级
+          XCODE_APP=$(ls -d /Applications/Xcode*27.1*.app 2>/dev/null | head -n 1 || true)
+          if [ -z "$XCODE_APP" ]; then
+            echo "未找到 Xcode 27.1，无法使用 iOS 27.1 SDK 构建"
+            ls -d /Applications/Xcode*.app || true
+            exit 1
+          fi
+          echo "使用 $(basename "$XCODE_APP")"
+          sudo xcode-select -s "$XCODE_APP/Contents/Developer"
           xcodebuild -version
           xcodebuild -showsdks | grep -i ios || true
+          xcodebuild -showsdks | grep -q "iphonesimulator27.1" || {
+            echo "未检测到 iOS 27.1 SDK"; exit 1;
+          }
 
       - name: Install xcbeautify (if missing)
         run: which xcbeautify || brew install xcbeautify
 
       - name: Resolve iOS Simulator
         run: |
-          # 自动选择一个可用的 iPhone 模拟器（避免运行时镜像差异）
-          DEVICE=$(xcrun simctl list devices available | grep -oE "iPhone [0-9]+ (Pro Max|Pro)?" | head -n 1)
+          # 优先使用 iPhone Duo 模拟器验证折叠形态；不可用时回退到普通 iPhone
+          DEVICE=$(xcrun simctl list devices available | grep -oE "iPhone Duo" | head -n 1)
+          if [ -z "$DEVICE" ]; then
+            DEVICE=$(xcrun simctl list devices available | grep -oE "iPhone [0-9]+ (Pro Max|Pro)?" | head -n 1)
+          fi
           if [ -z "$DEVICE" ]; then
             DEVICE=$(xcrun simctl list devices available | grep -oE "iPhone [0-9]+.*" | head -n 1 | cut -d '(' -f 1 | xargs)
           fi

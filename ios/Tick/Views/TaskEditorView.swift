@@ -146,13 +146,17 @@ struct TaskEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消", action: cancel)
-                        .accessibilityLabel("取消编辑")
+                    Button(action: cancel) {
+                        Label("取消", systemImage: "xmark")
+                    }
+                    .accessibilityLabel("取消编辑")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存", action: save)
-                        .disabled(!canSave)
-                        .accessibilityLabel("保存任务")
+                    Button(action: save) {
+                        Label("保存", systemImage: "checkmark")
+                    }
+                    .disabled(!canSave)
+                    .accessibilityLabel("保存任务")
                 }
             }
         }

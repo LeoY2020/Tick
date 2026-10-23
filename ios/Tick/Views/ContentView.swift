@@ -21,7 +21,9 @@ struct ContentView: View {
     @Query(sort: \Goal.createdAt) private var goals: [Goal]
 
     @State private var selectedGoal: Goal?
-    @State private var columnVisibility: NavigationSplitViewVisibility = .detailOnly
+    /// 初始交给系统决定：宽屏（iPad / iPhone Duo 展开的内屏）直接呈现侧边栏 + 详情双栏，
+    /// 窄屏自动回落为单栏详情。iPhone Duo 展开时的内屏应延续 iPad 式布局，而非默认隐藏侧边栏。
+    @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
     @State private var showSettings = false
     @State private var showAddTask = false
     /// 空态「添加目标」：新建目标表单
@@ -30,16 +32,14 @@ struct ContentView: View {
     @State private var editingIsNew = false
     /// AI 对话：聊天 + 可选附件 + 生成任务
     @State private var showAIChat = false
-    /// 是否为窄窗口：尺寸类 compact（iPhone）或窗口宽度偏窄（iPad 台前调度窄窗）。
-    /// 台前调度的窄窗有时仍报 regular，仅靠 horizontalSizeClass 判断会漏，故叠加宽度判断。
+    /// 是否为窄窗口：仅依据可用宽度判断（iPhone 折叠外屏 / 各种窄窗）。
+    /// iPhone Duo 在折叠、展开、部分折叠与旋转过程中会持续改变窗口尺寸，
+    /// 且尺寸类不再代表设备形态（compact 也可能是 iPad 窄窗，regular 也可能是 iPhone 内屏），
+    /// 因此只使用容器实际宽度决定单栏或双栏。
     @State private var isNarrowWindow = false
 
     /// 窄窗口宽度阈值：小于该宽度按窄屏处理（单个分栏无法舒适并排）
     private static let narrowWindowWidth: CGFloat = 800
-
-    /// 水平尺寸类：侧边栏手动切换按钮仅在窄屏显示，
-    /// iPad regular 宽度下系统自动提供切换按钮
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @StateObject private var expandedState = ExpandedTaskState()
     /// 待删除任务的统一呈现（稳定父级持有，供 List / 行共享）
@@ -63,7 +63,8 @@ struct ContentView: View {
                             Button {
                                 showAIChat = true
                             } label: {
-                                Image(systemName: "sparkles")
+                                // 图标 + 标题：iPhone Duo 垂直工具栏与溢出菜单分别取图标 / 图标+标题
+                                Label("AI 对话并生成任务", systemImage: "sparkles")
                             }
                             .accessibilityLabel("AI 对话并生成任务")
                             .disabled(selectedGoal == nil)
@@ -72,7 +73,7 @@ struct ContentView: View {
                             Button {
                                 showSettings = true
                             } label: {
-                                Image(systemName: "gearshape")
+                                Label("设置", systemImage: "gearshape")
                             }
                             .accessibilityLabel("设置")
                         }
@@ -107,10 +108,10 @@ struct ContentView: View {
                 }
             }
             .onChange(of: selectedGoal) { _, newGoal in
-                // 窄窗口（iPhone compact / iPad 台前调度窄窗）下选中目标后自动收起侧边栏、
+                // 窄窗口（iPhone Duo 折叠外屏 / 各种窄窗）下选中目标后自动收起侧边栏、
                 // 切回详情，否则点击目标后仍停留在目标列表，看不到目标界面。
                 // 注意：compact 下 List(selection:) 已自动推入详情，此处 detailOnly 是双重保障；
-                // 台前调度窄窗（仍报 regular）依赖此处的强制塌缩。
+                // 宽屏窄窗（仍报 regular）依赖此处的强制塌缩。
                 if newGoal != nil && isNarrowWindow {
                     columnVisibility = .detailOnly
                 }
@@ -118,17 +119,22 @@ struct ContentView: View {
             .onChange(of: notifications.pendingTarget) { _, target in
                 handleNotificationTap(target)
             }
-            // 依据窗口实际宽度判定窄窗口（含 iPad 台前调度窄窗）
-            .onAppear { isNarrowWindow = Self.isNarrow(proxy.size.width, horizontalSizeClass: horizontalSizeClass) }
+            // 依据窗口实际宽度判定窄窗口（含 iPad 台前调度窄窗、iPhone Duo 折叠外屏）
+            .onAppear { isNarrowWindow = Self.isNarrow(proxy.size.width) }
+            // 折叠 / 展开 / 部分折叠会动态改变窗口尺寸：变窄时收起侧边栏，
+            // 变宽时恢复系统自动分栏（双栏），无需重新进入 App
             .onChange(of: proxy.size.width) { _, w in
-                isNarrowWindow = Self.isNarrow(w, horizontalSizeClass: horizontalSizeClass)
+                let narrow = Self.isNarrow(w)
+                guard narrow != isNarrowWindow else { return }
+                isNarrowWindow = narrow
+                columnVisibility = narrow ? .detailOnly : .automatic
             }
         }
     }
 
-    /// 窄窗口判定：尺寸类 compact，或窗口宽度低于阈值
-    private static func isNarrow(_ width: CGFloat, horizontalSizeClass: UserInterfaceSizeClass?) -> Bool {
-        horizontalSizeClass == .compact || width < narrowWindowWidth
+    /// 窄窗口判定：只依据可用宽度，避免尺寸类 / 设备形态假设
+    private static func isNarrow(_ width: CGFloat) -> Bool {
+        width < narrowWindowWidth
     }
 
     // MARK: - 详情区
@@ -262,13 +268,13 @@ struct ContentView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                // 侧边栏切换按钮：仅窄窗口（iPhone compact / iPad 台前调度窄窗）显示；
-                // iPad regular 宽度下系统自动提供切换按钮，手动添加会重复
+                // 侧边栏切换按钮：仅窄窗口（iPhone Duo 折叠外屏 / 各种窄窗）显示；
+                // 宽屏下系统自动提供切换按钮，手动添加会重复
                 if isNarrowWindow {
                     Button {
                         columnVisibility = columnVisibility == .all ? .detailOnly : .all
                     } label: {
-                        Image(systemName: "sidebar.leading")
+                        Label("目标列表", systemImage: "sidebar.leading")
                     }
                     .accessibilityLabel("目标列表")
                 }

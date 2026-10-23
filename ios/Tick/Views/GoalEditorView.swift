@@ -179,13 +179,17 @@ struct GoalEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消", action: cancel)
-                        .accessibilityLabel("取消编辑")
+                    Button(action: cancel) {
+                        Label("取消", systemImage: "xmark")
+                    }
+                    .accessibilityLabel("取消编辑")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存", action: save)
-                        .disabled(!isNameValid) // 名称必填
-                        .accessibilityLabel("保存目标")
+                    Button(action: save) {
+                        Label("保存", systemImage: "checkmark")
+                    }
+                    .disabled(!isNameValid) // 名称必填
+                    .accessibilityLabel("保存目标")
                 }
             }
         }

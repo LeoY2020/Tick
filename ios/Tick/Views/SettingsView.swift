@@ -25,8 +25,10 @@ struct SettingsView: View {
             .navigationTitle("设置")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") { dismiss() }
-                        .accessibilityLabel("完成")
+                    Button { dismiss() } label: {
+                        Label("完成", systemImage: "checkmark")
+                    }
+                    .accessibilityLabel("完成")
                 }
             }
         }

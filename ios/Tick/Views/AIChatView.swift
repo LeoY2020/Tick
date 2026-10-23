@@ -52,17 +52,19 @@ struct AIChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("关闭") { dismiss() }
+                    Button { dismiss() } label: {
+                        Label("关闭", systemImage: "xmark")
+                    }
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button(action: newChat) {
-                        Image(systemName: "square.and.pencil")
+                        Label("新建聊天", systemImage: "square.and.pencil")
                     }
                     .accessibilityLabel("新建聊天")
                     .disabled(isBusy)
 
                     Button { showHistory = true } label: {
-                        Image(systemName: "clock.arrow.circlepath")
+                        Label("AI 历史", systemImage: "clock.arrow.circlepath")
                     }
                     .accessibilityLabel("AI 历史")
                 }
@@ -315,7 +317,9 @@ struct AIChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") { showHistory = false }
+                    Button { showHistory = false } label: {
+                        Label("完成", systemImage: "checkmark")
+                    }
                 }
             }
         }

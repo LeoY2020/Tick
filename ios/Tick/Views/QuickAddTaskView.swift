@@ -53,13 +53,17 @@ struct QuickAddTaskView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }
-                        .accessibilityLabel("取消")
+                    Button { dismiss() } label: {
+                        Label("取消", systemImage: "xmark")
+                    }
+                    .accessibilityLabel("取消")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存", action: save)
-                        .disabled(!canSave)
-                        .accessibilityLabel("保存任务")
+                    Button(action: save) {
+                        Label("保存", systemImage: "checkmark")
+                    }
+                    .disabled(!canSave)
+                    .accessibilityLabel("保存任务")
                 }
             }
         }
