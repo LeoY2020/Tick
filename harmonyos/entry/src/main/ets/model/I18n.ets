@@ -27,6 +27,7 @@ const TERMS: Record<string, LocalizedText> = {
   'common.delete': { zh: '删除', zhHant: '刪除', ja: '削除', ko: '삭제', en: 'Delete', fr: 'Supprimer', de: 'Löschen', es: 'Eliminar' },
   'common.back': { zh: '‹ 返回', zhHant: '‹ 返回', ja: '‹ 戻る', ko: '‹ 뒤로', en: '‹ Back', fr: '‹ Retour', de: '‹ Zurück', es: '‹ Atrás' },
   'common.custom': { zh: '自定义', zhHant: '自訂', ja: 'カスタム', ko: '사용자 지정', en: 'Custom', fr: 'Personnalisé', de: 'Benutzerdefiniert', es: 'Personalizado' },
+  'common.saveFailed': { zh: '保存失败，请重试', zhHant: '儲存失敗，請重試', ja: '保存に失敗しました。再試行してください', ko: '저장 실패, 다시 시도하세요', en: 'Save failed, please retry', fr: 'Échec de l\'enregistrement, réessayez', de: 'Speichern fehlgeschlagen, bitte erneut versuchen', es: 'Error al guardar, inténtelo de nuevo' },
 
   // ---- 导航 / 目标 ----
   'nav.goals': { zh: '目标', zhHant: '目標', ja: '目標', ko: '목표', en: 'Goals', fr: 'Objectifs', de: 'Ziele', es: 'Objetivos' },

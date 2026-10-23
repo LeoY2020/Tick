@@ -10,7 +10,7 @@ import { AppViewModel } from '../viewmodel/AppViewModel';
 import { I18n } from '../model/I18n';
 import { AIService, AIServiceError } from '../services/AIService';
 import { DocumentTextExtractor } from '../services/DocumentTextExtractor';
-import { Theme, ThemePalette, DesignTokens } from '../theme/DesignTokens';
+import { Theme, ThemePalette, DesignTokens, Adaptive } from '../theme/DesignTokens';
 
 const D = DesignTokens;
 
@@ -24,13 +24,17 @@ struct AIChat {
     }
     .width('100%')
     .height('100%')
+    .onAreaChange((oldArea: Area, newArea: Area) => {
+      this.syncViewSize(newArea.width as number, newArea.height as number)
+    })
   }
 
   @Builder
   page() {
-    Column() {
-      // 顶部栏（扁平 56，与首页一致）
-      Row({ space: D.spaceXs }) {
+    Row() {
+      Column() {
+        // 顶部栏（扁平 56，与首页一致）
+        Row({ space: D.spaceXs }) {
         Button() {
           SymbolGlyph($r('sys.symbol.chevron_left'))
             .fontSize(22)
@@ -65,7 +69,7 @@ struct AIChat {
       }
       .width('100%')
       .height(56)
-      .padding({ left: D.spaceSm, right: D.spaceSm })
+      .padding({ left: this.gutter(), right: this.gutter() })
 
       // 显示选中的附件名（卡片内同心圆角）
       if (this.attachmentName.length > 0) {
@@ -96,7 +100,7 @@ struct AIChat {
         }
         .width('100%')
         .padding({ left: D.spaceMd, right: D.spaceXs, top: D.spaceXs, bottom: D.spaceXs })
-        .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
+        .margin({ left: this.gutter(), right: this.gutter(), top: D.spaceSm })
         .borderRadius(D.radiusL)
         .backgroundColor($r('sys.color.comp_background_list_card'))
       }
@@ -114,7 +118,7 @@ struct AIChat {
       }
       .layoutWeight(1)
       .width('100%')
-      .padding({ left: D.spaceMd, right: D.spaceMd, top: D.spaceMd })
+      .padding({ left: this.gutter(), right: this.gutter(), top: D.spaceMd })
       .scrollBar(BarState.Off)
 
       // 输入区（底部扁平卡片）
@@ -141,7 +145,7 @@ struct AIChat {
       }
       .width('100%')
       .padding(D.spaceSm)
-      .margin({ left: D.spaceMd, right: D.spaceMd, bottom: D.spaceSm })
+      .margin({ left: this.gutter(), right: this.gutter(), bottom: D.spaceSm })
       .backgroundColor($r('sys.color.comp_background_list_card'))
       .borderRadius(D.radiusXl)
 
@@ -158,8 +162,12 @@ struct AIChat {
         .padding({ bottom: D.spaceSm })
       }
     }
+    .width(this.contentWidth())
+    .height('100%')
+    }
     .width('100%')
     .height('100%')
+    .justifyContent(FlexAlign.Center)
     .backgroundColor($r('sys.color.background_secondary'))
   }
 
@@ -219,6 +227,9 @@ struct AIChat {
   @State busy: boolean = false
   @State settings: SettingsModel = new SettingsModel()
   @State colorScheme: 'system' | 'light' | 'dark' = 'system'
+  /** 当前窗口尺寸（随分屏 / 折叠 / 旋转连续更新） */
+  @State viewWidth: number = 360
+  @State viewHeight: number = 780
 
   private attachmentText: string | undefined = undefined
   private goalId: string = ''
@@ -397,6 +408,23 @@ struct AIChat {
   }
 
   // ===== 主题辅助 =====
+  private syncViewSize(w: number, h: number): void {
+    if (w > 0 && Math.abs(w - this.viewWidth) > 0.5) {
+      this.viewWidth = w
+    }
+    if (h > 0 && Math.abs(h - this.viewHeight) > 0.5) {
+      this.viewHeight = h
+    }
+  }
+
+  private contentWidth(): number {
+    return Adaptive.contentWidth(this.viewWidth)
+  }
+
+  private gutter(): number {
+    return Adaptive.gutter(this.viewWidth)
+  }
+
   private isDark(): boolean {
     return Theme.dark(this.colorScheme)
   }

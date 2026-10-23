@@ -7,7 +7,7 @@ import { SettingsStore } from '../data/Repositories';
 import { I18n } from '../model/I18n';
 import { LanguageSetting } from '../model/Enums';
 import { BackupService } from '../services/BackupService';
-import { Theme, ThemePalette, DesignTokens } from '../theme/DesignTokens';
+import { Theme, ThemePalette, DesignTokens, Adaptive } from '../theme/DesignTokens';
 
 const D = DesignTokens;
 
@@ -21,64 +21,75 @@ struct Settings {
     }
     .width('100%')
     .height('100%')
+    .onAreaChange((oldArea: Area, newArea: Area) => {
+      this.syncViewSize(newArea.width as number, newArea.height as number)
+    })
   }
 
   @Builder
   page() {
     Column() {
-      // 顶部栏
-      Row({ space: D.spaceXs }) {
-        Button() {
-          SymbolGlyph($r('sys.symbol.chevron_left'))
-            .fontSize(22)
-            .fontColor([this.tPrimary()])
+      // 顶部栏（内容居中，宽屏不贴边）
+      Row() {
+        Row({ space: D.spaceXs }) {
+          Button() {
+            SymbolGlyph($r('sys.symbol.chevron_left'))
+              .fontSize(22)
+              .fontColor([this.tPrimary()])
+          }
+          .width(44)
+          .height(44)
+          .borderRadius(D.radiusPill)
+          .backgroundColor(Color.Transparent)
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+          .onClick(() => router.back())
+
+          Text(I18n.all({ zh: '设置', zhHant: '設定', ja: '設定', ko: '설정', en: 'Settings', fr: 'Réglages', de: 'Einstellungen', es: 'Ajustes' }))
+            .fontSize(D.fontSizeTitle)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.tPrimary())
+            .layoutWeight(1)
+
+          Blank().width(44)
         }
-        .width(44)
-        .height(44)
-        .borderRadius(D.radiusPill)
-        .backgroundColor(Color.Transparent)
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-        .onClick(() => router.back())
-
-        Text(I18n.all({ zh: '设置', zhHant: '設定', ja: '設定', ko: '설정', en: 'Settings', fr: 'Réglages', de: 'Einstellungen', es: 'Ajustes' }))
-          .fontSize(D.fontSizeTitle)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.tPrimary())
-          .layoutWeight(1)
-
-        Blank().width(44)
+        .width(this.contentWidth())
+        .height(56)
+        .padding({ left: this.gutter(), right: this.gutter() })
       }
       .width('100%')
-      .height(56)
-      .padding({ left: D.spaceSm, right: D.spaceSm })
+      .justifyContent(FlexAlign.Center)
 
       Scroll() {
-        Column({ space: D.spaceMd }) {
-          this.sectionTitle(I18n.all({ zh: '外观', zhHant: '外觀', ja: '外観', ko: '화면 모드', en: 'Appearance', fr: 'Apparence', de: 'Darstellung', es: 'Apariencia' }))
-          this.colorSchemeSection()
+        Row() {
+          Column({ space: D.spaceMd }) {
+            this.sectionTitle(I18n.all({ zh: '外观', zhHant: '外觀', ja: '外観', ko: '화면 모드', en: 'Appearance', fr: 'Apparence', de: 'Darstellung', es: 'Apariencia' }))
+            this.colorSchemeSection()
 
-          this.sectionTitle(I18n.all({ zh: '语言', zhHant: '語言', ja: '言語', ko: '언어', en: 'Language', fr: 'Langue', de: 'Sprache', es: 'Idioma' }))
-          this.languageSection()
+            this.sectionTitle(I18n.all({ zh: '语言', zhHant: '語言', ja: '言語', ko: '언어', en: 'Language', fr: 'Langue', de: 'Sprache', es: 'Idioma' }))
+            this.languageSection()
 
-          this.sectionTitle(I18n.all({ zh: 'AI 助手', zhHant: 'AI 助手', ja: 'AI アシスタント', ko: 'AI 비서', en: 'AI Assistant', fr: 'Assistant IA', de: 'KI-Assistent', es: 'Asistente de IA' }))
-          this.aiSection()
+            this.sectionTitle(I18n.all({ zh: 'AI 助手', zhHant: 'AI 助手', ja: 'AI アシスタント', ko: 'AI 비서', en: 'AI Assistant', fr: 'Assistant IA', de: 'KI-Assistent', es: 'Asistente de IA' }))
+            this.aiSection()
 
-          this.sectionTitle(I18n.all({ zh: '备份', zhHant: '備份', ja: 'バックアップ', ko: '백업', en: 'Backup', fr: 'Sauvegarde', de: 'Sicherung', es: 'Copia de seguridad' }))
-          this.backupSection()
+            this.sectionTitle(I18n.all({ zh: '备份', zhHant: '備份', ja: 'バックアップ', ko: '백업', en: 'Backup', fr: 'Sauvegarde', de: 'Sicherung', es: 'Copia de seguridad' }))
+            this.backupSection()
 
-          // 版本号（语言无关的纯文本，便于分辨安装包新旧；app.json5 的 versionName 用数值 1.0.0，beta 标识体现于此）
-          Text('v1.0.0 beta1')
-            .fontSize(D.fontSizeCaption)
-            .fontColor(this.tSecondary())
-            .width('100%')
-            .textAlign(TextAlign.Center)
-            .margin({ top: D.spaceSm })
+            // 版本号（语言无关的纯文本，便于分辨安装包新旧；app.json5 的 versionName 用数值 1.0.0，beta 标识体现于此）
+            Text('v1.0.0 beta1')
+              .fontSize(D.fontSizeCaption)
+              .fontColor(this.tSecondary())
+              .width('100%')
+              .textAlign(TextAlign.Center)
+              .margin({ top: D.spaceSm })
 
-          this.xiaoyiNote()
+            this.xiaoyiNote()
+          }
+          .width(this.contentWidth())
+          .padding({ left: this.gutter(), right: this.gutter(), bottom: D.spaceXxl })
+          .constraintSize({ maxHeight: 10000 })
         }
         .width('100%')
-        .padding({ left: D.spaceLg, right: D.spaceLg, bottom: D.spaceXxl })
-        .constraintSize({ maxHeight: 10000 })
+        .justifyContent(FlexAlign.Center)
       }
       .scrollBar(BarState.Off)
       .width('100%')
@@ -276,6 +287,9 @@ struct Settings {
   @State m: SettingsModel = new SettingsModel()
   @State exporting: boolean = false
   @State importing: boolean = false
+  /** 当前窗口尺寸（随分屏 / 折叠 / 旋转连续更新） */
+  @State viewWidth: number = 360
+  @State viewHeight: number = 780
 
   aboutToAppear(): void {
     this.load()
@@ -347,6 +361,23 @@ struct Settings {
   }
 
   // ===== 主题辅助 =====
+  private syncViewSize(w: number, h: number): void {
+    if (w > 0 && Math.abs(w - this.viewWidth) > 0.5) {
+      this.viewWidth = w
+    }
+    if (h > 0 && Math.abs(h - this.viewHeight) > 0.5) {
+      this.viewHeight = h
+    }
+  }
+
+  private contentWidth(): number {
+    return Adaptive.contentWidth(this.viewWidth)
+  }
+
+  private gutter(): number {
+    return Adaptive.gutter(this.viewWidth)
+  }
+
   private isDark(): boolean {
     return Theme.dark(this.m.colorScheme)
   }

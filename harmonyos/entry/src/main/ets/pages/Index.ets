@@ -9,7 +9,7 @@ import { I18n } from '../model/I18n';
 import { CountdownFormatter } from '../services/CountdownFormatter';
 import { ReminderService } from '../services/ReminderService';
 import { TaskType, TaskStatus, RepeatRule } from '../model/Enums';
-import { DesignTokens, COLOR_PALETTE, PaletteColor, Theme, ThemePalette } from '../theme/DesignTokens';
+import { DesignTokens, Adaptive, COLOR_PALETTE, PaletteColor, Theme, ThemePalette } from '../theme/DesignTokens';
 
 const D = DesignTokens;
 
@@ -55,44 +55,56 @@ struct Index {
   @Builder
   page() {
     Stack({ alignContent: Alignment.BottomEnd }) {
-      Column() {
-        this.headerBar()
-        if (this.selectedGoalId.length === 0) {
-          this.emptyState()
-        } else {
-          this.goalHeader()
-          this.goalProgressArea()
-          Column() {
-            List({ space: D.spaceSm }) {
-              ForEach(this.buildRows(), (row: TaskRow) => {
-                ListItem() {
-                  this.taskRow(row)
-                }
-                .bindContextMenu(this.rowMenu(row), ResponseType.LongPress)
-              }, (row: TaskRow) => row.task.id)
+      // 居中内容区：宽屏时限制最大宽度，窄屏时铺满
+      Row() {
+        Column() {
+          this.headerBar()
+          if (this.selectedGoalId.length === 0) {
+            this.emptyState()
+          } else {
+            this.goalHeader()
+            this.goalProgressArea()
+            Column() {
+              List({ space: D.spaceSm }) {
+                ForEach(this.buildRows(), (row: TaskRow) => {
+                  ListItem() {
+                    this.taskRow(row)
+                  }
+                  .bindContextMenu(this.rowMenu(row), ResponseType.LongPress)
+                }, (row: TaskRow) => row.task.id)
+              }
+              .layoutWeight(1)
+              .width('100%')
+              .padding({ bottom: D.spaceLg })
             }
             .layoutWeight(1)
-            .width('100%')
-            .padding({ bottom: D.spaceLg })
           }
-          .layoutWeight(1)
         }
+        .width(this.contentWidth())
+        .height('100%')
+        // 任务编辑半模态绑定在内容区（与目标半模态分开，避免同组件只能挂一个 sheet）
+        .bindSheet($$this.taskSheetVisible, this.taskSheetBuilder(), {
+          height: Adaptive.sheetHeight(this.viewHeight, 560),
+          showClose: true,
+          dragBar: true
+        })
       }
       .width('100%')
       .height('100%')
+      .justifyContent(FlexAlign.Center)
 
-      // 主操作按钮：品牌色实心圆（无渐变、无辉光）
+      // 主操作按钮：品牌色实心圆（无渐变、无辉光），尺寸随窗口连续缩放
       if (this.selectedGoalId.length > 0) {
         Button() {
           SymbolGlyph($r('sys.symbol.plus'))
-            .fontSize(24)
+            .fontSize(this.fabSize() * 0.43)
             .fontColor([$r('sys.color.font_on_primary')])
         }
-        .width(56)
-        .height(56)
+        .width(this.fabSize())
+        .height(this.fabSize())
         .borderRadius(D.radiusPill)
         .backgroundColor($r('sys.color.brand'))
-        .margin({ bottom: 28, right: 20 })
+        .margin({ bottom: 28, right: this.sideInset() + this.gutter() })
         .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.94 })
         .onClick(() => this.openAddTopTask())
       }
@@ -105,13 +117,11 @@ struct Index {
     .width('100%')
     .height('100%')
     .backgroundColor($r('sys.color.background_secondary'))
-    .bindSheet($$this.taskSheetVisible, this.taskSheetBuilder(), {
-      height: 560,
-      showClose: true,
-      dragBar: true
+    .onAreaChange((oldArea: Area, newArea: Area) => {
+      this.syncViewSize(newArea.width as number, newArea.height as number)
     })
     .bindSheet($$this.goalSheetVisible, this.goalSheetBuilder(), {
-      height: 520,
+      height: Adaptive.sheetHeight(this.viewHeight, 520),
       showClose: true,
       dragBar: true
     })
@@ -263,7 +273,7 @@ struct Index {
     }
     .width('100%')
     .padding(D.spaceMd)
-    .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
+    .margin({ left: this.gutter(), right: this.gutter(), top: D.spaceSm })
     .backgroundColor($r('sys.color.comp_background_list_card'))
     .borderRadius(D.radiusXl)
     .transition(TransitionEffect.OPACITY
@@ -296,7 +306,7 @@ struct Index {
     }
     .width('100%')
     .padding(D.spaceMd)
-    .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
+    .margin({ left: this.gutter(), right: this.gutter(), top: D.spaceSm })
     .backgroundColor($r('sys.color.comp_background_list_card'))
     .borderRadius(D.radiusXl)
   }
@@ -334,7 +344,7 @@ struct Index {
     }
     .width('100%')
     .padding({ left: Math.min(row.depth * 16, 80), right: D.spaceMd, top: 12, bottom: 12 })
-    .margin({ left: D.spaceMd, right: D.spaceMd, top: 4 })
+    .margin({ left: this.gutter(), right: this.gutter(), top: 4 })
     .borderRadius(D.radiusL)
     .backgroundColor($r('sys.color.comp_background_list_card'))
     .transition(TransitionEffect.OPACITY
@@ -512,7 +522,7 @@ struct Index {
             router.pushUrl({ url: 'pages/Settings' })
           })
       }
-      .width(280)
+      .width(Adaptive.sidebarWidth(this.viewWidth))
       .height('100%')
       .padding(D.spaceLg)
       .backgroundColor($r('sys.color.background_primary'))
@@ -798,6 +808,9 @@ struct Index {
   @State taskSheetVisible: boolean = false
   @State goalSheetVisible: boolean = false
   @State colorScheme: 'system' | 'light' | 'dark' = 'system'
+  /** 当前窗口尺寸（随窗口/折叠/分屏连续更新） */
+  @State viewWidth: number = 360
+  @State viewHeight: number = 780
 
   aboutToAppear(): void {
     this.refreshGoals()
@@ -1101,23 +1114,29 @@ struct Index {
       promptAction.showToast({ message: I18n.t('goals.nameRequired') })
       return
     }
-    if (this.goalBuf.isNew) {
-      const g = await AppViewModel.createGoal(name, this.goalBuf.colorHex, undefined, undefined, undefined, false, false, this.goalBuf.countingMode)
-      this.goalSheetVisible = false
-      await this.refreshGoals()
-      this.selectGoal(g.id)
-    } else {
-      const g = this.goals.find((it: Goal) => it.id === this.goalBuf.id)
-      if (g !== undefined) {
-        g.name = name
-        g.colorHex = this.goalBuf.colorHex
-        g.progressCountingMode = this.goalBuf.countingMode
-        await AppViewModel.updateGoal(g)
+    try {
+      if (this.goalBuf.isNew) {
+        const g = await AppViewModel.createGoal(name, this.goalBuf.colorHex, undefined, undefined, undefined, false, false, this.goalBuf.countingMode)
         this.goalSheetVisible = false
         await this.refreshGoals()
+        await this.selectGoal(g.id)
+      } else {
+        const g = this.goals.find((it: Goal) => it.id === this.goalBuf.id)
+        if (g !== undefined) {
+          g.name = name
+          g.colorHex = this.goalBuf.colorHex
+          g.progressCountingMode = this.goalBuf.countingMode
+          await AppViewModel.updateGoal(g)
+          this.goalSheetVisible = false
+          await this.refreshGoals()
+        }
       }
+      this.revision++
+    } catch (e) {
+      const err = e as Error
+      const detail = err !== undefined && err.message !== undefined ? err.message : ''
+      promptAction.showToast({ message: detail.length > 0 ? detail : I18n.t('common.saveFailed') })
     }
-    this.revision++
   }
 
   private confirmDeleteGoal(g: Goal): void {
@@ -1176,6 +1195,33 @@ struct Index {
       }
       this.removeFromTree(tree[i].subtasks, id)
     }
+  }
+
+  // ===== 自适应度量 =====
+  /** 窗口尺寸变化时平滑同步（避免亚像素抖动引发无谓重绘） */
+  private syncViewSize(w: number, h: number): void {
+    if (w > 0 && Math.abs(w - this.viewWidth) > 0.5) {
+      this.viewWidth = w
+    }
+    if (h > 0 && Math.abs(h - this.viewHeight) > 0.5) {
+      this.viewHeight = h
+    }
+  }
+
+  private contentWidth(): number {
+    return Adaptive.contentWidth(this.viewWidth)
+  }
+
+  private sideInset(): number {
+    return Adaptive.sideInset(this.viewWidth)
+  }
+
+  private gutter(): number {
+    return Adaptive.gutter(this.viewWidth)
+  }
+
+  private fabSize(): number {
+    return Adaptive.fabSize(this.viewWidth, this.viewHeight)
   }
 
   // ===== 主题辅助 =====

@@ -78,6 +78,48 @@ export class DesignTokens {
   static readonly fontSizeCaption: number = 12;
 }
 
+/**
+ * 连续自适应度量（无断点跳变）：
+ * 随窗口宽高平滑插值，适配手机 / 折叠屏 / 平板 / 2in1 的各种比例与分辨率。
+ * 所有值均为 vp，随屏幕密度自动换算。
+ */
+export class Adaptive {
+  /** 内容最大宽度：超宽窗口时内容居中，避免长行难以阅读 */
+  static readonly contentMaxWidth: number = 720;
+  /** 半模态最小可用高度 */
+  private static readonly sheetMinHeight: number = 320;
+
+  /** 内容宽度 */
+  static contentWidth(winW: number): number {
+    return Math.min(winW, Adaptive.contentMaxWidth);
+  }
+
+  /** 内容居中时的左右留白 */
+  static sideInset(winW: number): number {
+    return Math.max(0, (winW - Adaptive.contentWidth(winW)) / 2);
+  }
+
+  /** 页面水平内边距：宽屏连续增大（12 → 32） */
+  static gutter(winW: number): number {
+    return Math.min(32, Math.max(12, winW * 0.04));
+  }
+
+  /** 主操作按钮直径（52 → 64） */
+  static fabSize(winW: number, winH: number): number {
+    return Math.min(64, Math.max(52, Math.min(winW, winH) * 0.14));
+  }
+
+  /** 半模态高度：不超过可用高度的 85% */
+  static sheetHeight(winH: number, preferred: number): number {
+    return Math.min(preferred, Math.max(Adaptive.sheetMinHeight, winH * 0.85));
+  }
+
+  /** 抽屉宽度：240 → 320，且不超过内容宽度 */
+  static sidebarWidth(winW: number): number {
+    return Math.min(Adaptive.contentWidth(winW), Math.min(320, Math.max(240, winW * 0.78)));
+  }
+}
+
 /** 目标/任务预设色板（12 色，与 iOS 版保持一致） */
 export interface PaletteColor {
   name: string;
