@@ -26,19 +26,18 @@ struct Settings {
   @Builder
   page() {
     Column() {
-      // 顶部栏（玻璃卡片）
-      Row({ space: D.spaceSm }) {
+      // 顶部栏
+      Row({ space: D.spaceXs }) {
         Button() {
-          Image($r('app.media.ic_back'))
-            .width(20)
-            .height(20)
-            .fillColor(this.tPrimary())
+          SymbolGlyph($r('sys.symbol.chevron_left'))
+            .fontSize(22)
+            .fontColor([this.tPrimary()])
         }
-        .width(40)
-        .height(40)
+        .width(44)
+        .height(44)
         .borderRadius(D.radiusPill)
-        .backgroundColor(this.glass())
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
+        .backgroundColor(Color.Transparent)
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
         .onClick(() => router.back())
 
         Text(I18n.all({ zh: '设置', zhHant: '設定', ja: '設定', ko: '설정', en: 'Settings', fr: 'Réglages', de: 'Einstellungen', es: 'Ajustes' }))
@@ -46,20 +45,15 @@ struct Settings {
           .fontWeight(FontWeight.Bold)
           .fontColor(this.tPrimary())
           .layoutWeight(1)
-          .textAlign(TextAlign.Center)
 
-        Blank().width(40)
+        Blank().width(44)
       }
       .width('100%')
-      .padding({ left: D.spaceXs, right: D.spaceXs, top: D.spaceXs, bottom: D.spaceXs })
-      .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
-      .backgroundColor(this.glass())
-      .borderRadius(D.radiusXl)
-      .border({ width: 1, color: this.borderC() })
-      .shadow({ radius: 20, color: this.shadowC(), offsetY: 8 })
+      .height(56)
+      .padding({ left: D.spaceSm, right: D.spaceSm })
 
       Scroll() {
-        Column({ space: D.spaceLg }) {
+        Column({ space: D.spaceMd }) {
           this.sectionTitle(I18n.all({ zh: '外观', zhHant: '外觀', ja: '外観', ko: '화면 모드', en: 'Appearance', fr: 'Apparence', de: 'Darstellung', es: 'Apariencia' }))
           this.colorSchemeSection()
 
@@ -78,6 +72,7 @@ struct Settings {
             .fontColor(this.tSecondary())
             .width('100%')
             .textAlign(TextAlign.Center)
+            .margin({ top: D.spaceSm })
 
           this.xiaoyiNote()
         }
@@ -91,58 +86,40 @@ struct Settings {
     }
     .width('100%')
     .height('100%')
-    .linearGradient({
-      angle: 180,
-      colors: [[this.bgTop(), 0], [this.bg(), 0.55], [this.bgBottom(), 1]]
-    })
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 
   @Builder
   sectionTitle(t: string) {
-    Row({ space: 8 }) {
-      Row()
-        .width(3)
-        .height(13)
-        .borderRadius(2)
-        .linearGradient({
-          angle: 180,
-          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-        })
-      Text(t)
-        .fontSize(D.fontSizeCaption)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(this.tSecondary())
-    }
-    .width('100%')
-    .margin({ top: D.spaceSm })
+    Text(t)
+      .fontSize(D.fontSizeCaption)
+      .fontColor(this.tSecondary())
+      .width('100%')
+      .margin({ top: D.spaceSm })
   }
 
   @Builder
   colorSchemeSection() {
-    Row({ space: D.spaceSm }) {
+    Row({ space: D.spaceXs }) {
       this.schemeChip('system', I18n.all({ zh: '跟随系统', zhHant: '跟隨系統', ja: 'システムに従う', ko: '시스템 따르기', en: 'Follow System', fr: 'Suivre le système', de: 'System folgen', es: 'Seguir el sistema' }))
       this.schemeChip('light', I18n.all({ zh: '亮色', zhHant: '亮色', ja: 'ライト', ko: '라이트', en: 'Light', fr: 'Clair', de: 'Hell', es: 'Claro' }))
       this.schemeChip('dark', I18n.all({ zh: '暗色', zhHant: '暗色', ja: 'ダーク', ko: '다크', en: 'Dark', fr: 'Sombre', de: 'Dunkel', es: 'Oscuro' }))
     }
     .width('100%')
-    .padding(D.spaceXs)
-    .backgroundColor(this.glass())
-    .borderRadius(D.radiusL)
-    .border({ width: 1, color: this.borderC() })
+    .padding(D.spaceSm)
+    .backgroundColor($r('sys.color.comp_background_list_card'))
+    .borderRadius(D.radiusXl)
   }
 
   @Builder
   schemeChip(v: 'system' | 'light' | 'dark', label: string) {
     Text(label)
       .fontSize(D.fontSizeBody2)
-      .fontColor(this.m.colorScheme === v ? Color.White : this.tPrimary())
-      .backgroundColor(this.m.colorScheme === v ? Color.Transparent : this.trackC())
-      .linearGradient(this.m.colorScheme === v
-        ? { angle: 135, colors: [[this.heroAC(), 0], [this.heroBC(), 1]] }
-        : { angle: 135, colors: [[this.trackC(), 0], [this.trackC(), 1]] })
+      .fontColor(this.m.colorScheme === v ? $r('sys.color.font_on_primary') : this.tPrimary())
+      .backgroundColor(this.m.colorScheme === v ? $r('sys.color.brand') : $r('sys.color.comp_background_tertiary'))
       .padding({ left: D.spaceLg, right: D.spaceLg, top: 8, bottom: 8 })
-      .borderRadius(D.radiusPill)
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+      .borderRadius(D.radiusM)
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.96 })
       .onClick(() => this.applyColorScheme(v))
   }
 
@@ -160,25 +137,21 @@ struct Settings {
       this.langChip('es', 'Español')
     }
     .width('100%')
-    .padding(D.spaceMd)
-    .backgroundColor(this.glass())
-    .borderRadius(D.radiusL)
-    .border({ width: 1, color: this.borderC() })
+    .padding(D.spaceSm)
+    .backgroundColor($r('sys.color.comp_background_list_card'))
+    .borderRadius(D.radiusXl)
   }
 
   @Builder
   langChip(v: LanguageSetting, label: string) {
     Text(label)
       .fontSize(D.fontSizeBody2)
-      .fontColor(this.m.language === v ? Color.White : this.tPrimary())
-      .backgroundColor(this.m.language === v ? Color.Transparent : this.trackC())
-      .linearGradient(this.m.language === v
-        ? { angle: 135, colors: [[this.heroAC(), 0], [this.heroBC(), 1]] }
-        : { angle: 135, colors: [[this.trackC(), 0], [this.trackC(), 1]] })
+      .fontColor(this.m.language === v ? $r('sys.color.font_on_primary') : this.tPrimary())
+      .backgroundColor(this.m.language === v ? $r('sys.color.brand') : $r('sys.color.comp_background_tertiary'))
       .padding({ left: D.spaceLg, right: D.spaceLg, top: 8, bottom: 8 })
       .margin({ right: D.spaceSm, bottom: D.spaceSm })
-      .borderRadius(D.radiusPill)
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+      .borderRadius(D.radiusM)
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.96 })
       .onClick(() => this.applyLanguage(v))
   }
 
@@ -189,14 +162,14 @@ struct Settings {
       TextInput({ text: this.m.baseUrl, placeholder: 'https://api.deepseek.com/v1' })
         .height(42)
         .borderRadius(D.radiusM)
-        .backgroundColor(this.card())
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
         .fontColor(this.tPrimary())
         .onChange((v: string) => { this.m.baseUrl = v })
       this.fieldLabel(I18n.all({ zh: '模型名', zhHant: '模型名稱', ja: 'モデル名', ko: '모델명', en: 'Model name', fr: 'Nom du modèle', de: 'Modellname', es: 'Nombre del modelo' }))
       TextInput({ text: this.m.modelName, placeholder: 'deepseek-chat' })
         .height(42)
         .borderRadius(D.radiusM)
-        .backgroundColor(this.card())
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
         .fontColor(this.tPrimary())
         .onChange((v: string) => { this.m.modelName = v })
       this.fieldLabel(I18n.all({ zh: 'API Key', zhHant: 'API Key', ja: 'API キー', ko: 'API 키', en: 'API Key', fr: 'Clé API', de: 'API-Schlüssel', es: 'Clave API' }))
@@ -204,28 +177,22 @@ struct Settings {
         .type(InputType.Password)
         .height(42)
         .borderRadius(D.radiusM)
-        .backgroundColor(this.card())
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
         .fontColor(this.tPrimary())
         .onChange((v: string) => { this.m.apiKey = v })
       Button(I18n.all({ zh: '保存 AI 配置', zhHant: '儲存 AI 設定', ja: 'AI 設定を保存', ko: 'AI 설정 저장', en: 'Save AI Config', fr: 'Enregistrer la config IA', de: 'KI-Konfiguration speichern', es: 'Guardar configuración de IA' }))
         .width('100%')
         .height(44)
-        .borderRadius(D.radiusPill)
-        .linearGradient({
-          angle: 135,
-          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-        })
-        .shadow({ radius: 14, color: this.glowAC(), offsetY: 6 })
-        .fontColor(Color.White)
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+        .borderRadius(D.radiusM)
+        .backgroundColor($r('sys.color.brand'))
+        .fontColor($r('sys.color.font_on_primary'))
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
         .onClick(() => this.saveSettings())
     }
     .width('100%')
     .padding(D.spaceMd)
-    .backgroundColor(this.glass())
+    .backgroundColor($r('sys.color.comp_background_list_card'))
     .borderRadius(D.radiusXl)
-    .border({ width: 1, color: this.borderC() })
-    .shadow({ radius: 18, color: this.shadowC(), offsetY: 6 })
   }
 
   @Builder
@@ -233,31 +200,25 @@ struct Settings {
     Column({ space: D.spaceMd }) {
       Button() {
         Row({ space: 6 }) {
-          Image($r('app.media.ic_plus'))
-            .width(16)
-            .height(16)
-            .fillColor(Color.White)
+          SymbolGlyph($r('sys.symbol.arrow_up_to_line'))
+            .fontSize(16)
+            .fontColor([$r('sys.color.font_on_primary')])
           Text(I18n.all({ zh: '导出备份', zhHant: '匯出備份', ja: 'バックアップを書き出し', ko: '백업 내보내기', en: 'Export backup', fr: 'Exporter la sauvegarde', de: 'Sicherung exportieren', es: 'Exportar copia de seguridad' }))
             .fontSize(D.fontSizeBody2)
-            .fontColor(Color.White)
+            .fontColor($r('sys.color.font_on_primary'))
         }
       }
       .width('100%')
       .height(44)
-      .borderRadius(D.radiusPill)
-      .linearGradient({
-        angle: 135,
-        colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-      })
-      .shadow({ radius: 14, color: this.glowAC(), offsetY: 6 })
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+      .borderRadius(D.radiusM)
+      .backgroundColor($r('sys.color.brand'))
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
       .onClick(() => this.exportBackup())
       Button() {
         Row({ space: 6 }) {
-          Image($r('app.media.ic_clip'))
-            .width(16)
-            .height(16)
-            .fillColor(this.tPrimary())
+          SymbolGlyph($r('sys.symbol.arrow_down_to_line'))
+            .fontSize(16)
+            .fontColor([this.tPrimary()])
           Text(I18n.all({ zh: '导入备份', zhHant: '匯入備份', ja: 'バックアップを読み込み', ko: '백업 가져오기', en: 'Import backup', fr: 'Importer la sauvegarde', de: 'Sicherung importieren', es: 'Importar copia de seguridad' }))
             .fontSize(D.fontSizeBody2)
             .fontColor(this.tPrimary())
@@ -265,16 +226,15 @@ struct Settings {
       }
       .width('100%')
       .height(44)
-      .borderRadius(D.radiusPill)
-      .backgroundColor(this.trackC())
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+      .borderRadius(D.radiusM)
+      .backgroundColor($r('sys.color.comp_background_tertiary'))
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
       .onClick(() => this.importBackup())
     }
     .width('100%')
     .padding(D.spaceMd)
-    .backgroundColor(this.glass())
+    .backgroundColor($r('sys.color.comp_background_list_card'))
     .borderRadius(D.radiusXl)
-    .border({ width: 1, color: this.borderC() })
   }
 
   @Builder
@@ -300,7 +260,7 @@ struct Settings {
     .width('100%')
     .padding(D.spaceMd)
     .borderRadius(D.radiusM)
-    .backgroundColor(this.card())
+    .backgroundColor($r('sys.color.comp_background_tertiary'))
     .margin({ top: D.spaceMd })
   }
 
@@ -395,55 +355,11 @@ struct Settings {
     return Theme.palette(this.isDark())
   }
 
-  private bg(): string {
-    return this.pal().bg
-  }
-
-  private card(): string {
-    return this.pal().card
-  }
-
   private tPrimary(): string {
     return this.pal().textPrimary
   }
 
   private tSecondary(): string {
     return this.pal().textSecondary
-  }
-
-  private bgTop(): string {
-    return this.pal().bgTop
-  }
-
-  private bgBottom(): string {
-    return this.pal().bgBottom
-  }
-
-  private heroAC(): string {
-    return this.pal().heroA
-  }
-
-  private heroBC(): string {
-    return this.pal().heroB
-  }
-
-  private glowAC(): string {
-    return this.pal().glowA
-  }
-
-  private glass(): string {
-    return this.isDark() ? '#E8171A24' : '#EFFFFFFF'
-  }
-
-  private borderC(): string {
-    return this.pal().border
-  }
-
-  private trackC(): string {
-    return this.pal().track
-  }
-
-  private shadowC(): string {
-    return this.pal().shadow
   }
 }

@@ -55,30 +55,6 @@ struct Index {
   @Builder
   page() {
     Stack({ alignContent: Alignment.BottomEnd }) {
-      // 光感渐变背景
-      Column()
-        .width('100%')
-        .height('100%')
-        .linearGradient({
-          angle: 180,
-          colors: [[this.bgTopC(), 0], [this.currentBackground(), 0.55], [this.bgBottomC(), 1]]
-        })
-      // 环境光斑（静态柔光，避免每帧重算模糊）
-      Circle()
-        .width(300)
-        .height(300)
-        .fill(this.glowAC())
-        .blur(120)
-        .opacity(0.8)
-        .position({ x: -80, y: -60 })
-      Circle()
-        .width(260)
-        .height(260)
-        .fill(this.glowBC())
-        .blur(110)
-        .opacity(0.6)
-        .position({ x: 180, y: 300 })
-
       Column() {
         this.headerBar()
         if (this.selectedGoalId.length === 0) {
@@ -104,28 +80,20 @@ struct Index {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(Color.Transparent)
 
-      // 底部添加任务按钮（光感渐变 + 辉光）
+      // 主操作按钮：品牌色实心圆（无渐变、无辉光）
       if (this.selectedGoalId.length > 0) {
-        Stack({ alignContent: Alignment.Center }) {
-          Circle()
-            .width(58)
-            .height(58)
-            .linearGradient({
-              angle: 135,
-              colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-            })
-            .shadow({ radius: 22, color: this.glowAC(), offsetY: 10 })
-          Image($r('app.media.ic_plus'))
-            .width(24)
-            .height(24)
-            .fillColor(Color.White)
+        Button() {
+          SymbolGlyph($r('sys.symbol.plus'))
+            .fontSize(24)
+            .fontColor([$r('sys.color.font_on_primary')])
         }
-        .width(58)
-        .height(58)
-        .margin({ bottom: 28, right: 22 })
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
+        .width(56)
+        .height(56)
+        .borderRadius(D.radiusPill)
+        .backgroundColor($r('sys.color.brand'))
+        .margin({ bottom: 28, right: 20 })
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.94 })
         .onClick(() => this.openAddTopTask())
       }
 
@@ -136,6 +104,7 @@ struct Index {
     }
     .width('100%')
     .height('100%')
+    .backgroundColor($r('sys.color.background_secondary'))
     .bindSheet($$this.taskSheetVisible, this.taskSheetBuilder(), {
       height: 560,
       showClose: true,
@@ -151,81 +120,59 @@ struct Index {
   // ===== 顶部导航栏 =====
   @Builder
   headerBar() {
-    Row({ space: D.spaceSm }) {
+    Row({ space: D.spaceXs }) {
       Button() {
-        Image($r('app.media.ic_menu'))
-          .width(22)
-          .height(22)
-          .fillColor(this.tPrimary())
+        SymbolGlyph($r('sys.symbol.open_sidebar'))
+          .fontSize(22)
+          .fontColor([this.tPrimary()])
       }
-      .width(40)
-      .height(40)
+      .width(44)
+      .height(44)
       .borderRadius(D.radiusPill)
-      .backgroundColor(this.glassC())
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
+      .backgroundColor(Color.Transparent)
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
       .onClick(() => {
         this.sidebarShown = true
       })
 
-      Column({ space: 1 }) {
-        Text(this.selectedGoalName.length > 0 ? this.selectedGoalName : 'Tick')
-          .fontSize(D.fontSizeTitle)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.tPrimary())
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text('TICK · 光感')
-          .fontSize(10)
-          .fontColor(this.tTertiary())
-          .letterSpacing(1.4)
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Center)
+      Text(this.selectedGoalName.length > 0 ? this.selectedGoalName : 'Tick')
+        .fontSize(D.fontSizeTitle)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(this.tPrimary())
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .layoutWeight(1)
 
-      Row({ space: 8 }) {
-        Button() {
-          Image($r('app.media.ic_ai'))
-            .width(20)
-            .height(20)
-            .fillColor(Color.White)
-        }
-        .width(38)
-        .height(38)
-        .borderRadius(D.radiusPill)
-        .linearGradient({
-          angle: 135,
-          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-        })
-        .shadow({ radius: 14, color: this.glowAC(), offsetY: 5 })
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
-        .onClick(() => {
-          router.pushUrl({ url: 'pages/AIChat', params: { goalId: this.selectedGoalId } })
-        })
-        Button() {
-          Image($r('app.media.ic_settings'))
-            .width(21)
-            .height(21)
-            .fillColor(this.tPrimary())
-        }
-        .width(40)
-        .height(40)
-        .borderRadius(D.radiusPill)
-        .backgroundColor(this.glassC())
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
-        .onClick(() => {
-          router.pushUrl({ url: 'pages/Settings' })
-        })
+      Button() {
+        SymbolGlyph($r('sys.symbol.wand_and_stars'))
+          .fontSize(22)
+          .fontColor([this.tPrimary()])
       }
-      .layoutWeight(1)
-      .justifyContent(FlexAlign.End)
+      .width(44)
+      .height(44)
+      .borderRadius(D.radiusPill)
+      .backgroundColor(Color.Transparent)
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+      .onClick(() => {
+        router.pushUrl({ url: 'pages/AIChat', params: { goalId: this.selectedGoalId } })
+      })
+      Button() {
+        SymbolGlyph($r('sys.symbol.gearshape'))
+          .fontSize(22)
+          .fontColor([this.tPrimary()])
+      }
+      .width(44)
+      .height(44)
+      .borderRadius(D.radiusPill)
+      .backgroundColor(Color.Transparent)
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+      .onClick(() => {
+        router.pushUrl({ url: 'pages/Settings' })
+      })
     }
     .width('100%')
-    .padding({ left: D.spaceXs, right: D.spaceXs, top: D.spaceXs, bottom: D.spaceXs })
-    .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
-    .backgroundColor(this.glassC())
-    .borderRadius(D.radiusXl)
-    .border({ width: 1, color: this.borderC() })
-    .shadow({ radius: 20, color: this.shadowC(), offsetY: 8 })
+    .height(56)
+    .padding({ left: D.spaceSm, right: D.spaceSm })
   }
 
   // ===== 空态 =====
@@ -234,41 +181,31 @@ struct Index {
     Column({ space: D.spaceLg }) {
       Stack({ alignContent: Alignment.Center }) {
         Circle()
-          .width(108)
-          .height(108)
-          .linearGradient({
-            angle: 135,
-            colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-          })
-          .shadow({ radius: 28, color: this.glowAC(), offsetY: 12 })
-        Image($r('app.media.ic_target'))
-          .width(48)
-          .height(48)
-          .fillColor(Color.White)
+          .width(96)
+          .height(96)
+          .fill($r('sys.color.comp_background_tertiary'))
+        SymbolGlyph($r('sys.symbol.scope'))
+          .fontSize(44)
+          .fontColor([this.tTertiary()])
       }
       Text(I18n.t('goals.empty'))
         .fontSize(D.fontSizeBody)
         .fontColor(this.tSecondary())
       Button() {
         Row({ space: 6 }) {
-          Image($r('app.media.ic_plus'))
-            .width(18)
-            .height(18)
-            .fillColor(Color.White)
+          SymbolGlyph($r('sys.symbol.plus'))
+            .fontSize(18)
+            .fontColor([$r('sys.color.font_on_primary')])
           Text(I18n.t('goals.add'))
             .fontSize(D.fontSizeBody2)
-            .fontColor(Color.White)
+            .fontColor($r('sys.color.font_on_primary'))
         }
       }
-      .height(44)
+      .height(40)
       .padding({ left: D.spaceXl, right: D.spaceXl })
       .borderRadius(D.radiusPill)
-      .linearGradient({
-        angle: 135,
-        colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-      })
-      .shadow({ radius: 16, color: this.glowAC(), offsetY: 6 })
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+      .backgroundColor($r('sys.color.brand'))
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.96 })
       .onClick(() => this.openAddGoal())
     }
     .width('100%')
@@ -280,24 +217,19 @@ struct Index {
   // ===== 目标标题 + 倒计时 =====
   @Builder
   goalHeader() {
-    Row({ space: D.spaceMd }) {
-      // 目标徽标
+    Row({ space: D.spaceSm }) {
+      // 目标徽标（品牌色实心，内嵌系统符号）
       Stack({ alignContent: Alignment.Center }) {
         Circle()
-          .width(46)
-          .height(46)
-          .linearGradient({
-            angle: 135,
-            colors: [[this.resolveColor(this.selectedGoalColor), 0], [this.heroBC(), 1]]
-          })
-          .shadow({ radius: 14, color: this.glowAC(), offsetY: 6 })
-        Image($r('app.media.ic_target'))
-          .width(22)
-          .height(22)
-          .fillColor(Color.White)
+          .width(44)
+          .height(44)
+          .fill($r('sys.color.brand'))
+        SymbolGlyph($r('sys.symbol.scope'))
+          .fontSize(22)
+          .fontColor([$r('sys.color.font_on_primary')])
       }
 
-      Column({ space: 3 }) {
+      Column({ space: 2 }) {
         Text(this.selectedGoalName)
           .fontSize(D.fontSizeTitle)
           .fontWeight(FontWeight.Bold)
@@ -317,7 +249,7 @@ struct Index {
             Text(CountdownFormatter.countdown(this.selectedEndDate, this.selectedEndPrecise) as string)
               .fontSize(15)
               .fontWeight(FontWeight.Bold)
-              .fontColor(this.heroAC())
+              .fontColor(this.tPrimary())
           }
           Text(CountdownFormatter.endDateLabel(this.selectedEndDate, this.selectedEndPrecise))
             .fontSize(10)
@@ -325,47 +257,31 @@ struct Index {
         }
         .alignItems(HorizontalAlign.End)
         .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-        .borderRadius(D.radiusL)
-        .backgroundColor(this.accentSoftC())
+        .borderRadius(D.radiusM)
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
       }
     }
     .width('100%')
     .padding(D.spaceMd)
     .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
-    .backgroundColor(this.glassC())
+    .backgroundColor($r('sys.color.comp_background_list_card'))
     .borderRadius(D.radiusXl)
-    .border({ width: 1, color: this.borderC() })
-    .shadow({ radius: 18, color: this.shadowC(), offsetY: 8 })
     .transition(TransitionEffect.OPACITY
-      .animation({ duration: D.animNormal, curve: Curve.EaseOut })
-      .combine(TransitionEffect.translate({ y: 12 })))
+      .animation({ duration: D.animNormal, curve: Curve.EaseInOut })
+      .combine(TransitionEffect.translate({ y: 8 })))
   }
 
   // ===== 目标总进度 =====
   @Builder
   goalProgressArea() {
-    Column({ space: D.spaceSm }) {
-      // 渐变轨道 + 光感扫光
-      Stack({ alignContent: Alignment.Start }) {
-        Progress({ value: this.goalFraction() * 100, total: 100, type: ProgressType.Linear })
-          .color(this.heroAC())
-          .backgroundColor(this.trackC())
-          .height(10)
-          .borderRadius(5)
-          .width('100%')
-        // 流动高光（周期重复从左到右扫过）
-        Row()
-          .width(110)
-          .height(10)
-          .linearGradient({
-            angle: 90,
-            colors: [['#00FFFFFF', 0], ['#73FFFFFF', 0.5], ['#00FFFFFF', 1]]
-          })
-          .offset({ x: this.sweepX })
-      }
-      .width('100%')
-      .height(10)
-      .clip(true)
+    Column({ space: D.spaceXs }) {
+      Progress({ value: this.goalFraction() * 100, total: 100, type: ProgressType.Linear })
+        .color($r('sys.color.brand'))
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .height(8)
+        .borderRadius(4)
+        .width('100%')
+        .animation({ duration: D.animNormal, curve: Curve.EaseInOut })
 
       Row() {
         Text(I18n.t('tasks.completed', Math.round(this.goalCompletedWeight()).toString(), this.goalTotalItems().toString()))
@@ -375,38 +291,35 @@ struct Index {
         Text(`${(this.goalFraction() * 100).toFixed(1)}%`)
           .fontSize(D.fontSizeBody2)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.heroAC())
+          .fontColor(this.tPrimary())
       }.width('100%')
     }
     .width('100%')
     .padding(D.spaceMd)
     .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
-    .backgroundColor(this.glassC())
+    .backgroundColor($r('sys.color.comp_background_list_card'))
     .borderRadius(D.radiusXl)
-    .border({ width: 1, color: this.borderC() })
-    .shadow({ radius: 18, color: this.shadowC(), offsetY: 8 })
   }
 
   // ===== 单个任务行 =====
   @Builder
   taskRow(row: TaskRow) {
     Row({ space: D.spaceSm }) {
-      // 展开箭头
+      // 展开箭头（系统符号，随展开状态平滑旋转）
       if (row.hasChildren) {
-        Image(row.expanded ? $r('app.media.ic_chevron_down') : $r('app.media.ic_chevron_right'))
-          .width(16)
-          .height(16)
-          .fillColor(this.tSecondary())
+        SymbolGlyph(row.expanded ? $r('sys.symbol.chevron_down') : $r('sys.symbol.chevron_right'))
+          .fontSize(16)
+          .fontColor([this.tSecondary()])
+          .animation({ duration: D.animFast, curve: Curve.EaseInOut })
           .onClick(() => this.toggleExpand(row.task.id))
       } else {
         Blank().width(16)
       }
-      // 颜色圆点（带柔和外发光）
+      // 颜色圆点
       Circle()
-        .width(9)
-        .height(9)
+        .width(8)
+        .height(8)
         .fill(this.resolveColor(AppViewModel.effectiveColor(row.task)))
-        .shadow({ radius: 6, color: this.resolveColor(AppViewModel.effectiveColor(row.task)) })
       // 名称
       Text(row.task.name)
         .fontSize(D.fontSizeBody)
@@ -421,14 +334,12 @@ struct Index {
     }
     .width('100%')
     .padding({ left: Math.min(row.depth * 16, 80), right: D.spaceMd, top: 12, bottom: 12 })
-    .margin({ left: D.spaceMd, right: D.spaceMd, top: 5 })
+    .margin({ left: D.spaceMd, right: D.spaceMd, top: 4 })
     .borderRadius(D.radiusL)
-    .backgroundColor(this.glassC())
-    .border({ width: 1, color: this.borderC() })
-    .shadow({ radius: 10, color: this.shadowC(), offsetY: 3 })
+    .backgroundColor($r('sys.color.comp_background_list_card'))
     .transition(TransitionEffect.OPACITY
-      .animation({ duration: D.animNormal, curve: Curve.EaseOut })
-      .combine(TransitionEffect.translate({ y: 8 })))
+      .animation({ duration: D.animNormal, curve: Curve.EaseInOut })
+      .combine(TransitionEffect.translate({ y: 6 })))
   }
 
   // ===== 行尾控件 =====
@@ -445,16 +356,15 @@ struct Index {
   @Builder
   singleControl(row: TaskRow) {
     Row() {
-      Image(this.statusIcon(AppViewModel.effectiveStatus(row.task)))
-        .width(26)
-        .height(26)
-        .fillColor(this.statusColor(AppViewModel.effectiveStatus(row.task)))
-        .animation({ duration: D.animNormal, curve: Curve.EaseOut })
+      SymbolGlyph(this.statusSymbol(AppViewModel.effectiveStatus(row.task)))
+        .fontSize(24)
+        .fontColor([this.statusColor(AppViewModel.effectiveStatus(row.task))])
+        .animation({ duration: D.animNormal, curve: Curve.EaseInOut })
     }
     .width(40)
     .height(40)
     .justifyContent(FlexAlign.Center)
-    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.85 })
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.88 })
     .onClick(() => {
       if (!row.hasChildren) {
         this.cycleStatus(row.task)
@@ -468,15 +378,14 @@ struct Index {
     Row({ space: 6 }) {
       if (!row.hasChildren) {
         Button() {
-          Image($r('app.media.ic_minus'))
-            .width(14)
-            .height(14)
-            .fillColor(this.tPrimary())
+          SymbolGlyph($r('sys.symbol.minus'))
+            .fontSize(14)
+            .fontColor([this.tSecondary()])
         }
         .width(28)
         .height(28)
-        .borderRadius(D.radiusPill)
-        .backgroundColor(this.trackC())
+        .borderRadius(D.radiusS)
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
         .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
         .onClick(() => this.adjustProgress(row.task, -1))
       }
@@ -484,22 +393,22 @@ struct Index {
         .fontSize(D.fontSizeCaption)
         .fontColor(this.tSecondary())
       Progress({ value: this.taskProgressPercent(row.task), total: 100, type: ProgressType.Linear })
-        .width(56)
+        .width(52)
         .height(4)
         .borderRadius(2)
-        .color(this.resolveColor(AppViewModel.effectiveColor(row.task)))
-        .backgroundColor(this.trackC())
+        .color($r('sys.color.brand'))
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .animation({ duration: D.animNormal, curve: Curve.EaseInOut })
       if (!row.hasChildren) {
         Button() {
-          Image($r('app.media.ic_plus'))
-            .width(14)
-            .height(14)
-            .fillColor(this.tPrimary())
+          SymbolGlyph($r('sys.symbol.plus'))
+            .fontSize(14)
+            .fontColor([this.tSecondary()])
         }
         .width(28)
         .height(28)
-        .borderRadius(D.radiusPill)
-        .backgroundColor(this.trackC())
+        .borderRadius(D.radiusS)
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
         .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
         .onClick(() => this.adjustProgress(row.task, 1))
       }
@@ -538,27 +447,26 @@ struct Index {
             ListItem() {
               Row() {
                 Circle()
-                  .width(10)
-                  .height(10)
+                  .width(8)
+                  .height(8)
                   .fill(this.resolveColor(g.colorHex))
                 Text(g.name)
                   .fontSize(D.fontSizeBody)
-                  .fontColor(this.selectedGoalId === g.id ? D.colorPrimary : this.tPrimary())
+                  .fontColor(this.tPrimary())
                   .fontWeight(this.selectedGoalId === g.id ? FontWeight.Medium : FontWeight.Normal)
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
                   .layoutWeight(1)
                 if (this.selectedGoalId === g.id) {
-                  Image($r('app.media.ic_check'))
-                    .width(16)
-                    .height(16)
-                    .fillColor(this.heroAC())
+                  SymbolGlyph($r('sys.symbol.checkmark'))
+                    .fontSize(16)
+                    .fontColor([$r('sys.color.brand')])
                 }
               }
               .width('100%')
               .padding(D.spaceSm)
               .borderRadius(D.radiusM)
-              .backgroundColor(this.selectedGoalId === g.id ? this.accentSoftC() : Color.Transparent)
+              .backgroundColor(this.selectedGoalId === g.id ? $r('sys.color.comp_background_tertiary') : Color.Transparent)
               .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
               .onClick(() => {
                 this.selectGoal(g.id)
@@ -573,25 +481,20 @@ struct Index {
 
         Button() {
           Row({ space: 6 }) {
-            Image($r('app.media.ic_plus'))
-              .width(16)
-              .height(16)
-              .fillColor(Color.White)
+            SymbolGlyph($r('sys.symbol.plus'))
+              .fontSize(16)
+              .fontColor([$r('sys.color.font_on_primary')])
             Text(I18n.t('goals.new'))
               .fontSize(D.fontSizeBody2)
-              .fontColor(Color.White)
+              .fontColor($r('sys.color.font_on_primary'))
           }
         }
         .width('100%')
-        .height(44)
-        .borderRadius(D.radiusPill)
-        .linearGradient({
-          angle: 135,
-          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-        })
-        .shadow({ radius: 14, color: this.glowAC(), offsetY: 6 })
+        .height(40)
+        .borderRadius(D.radiusM)
+        .backgroundColor($r('sys.color.brand'))
         .margin({ top: D.spaceMd })
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
         .onClick(() => {
           this.sidebarShown = false
           this.openAddGoal()
@@ -599,11 +502,11 @@ struct Index {
         Button(I18n.t('nav.settings'))
           .width('100%')
           .height(40)
-          .borderRadius(D.radiusPill)
-          .backgroundColor(this.trackC())
+          .borderRadius(D.radiusM)
+          .backgroundColor($r('sys.color.comp_background_tertiary'))
           .fontColor(this.tPrimary())
           .margin({ top: D.spaceSm })
-          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
           .onClick(() => {
             this.sidebarShown = false
             router.pushUrl({ url: 'pages/Settings' })
@@ -612,15 +515,12 @@ struct Index {
       .width(280)
       .height('100%')
       .padding(D.spaceLg)
-      .linearGradient({
-        angle: 160,
-        colors: [[this.currentCard(), 0], [this.currentBgSoft(), 1]]
-      })
+      .backgroundColor($r('sys.color.background_primary'))
       .borderRadius({ topRight: D.radiusXl, bottomRight: D.radiusXl })
-      .shadow({ radius: 28, color: this.shadowC(), offsetX: 8 })
+      .shadow({ radius: 24, color: '#33000000', offsetX: 6 })
       .transition(TransitionEffect.OPACITY
-        .animation({ duration: D.animNormal, curve: Curve.EaseOut })
-        .combine(TransitionEffect.translate({ x: -40 })))
+        .animation({ duration: D.animNormal, curve: Curve.EaseInOut })
+        .combine(TransitionEffect.translate({ x: -32 })))
     }
   }
 
@@ -641,7 +541,7 @@ struct Index {
       TextInput({ placeholder: I18n.t('task.namePlaceholder'), text: this.taskBuf.name })
         .height(44)
         .borderRadius(D.radiusM)
-        .backgroundColor(this.currentCard())
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
         .onChange((v: string) => { this.taskBuf.name = v })
 
       // 类型选择
@@ -658,7 +558,7 @@ struct Index {
               .type(InputType.Number)
               .height(40)
               .borderRadius(D.radiusM)
-              .backgroundColor(this.currentCard())
+              .backgroundColor($r('sys.color.comp_background_tertiary'))
               .onChange((v: string) => {
                 this.taskBuf.totalAmount = Number.parseFloat(v)
                 if (Number.isNaN(this.taskBuf.totalAmount)) { this.taskBuf.totalAmount = 0 }
@@ -670,7 +570,7 @@ struct Index {
               .type(InputType.Number)
               .height(40)
               .borderRadius(D.radiusM)
-              .backgroundColor(this.currentCard())
+              .backgroundColor($r('sys.color.comp_background_tertiary'))
               .onChange((v: string) => {
                 this.taskBuf.currentAmount = Number.parseFloat(v)
                 if (Number.isNaN(this.taskBuf.currentAmount)) { this.taskBuf.currentAmount = 0 }
@@ -696,10 +596,9 @@ struct Index {
                 .height(28)
                 .fill(c.hex)
               if (this.taskBuf.colorHex === c.hex) {
-                Image($r('app.media.ic_check'))
-                  .width(14)
-                  .height(14)
-                  .fillColor(Color.White)
+                SymbolGlyph($r('sys.symbol.checkmark'))
+                  .fontSize(14)
+                  .fontColor([Color.White])
                   .position({ x: 9, y: 9 })
               }
             }
@@ -735,8 +634,8 @@ struct Index {
               ForEach([1, 2, 3, 4, 5, 6, 7], (w: number) => {
                 Text(I18n.t('weekday.' + w.toString()))
                   .fontSize(D.fontSizeCaption)
-                  .fontColor(this.taskBuf.weekdays.indexOf(w) >= 0 ? Color.White : this.tPrimary())
-                  .backgroundColor(this.taskBuf.weekdays.indexOf(w) >= 0 ? D.colorPrimary : this.colorPressed())
+                  .fontColor(this.taskBuf.weekdays.indexOf(w) >= 0 ? $r('sys.color.font_on_primary') : this.tPrimary())
+                  .backgroundColor(this.taskBuf.weekdays.indexOf(w) >= 0 ? $r('sys.color.brand') : $r('sys.color.comp_background_tertiary'))
                   .width(34)
                   .height(34)
                   .borderRadius(D.radiusPill)
@@ -751,24 +650,24 @@ struct Index {
       Button(I18n.t('common.save'))
         .width('100%')
         .height(44)
-        .borderRadius(D.radiusL)
-        .backgroundColor(D.colorPrimary)
-        .fontColor(Color.White)
+        .borderRadius(D.radiusM)
+        .backgroundColor($r('sys.color.brand'))
+        .fontColor($r('sys.color.font_on_primary'))
         .margin({ top: D.spaceSm })
         .onClick(() => this.saveTaskEditor())
     }
     .padding(D.spaceLg)
     .width('100%')
     .height('100%')
-    .backgroundColor(this.currentBackground())
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 
   @Builder
   typeChip(t: TaskType, label: string) {
     Text(label)
       .fontSize(D.fontSizeBody2)
-      .fontColor(this.taskBuf.type === t ? Color.White : this.tPrimary())
-      .backgroundColor(this.taskBuf.type === t ? D.colorPrimary : this.colorPressed())
+      .fontColor(this.taskBuf.type === t ? $r('sys.color.font_on_primary') : this.tPrimary())
+      .backgroundColor(this.taskBuf.type === t ? $r('sys.color.brand') : $r('sys.color.comp_background_tertiary'))
       .padding({ left: D.spaceLg, right: D.spaceLg, top: D.spaceSm, bottom: D.spaceSm })
       .borderRadius(D.radiusPill)
       .onClick(() => { this.taskBuf.type = t })
@@ -778,8 +677,8 @@ struct Index {
   statusChip(s: TaskStatus, label: string) {
     Text(label)
       .fontSize(D.fontSizeCaption)
-      .fontColor(this.taskBuf.status === s ? Color.White : this.tPrimary())
-      .backgroundColor(this.taskBuf.status === s ? D.colorPrimary : this.colorPressed())
+      .fontColor(this.taskBuf.status === s ? $r('sys.color.font_on_primary') : this.tPrimary())
+      .backgroundColor(this.taskBuf.status === s ? $r('sys.color.brand') : $r('sys.color.comp_background_tertiary'))
       .padding({ left: D.spaceMd, right: D.spaceMd, top: 4, bottom: 4 })
       .borderRadius(D.radiusPill)
       .onClick(() => { this.taskBuf.status = s })
@@ -789,8 +688,8 @@ struct Index {
   repeatChip(r: RepeatRule, label: string) {
     Text(label)
       .fontSize(D.fontSizeCaption)
-      .fontColor(this.taskBuf.repeatRule === r ? Color.White : this.tPrimary())
-      .backgroundColor(this.taskBuf.repeatRule === r ? D.colorPrimary : this.colorPressed())
+      .fontColor(this.taskBuf.repeatRule === r ? $r('sys.color.font_on_primary') : this.tPrimary())
+      .backgroundColor(this.taskBuf.repeatRule === r ? $r('sys.color.brand') : $r('sys.color.comp_background_tertiary'))
       .padding({ left: D.spaceMd, right: D.spaceMd, top: 4, bottom: 4 })
       .borderRadius(D.radiusPill)
       .onClick(() => { this.taskBuf.repeatRule = r })
@@ -813,7 +712,7 @@ struct Index {
       TextInput({ placeholder: I18n.t('goals.namePlaceholder'), text: this.goalBuf.name })
         .height(44)
         .borderRadius(D.radiusM)
-        .backgroundColor(this.currentCard())
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
         .onChange((v: string) => { this.goalBuf.name = v })
 
       // 颜色
@@ -828,10 +727,9 @@ struct Index {
                   .height(28)
                   .fill(c.hex)
                 if (this.goalBuf.colorHex === c.hex) {
-                  Image($r('app.media.ic_check'))
-                    .width(14)
-                    .height(14)
-                    .fillColor(Color.White)
+                  SymbolGlyph($r('sys.symbol.checkmark'))
+                    .fontSize(14)
+                    .fontColor([Color.White])
                     .position({ x: 9, y: 9 })
                 }
               }
@@ -851,15 +749,15 @@ struct Index {
         Row({ space: D.spaceSm }) {
           Text(I18n.t('goals.countAllTasks'))
             .fontSize(D.fontSizeCaption)
-            .fontColor(this.goalBuf.countingMode === 'allTasks' ? Color.White : this.tPrimary())
-            .backgroundColor(this.goalBuf.countingMode === 'allTasks' ? D.colorPrimary : this.colorPressed())
+            .fontColor(this.goalBuf.countingMode === 'allTasks' ? $r('sys.color.font_on_primary') : this.tPrimary())
+            .backgroundColor(this.goalBuf.countingMode === 'allTasks' ? $r('sys.color.brand') : $r('sys.color.comp_background_tertiary'))
             .padding({ left: D.spaceMd, right: D.spaceMd, top: 6, bottom: 6 })
             .borderRadius(D.radiusPill)
             .onClick(() => { this.goalBuf.countingMode = 'allTasks' })
           Text(I18n.t('goals.countLeafTasks'))
             .fontSize(D.fontSizeCaption)
-            .fontColor(this.goalBuf.countingMode === 'leafTasks' ? Color.White : this.tPrimary())
-            .backgroundColor(this.goalBuf.countingMode === 'leafTasks' ? D.colorPrimary : this.colorPressed())
+            .fontColor(this.goalBuf.countingMode === 'leafTasks' ? $r('sys.color.font_on_primary') : this.tPrimary())
+            .backgroundColor(this.goalBuf.countingMode === 'leafTasks' ? $r('sys.color.brand') : $r('sys.color.comp_background_tertiary'))
             .padding({ left: D.spaceMd, right: D.spaceMd, top: 6, bottom: 6 })
             .borderRadius(D.radiusPill)
             .onClick(() => { this.goalBuf.countingMode = 'leafTasks' })
@@ -869,15 +767,15 @@ struct Index {
       Button(I18n.t('common.save'))
         .width('100%')
         .height(44)
-        .borderRadius(D.radiusL)
-        .backgroundColor(D.colorPrimary)
-        .fontColor(Color.White)
+        .borderRadius(D.radiusM)
+        .backgroundColor($r('sys.color.brand'))
+        .fontColor($r('sys.color.font_on_primary'))
         .onClick(() => this.saveGoalEditor())
     }
     .padding(D.spaceLg)
     .width('100%')
     .height('100%')
-    .backgroundColor(this.currentBackground())
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 
   // ===== 状态字段（非响应式，供 buildRows/渲染使用）=====
@@ -900,24 +798,12 @@ struct Index {
   @State taskSheetVisible: boolean = false
   @State goalSheetVisible: boolean = false
   @State colorScheme: 'system' | 'light' | 'dark' = 'system'
-  /** 进度条光感扫光位置 */
-  @State sweepX: number = -110
 
   aboutToAppear(): void {
     this.refreshGoals()
     this.loadSettings()
-    this.startLightSweep()
-    // 每分钟刷新倒计时
+    // 定时刷新倒计时
     this.timer = setInterval(() => { this.revision++ }, 30000)
-  }
-
-  /** 光感动效：进度条高光无限循环扫过 */
-  private startLightSweep(): void {
-    setTimeout(() => {
-      animateTo({ duration: D.animSweep, curve: Curve.Linear, iterations: -1 }, () => {
-        this.sweepX = 400
-      })
-    }, 500)
   }
 
   aboutToDisappear(): void {
@@ -1052,16 +938,16 @@ struct Index {
     return AppViewModel.isDeleted(task)
   }
 
-  private statusIcon(s: TaskStatus): Resource {
+  private statusSymbol(s: TaskStatus): Resource {
     switch (s) {
       case 'done':
-        return $r('app.media.ic_check_circle')
+        return $r('sys.symbol.checkmark_circle_fill')
       case 'halfDone':
-        return $r('app.media.ic_half')
+        return $r('sys.symbol.circle_lefthalf_inset_filled')
       case 'deleted':
-        return $r('app.media.ic_trash')
+        return $r('sys.symbol.trash')
       default:
-        return $r('app.media.ic_circle_outline')
+        return $r('sys.symbol.circle')
     }
   }
 
@@ -1301,14 +1187,6 @@ struct Index {
     return Theme.palette(this.isDark())
   }
 
-  private currentBackground(): string {
-    return this.pal().bg
-  }
-
-  private currentCard(): string {
-    return this.pal().card
-  }
-
   private tPrimary(): string {
     return this.pal().textPrimary
   }
@@ -1319,58 +1197,6 @@ struct Index {
 
   private tTertiary(): string {
     return this.pal().textTertiary
-  }
-
-  private colorPressed(): string {
-    return this.isDark() ? '#33FFFFFF' : D.colorPressed
-  }
-
-  private bgTopC(): string {
-    return this.pal().bgTop
-  }
-
-  private bgBottomC(): string {
-    return this.pal().bgBottom
-  }
-
-  private currentBgSoft(): string {
-    return this.pal().cardSoft
-  }
-
-  private heroAC(): string {
-    return this.pal().heroA
-  }
-
-  private heroBC(): string {
-    return this.pal().heroB
-  }
-
-  private glowAC(): string {
-    return this.pal().glowA
-  }
-
-  private glowBC(): string {
-    return this.pal().glowB
-  }
-
-  private glassC(): string {
-    return this.isDark() ? '#E8171A24' : '#EFFFFFFF'
-  }
-
-  private borderC(): string {
-    return this.pal().border
-  }
-
-  private trackC(): string {
-    return this.pal().track
-  }
-
-  private shadowC(): string {
-    return this.pal().shadow
-  }
-
-  private accentSoftC(): string {
-    return this.pal().accentSoft
   }
 
   private resolveColor(hex: string): string {

@@ -29,19 +29,18 @@ struct AIChat {
   @Builder
   page() {
     Column() {
-      // 顶部栏（玻璃卡片）
-      Row({ space: D.spaceSm }) {
+      // 顶部栏（扁平 56，与首页一致）
+      Row({ space: D.spaceXs }) {
         Button() {
-          Image($r('app.media.ic_back'))
-            .width(20)
-            .height(20)
-            .fillColor(this.tPrimary())
+          SymbolGlyph($r('sys.symbol.chevron_left'))
+            .fontSize(22)
+            .fontColor([this.tPrimary()])
         }
-        .width(40)
-        .height(40)
+        .width(44)
+        .height(44)
         .borderRadius(D.radiusPill)
-        .backgroundColor(this.glass())
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
+        .backgroundColor(Color.Transparent)
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
         .onClick(() => router.back())
 
         Text(I18n.t('ai.chatTitle'))
@@ -49,57 +48,57 @@ struct AIChat {
           .fontWeight(FontWeight.Bold)
           .fontColor(this.tPrimary())
           .layoutWeight(1)
-          .textAlign(TextAlign.Center)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
 
         Button() {
-          Row({ space: 5 }) {
-            Image($r('app.media.ic_clip'))
-              .width(15)
-              .height(15)
-              .fillColor(Color.White)
-            Text(I18n.t('ai.attach'))
-              .fontSize(D.fontSizeCaption)
-              .fontColor(Color.White)
-          }
+          SymbolGlyph($r('sys.symbol.paperclip'))
+            .fontSize(20)
+            .fontColor([this.tPrimary()])
         }
-        .height(36)
+        .width(44)
+        .height(44)
         .borderRadius(D.radiusPill)
-        .padding({ left: 12, right: 12 })
-        .linearGradient({
-          angle: 135,
-          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-        })
-        .shadow({ radius: 12, color: this.glowAC(), offsetY: 5 })
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.94 })
+        .backgroundColor(Color.Transparent)
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
         .onClick(() => this.attach())
       }
       .width('100%')
-      .padding({ left: D.spaceXs, right: D.spaceXs, top: D.spaceXs, bottom: D.spaceXs })
-      .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
-      .backgroundColor(this.glass())
-      .borderRadius(D.radiusXl)
-      .border({ width: 1, color: this.borderC() })
-      .shadow({ radius: 20, color: this.shadowC(), offsetY: 8 })
+      .height(56)
+      .padding({ left: D.spaceSm, right: D.spaceSm })
 
-      // 显示选中的附件名
+      // 显示选中的附件名（卡片内同心圆角）
       if (this.attachmentName.length > 0) {
-        Row({ space: 6 }) {
-          Image($r('app.media.ic_clip'))
-            .width(13)
-            .height(13)
-            .fillColor(this.heroAC())
+        Row({ space: D.spaceXs }) {
+          SymbolGlyph($r('sys.symbol.paperclip'))
+            .fontSize(16)
+            .fontColor([$r('sys.color.brand')])
           Text(this.attachmentName)
             .fontSize(D.fontSizeCaption)
             .fontColor(this.tSecondary())
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
+          Button() {
+            SymbolGlyph($r('sys.symbol.xmark'))
+              .fontSize(14)
+              .fontColor([this.tTertiary()])
+          }
+          .width(28)
+          .height(28)
+          .borderRadius(D.radiusPill)
+          .backgroundColor(Color.Transparent)
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+          .onClick(() => {
+            this.attachmentName = ''
+            this.attachmentText = undefined
+          })
         }
         .width('100%')
-        .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+        .padding({ left: D.spaceMd, right: D.spaceXs, top: D.spaceXs, bottom: D.spaceXs })
         .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm })
-        .borderRadius(D.radiusPill)
-        .backgroundColor(this.accentSoft())
+        .borderRadius(D.radiusL)
+        .backgroundColor($r('sys.color.comp_background_list_card'))
       }
 
       // 消息列表
@@ -109,7 +108,7 @@ struct AIChat {
             this.messageBubble(msg)
           }
           .transition(TransitionEffect.OPACITY
-            .animation({ duration: D.animNormal, curve: Curve.EaseOut })
+            .animation({ duration: D.animNormal, curve: Curve.EaseInOut })
             .combine(TransitionEffect.translate({ y: 10 })))
         }, (msg: ChatMessage) => msg.id)
       }
@@ -118,47 +117,40 @@ struct AIChat {
       .padding({ left: D.spaceMd, right: D.spaceMd, top: D.spaceMd })
       .scrollBar(BarState.Off)
 
-      // 输入区（浮起玻璃面板）
-      Row({ space: D.spaceSm }) {
+      // 输入区（底部扁平卡片）
+      Row({ space: D.spaceXs }) {
         TextInput({ placeholder: I18n.t('ai.input'), text: this.inputText })
           .layoutWeight(1)
           .height(44)
-          .borderRadius(D.radiusPill)
-          .backgroundColor(this.track())
+          .borderRadius(D.radiusM)
+          .backgroundColor($r('sys.color.comp_background_tertiary'))
           .fontColor(this.tPrimary())
           .onChange((v: string) => { this.inputText = v })
           .onSubmit(() => this.send())
         Button() {
-          Image($r('app.media.ic_send'))
-            .width(19)
-            .height(19)
-            .fillColor(Color.White)
+          SymbolGlyph($r('sys.symbol.paperplane_fill'))
+            .fontSize(20)
+            .fontColor([$r('sys.color.font_on_primary')])
         }
         .width(44)
         .height(44)
-        .borderRadius(D.radiusPill)
-        .linearGradient({
-          angle: 135,
-          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-        })
-        .shadow({ radius: 14, color: this.glowAC(), offsetY: 5 })
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.9 })
+        .borderRadius(D.radiusM)
+        .backgroundColor($r('sys.color.brand'))
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
         .onClick(() => this.send())
       }
       .width('100%')
-      .padding(D.spaceXs)
-      .margin({ left: D.spaceMd, right: D.spaceMd, top: D.spaceSm, bottom: D.spaceSm })
-      .backgroundColor(this.glass())
+      .padding(D.spaceSm)
+      .margin({ left: D.spaceMd, right: D.spaceMd, bottom: D.spaceSm })
+      .backgroundColor($r('sys.color.comp_background_list_card'))
       .borderRadius(D.radiusXl)
-      .border({ width: 1, color: this.borderC() })
-      .shadow({ radius: 20, color: this.shadowC(), offsetY: 8 })
 
       if (this.busy) {
         Row({ space: 6 }) {
           LoadingProgress()
             .width(16)
             .height(16)
-            .color(this.heroAC())
+            .color($r('sys.color.brand'))
           Text(I18n.t('ai.sending'))
             .fontSize(D.fontSizeCaption)
             .fontColor(this.tSecondary())
@@ -168,28 +160,21 @@ struct AIChat {
     }
     .width('100%')
     .height('100%')
-    .linearGradient({
-      angle: 180,
-      colors: [[this.bgTop(), 0], [this.bg(), 0.55], [this.bgBottom(), 1]]
-    })
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 
   @Builder
   messageBubble(msg: ChatMessage) {
-    Row({ space: 8 }) {
+    Row({ space: D.spaceXs }) {
       if (msg.role === 'assistant') {
         Stack({ alignContent: Alignment.Center }) {
           Circle()
-            .width(26)
-            .height(26)
-            .linearGradient({
-              angle: 135,
-              colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-            })
-          Image($r('app.media.ic_ai'))
-            .width(14)
-            .height(14)
-            .fillColor(Color.White)
+            .width(28)
+            .height(28)
+            .fill($r('sys.color.comp_background_tertiary'))
+          SymbolGlyph($r('sys.symbol.wand_and_stars'))
+            .fontSize(16)
+            .fontColor([$r('sys.color.brand')])
         }
         .margin({ top: D.spaceXs })
       } else {
@@ -200,17 +185,13 @@ struct AIChat {
         Column() {
           Text(msg.text)
             .fontSize(D.fontSizeBody)
-            .fontColor(Color.White)
+            .fontColor($r('sys.color.font_on_primary'))
             .lineHeight(22)
         }
         .constraintSize({ maxWidth: '78%' })
         .padding({ left: 14, right: 14, top: 10, bottom: 10 })
-        .borderRadius({ topLeft: D.radiusL, topRight: D.radiusL, bottomLeft: D.radiusL, bottomRight: 6 })
-        .linearGradient({
-          angle: 135,
-          colors: [[this.heroAC(), 0], [this.heroBC(), 1]]
-        })
-        .shadow({ radius: 14, color: this.glowAC(), offsetY: 4 })
+        .borderRadius({ topLeft: D.radiusL, topRight: D.radiusL, bottomLeft: D.radiusL, bottomRight: D.radiusS })
+        .backgroundColor($r('sys.color.brand'))
       } else {
         Column() {
           Text(msg.text)
@@ -220,10 +201,8 @@ struct AIChat {
         }
         .constraintSize({ maxWidth: '78%' })
         .padding({ left: 14, right: 14, top: 10, bottom: 10 })
-        .borderRadius({ topLeft: D.radiusL, topRight: D.radiusL, bottomLeft: 6, bottomRight: D.radiusL })
-        .backgroundColor(this.card())
-        .border({ width: 1, color: this.borderC() })
-        .shadow({ radius: 12, color: this.shadowC(), offsetY: 3 })
+        .borderRadius({ topLeft: D.radiusL, topRight: D.radiusL, bottomLeft: D.radiusS, bottomRight: D.radiusL })
+        .backgroundColor($r('sys.color.comp_background_list_card'))
       }
 
       if (msg.role === 'assistant') {
@@ -426,14 +405,6 @@ struct AIChat {
     return Theme.palette(this.isDark())
   }
 
-  private bg(): string {
-    return this.pal().bg
-  }
-
-  private card(): string {
-    return this.pal().card
-  }
-
   private tPrimary(): string {
     return this.pal().textPrimary
   }
@@ -442,43 +413,7 @@ struct AIChat {
     return this.pal().textSecondary
   }
 
-  private bgTop(): string {
-    return this.pal().bgTop
-  }
-
-  private bgBottom(): string {
-    return this.pal().bgBottom
-  }
-
-  private heroAC(): string {
-    return this.pal().heroA
-  }
-
-  private heroBC(): string {
-    return this.pal().heroB
-  }
-
-  private glowAC(): string {
-    return this.pal().glowA
-  }
-
-  private glass(): string {
-    return this.isDark() ? '#E8171A24' : '#EFFFFFFF'
-  }
-
-  private borderC(): string {
-    return this.pal().border
-  }
-
-  private track(): string {
-    return this.pal().track
-  }
-
-  private shadowC(): string {
-    return this.pal().shadow
-  }
-
-  private accentSoft(): string {
-    return this.pal().accentSoft
+  private tTertiary(): string {
+    return this.pal().textTertiary
   }
 }
