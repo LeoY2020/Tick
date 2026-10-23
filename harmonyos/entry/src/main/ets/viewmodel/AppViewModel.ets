@@ -1,7 +1,7 @@
 import { Goal } from '../model/Goal';
 import { TaskItem } from '../model/TaskItem';
 import { GoalRepository, TaskRepository } from '../data/Repositories';
-import { ProgressEngine, GoalProgress } from '../domain/ProgressEngine';
+import { ProgressEngine, GoalProgress, ProgressPair } from '../domain/ProgressEngine';
 import { TaskStatus, TaskType, RepeatRule } from '../model/Enums';
 import { ReminderService } from '../services/ReminderService';
 
@@ -136,20 +136,48 @@ export class AppViewModel {
   static upsertInTree(tree: TaskItem[], task: TaskItem): TaskItem[] {
     const target = AppViewModel.findInTree(tree, task.id);
     if (target !== undefined) {
-      Object.assign(target, task);
+      AppViewModel.copyTaskInto(target, task);
       return tree;
     }
     if (task.parentTaskId === undefined) {
-      tree.push(Object.assign(new TaskItem(), task));
+      tree.push(AppViewModel.cloneTask(task));
       return tree;
     }
     const parent = AppViewModel.findInTree(tree, task.parentTaskId);
     if (parent !== undefined) {
-      parent.subtasks.push(Object.assign(new TaskItem(), task));
+      parent.subtasks.push(AppViewModel.cloneTask(task));
     } else {
-      tree.push(Object.assign(new TaskItem(), task));
+      tree.push(AppViewModel.cloneTask(task));
     }
     return tree;
+  }
+
+  /** 逐字段复制任务（ArkTS 不支持 Object.assign） */
+  private static copyTaskInto(target: TaskItem, source: TaskItem): void {
+    target.id = source.id;
+    target.name = source.name;
+    target.colorHex = source.colorHex;
+    target.iconSystemName = source.iconSystemName;
+    target.type = source.type;
+    target.status = source.status;
+    target.totalAmount = source.totalAmount;
+    target.currentAmount = source.currentAmount;
+    target.startDate = source.startDate;
+    target.endDate = source.endDate;
+    target.reminderDate = source.reminderDate;
+    target.repeatRule = source.repeatRule;
+    target.customWeekdaysRaw = source.customWeekdaysRaw;
+    target.createdAt = source.createdAt;
+    target.sortOrder = source.sortOrder;
+    target.parentTaskId = source.parentTaskId;
+    target.goalId = source.goalId;
+    target.subtasks = source.subtasks;
+  }
+
+  private static cloneTask(source: TaskItem): TaskItem {
+    const t = new TaskItem();
+    AppViewModel.copyTaskInto(t, source);
+    return t;
   }
 
   static findInTree(tree: TaskItem[], id: string): TaskItem | undefined {
@@ -214,7 +242,7 @@ export class AppViewModel {
     return ProgressEngine.effectiveStatus(task);
   }
 
-  static effectiveProgress(task: TaskItem): { current: number; total: number } {
+  static effectiveProgress(task: TaskItem): ProgressPair {
     return ProgressEngine.effectiveProgress(task);
   }
 

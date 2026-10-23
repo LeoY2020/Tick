@@ -44,7 +44,11 @@ class GoalEditBuffer {
 @Component
 struct Index {
   build() {
-    this.page()
+    Column() {
+      this.page()
+    }
+    .width('100%')
+    .height('100%')
   }
 
   // ===== 页面根 =====
@@ -241,19 +245,18 @@ struct Index {
   // ===== 目标总进度 =====
   @Builder
   goalProgressArea() {
-    const p: GoalProgressView = this.computeProgress()
     Column({ space: 6 }) {
-      Progress({ value: Math.min(p.fraction, 1) * 100, total: 100, type: ProgressType.Linear })
+      Progress({ value: this.goalFraction() * 100, total: 100, type: ProgressType.Linear })
         .color(this.resolveColor(this.selectedGoalColor))
         .height(6)
         .borderRadius(3)
         .width('100%')
       Row() {
-        Text(I18n.t('tasks.completed', Math.round(p.completedWeight).toString(), p.totalItems.toString()))
+        Text(I18n.t('tasks.completed', Math.round(this.goalCompletedWeight()).toString(), this.goalTotalItems().toString()))
           .fontSize(D.fontSizeCaption)
           .fontColor(this.tSecondary())
         Blank()
-        Text(`${(Math.min(p.fraction, 1) * 100).toFixed(1)}%`)
+        Text(`${(this.goalFraction() * 100).toFixed(1)}%`)
           .fontSize(D.fontSizeCaption)
           .fontColor(this.tSecondary())
       }.width('100%')
@@ -313,11 +316,10 @@ struct Index {
   // ===== 单项状态控件 =====
   @Builder
   singleControl(row: TaskRow) {
-    const st: TaskStatus = AppViewModel.effectiveStatus(row.task)
     Column() {
-      Text(this.statusSymbol(st))
+      Text(this.statusSymbol(AppViewModel.effectiveStatus(row.task)))
         .fontSize(20)
-        .fontColor(this.statusColor(st))
+        .fontColor(this.statusColor(AppViewModel.effectiveStatus(row.task)))
     }
     .width(36)
     .alignItems(HorizontalAlign.Center)
@@ -331,7 +333,6 @@ struct Index {
   // ===== 进度控件 =====
   @Builder
   progressControl(row: TaskRow) {
-    const p = AppViewModel.effectiveProgress(row.task)
     Row({ space: 6 }) {
       if (!row.hasChildren) {
         Button('-')
@@ -342,10 +343,10 @@ struct Index {
           .backgroundColor(this.colorPressed())
           .onClick(() => this.adjustProgress(row.task, -1))
       }
-      Text(`${Math.round(p.current)}/${Math.round(p.total)}`)
+      Text(this.taskProgressLabel(row.task))
         .fontSize(D.fontSizeCaption)
         .fontColor(this.tSecondary())
-      Progress({ value: p.total > 0 ? Math.min(p.current / p.total, 1) * 100 : 0, total: 100, type: ProgressType.Linear })
+      Progress({ value: this.taskProgressPercent(row.task), total: 100, type: ProgressType.Linear })
         .width(56)
         .height(4)
         .color(D.colorPrimary)
@@ -796,6 +797,31 @@ struct Index {
     return AppViewModel.goalProgress(temp)
   }
 
+  /** 目标进度比例（0~1，封顶 100%） */
+  private goalFraction(): number {
+    return Math.min(this.computeProgress().fraction, 1)
+  }
+
+  private goalCompletedWeight(): number {
+    return this.computeProgress().completedWeight
+  }
+
+  private goalTotalItems(): number {
+    return this.computeProgress().totalItems
+  }
+
+  /** 进度型任务的 "当前/总量" 文案 */
+  private taskProgressLabel(task: TaskItem): string {
+    const p = AppViewModel.effectiveProgress(task)
+    return `${Math.round(p.current)}/${Math.round(p.total)}`
+  }
+
+  /** 进度型任务的百分比（0~100） */
+  private taskProgressPercent(task: TaskItem): number {
+    const p = AppViewModel.effectiveProgress(task)
+    return p.total > 0 ? Math.min(p.current / p.total, 1) * 100 : 0
+  }
+
   private toggleExpand(id: string): void {
     if (this.expanded.has(id)) {
       this.expanded.delete(id)
@@ -1041,10 +1067,10 @@ struct Index {
     })
   }
 
-  private confirmDelete(row: TaskRow): void {
+  private confirmDelete(task: TaskItem): void {
     AlertDialog.show({
       title: I18n.t('tasks.delete'),
-      message: I18n.t('tasks.deleteConfirm', row.task.name),
+      message: I18n.t('tasks.deleteConfirm', task.name),
       primaryButton: {
         value: I18n.t('common.cancel'),
         action: () => { }
@@ -1053,9 +1079,9 @@ struct Index {
         value: I18n.t('common.delete'),
         fontColor: D.colorDanger,
         action: async () => {
-          const pid = row.task.parentTaskId
-          await AppViewModel.deleteTask(row.task.id)
-          this.removeFromTree(this.currentTree, row.task.id)
+          const pid = task.parentTaskId
+          await AppViewModel.deleteTask(task.id)
+          this.removeFromTree(this.currentTree, task.id)
           if (pid !== undefined) {
             // 刷新以免遗留空父容器（若已被删除则忽略）
           }

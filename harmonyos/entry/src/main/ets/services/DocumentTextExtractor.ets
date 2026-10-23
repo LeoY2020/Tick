@@ -1,5 +1,5 @@
 import fs from '@ohos.file.fs';
-import { fileUri } from '@ohos.file.fileuri';
+import fileUri from '@ohos.file.fileuri';
 import { I18n } from '../model/I18n';
 
 /**

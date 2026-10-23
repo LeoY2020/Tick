@@ -172,11 +172,11 @@ export class ReminderService {
     };
     if (p.year === undefined) {
       if (p.weekday !== undefined) {
-        req.repeatDaysOfWeek = [p.weekday];
+        req.daysOfWeek = [p.weekday];
       } else if (p.day !== undefined) {
-        req.daysOfMonth = [p.day];
+        req.repeatDays = [p.day];
       } else {
-        req.repeatDaysOfWeek = [1, 2, 3, 4, 5, 6, 7];
+        req.daysOfWeek = [1, 2, 3, 4, 5, 6, 7];
       }
     }
     return await reminderAgentManager.publishReminder(req);

@@ -41,6 +41,16 @@ function nullOrLong(v: number | undefined): number | null {
   return v === undefined ? null : v;
 }
 
+/** 统计满足条件的行数（RdbStore 无 count 方法，用 query + rowCount 代替） */
+async function countRows(store: relationalStore.RdbStore, predicates: relationalStore.RdbPredicates): Promise<number> {
+  const rs = await store.query(predicates, ['id']);
+  try {
+    return rs.rowCount;
+  } finally {
+    rs.close();
+  }
+}
+
 // MARK: - GoalRepository
 
 export class GoalRepository {
@@ -318,7 +328,7 @@ export class ChatRepository {
     const store = Database.getStore();
     const predicates = new relationalStore.RdbPredicates(T_CHAT);
     predicates.equalTo('id', session.id);
-    const count = await store.count(predicates);
+    const count = await countRows(store, predicates);
     if (count > 0) {
       await store.update(ChatRepository.toBucket(session), predicates);
     } else {
@@ -370,7 +380,7 @@ export class SettingsRepository {
     b['value'] = value;
     const predicates = new relationalStore.RdbPredicates(T_SETTINGS);
     predicates.equalTo('key', key);
-    const count = await store.count(predicates);
+    const count = await countRows(store, predicates);
     if (count > 0) {
       await store.update(b, predicates);
     } else {

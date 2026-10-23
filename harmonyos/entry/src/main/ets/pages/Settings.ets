@@ -16,7 +16,11 @@ const D = DesignTokens;
 @Component
 struct Settings {
   build() {
-    this.page()
+    Column() {
+      this.page()
+    }
+    .width('100%')
+    .height('100%')
   }
 
   @Builder
@@ -276,7 +280,7 @@ struct Settings {
       }
       const documentPicker = new picker.DocumentViewPicker(hostCtx as common.Context)
       const result = await documentPicker.select({ maxSelectNumber: 1 })
-      const uriList: string[] = result.uri
+      const uriList: string[] = result
       const uri = (uriList !== undefined && uriList !== null && uriList.length > 0) ? uriList[0] : ''
       if (uri === undefined || uri.length === 0) {
         return

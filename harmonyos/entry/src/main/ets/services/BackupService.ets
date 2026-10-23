@@ -1,12 +1,13 @@
 import fs from '@ohos.file.fs';
-import fileManager from '@ohos.file.fileManager';
-import fileUri from '@ohos.file.fileUri';
+import fileUri from '@ohos.file.fileuri';
+import picker from '@ohos.file.picker';
 import common from '@ohos.app.ability.common';
 import { Database } from '../data/Database';
 import { GoalRepository, TaskRepository } from '../data/Repositories';
 import { Goal } from '../model/Goal';
 import { TaskItem } from '../model/TaskItem';
 import { I18n } from '../model/I18n';
+import { normalizeRepeatRule } from '../model/Enums';
 
 /** 备份文件 JSON 结构（goals + 扁平 tasks） */
 interface BackupGoalJSON {
@@ -57,24 +58,23 @@ interface BackupEnvelope {
  */
 export class BackupService {
 
-  /** 导出全部数据到 Download，返回写入的文件路径 */
+  /** 导出全部数据（用户选择保存位置，失败时回落应用沙箱），返回写入的文件路径 */
   static async export(context: common.UIAbilityContext): Promise<string> {
     const envelope = await BackupService.collect();
     const json = JSON.stringify(envelope);
     const timestamp = Date.now();
     const fileName = `tick_backup_${timestamp}.json`;
 
-    // 优先写入系统 Download 目录
+    // 通过系统文件保存选择器让用户选择位置；失败时回落应用沙箱
     let targetPath = '';
     try {
-      const dirs = await fileManager.getDownloadDirs(context);
-      if (dirs.length > 0) {
-        const dirUri = dirs[0].uri;
-        const dirPath = new fileUri.FileUri(dirUri).path;
-        targetPath = `${dirPath}/${fileName}`;
+      const documentPicker = new picker.DocumentViewPicker(context);
+      const uris = await documentPicker.save({ newFileNames: [fileName] });
+      if (uris.length > 0) {
+        targetPath = uris[0];
       }
     } catch (e) {
-      // 获取 Download 目录失败：回落应用沙箱
+      // 保存选择器失败：回落应用沙箱
     }
     if (targetPath.length === 0) {
       targetPath = `${context.filesDir}/${fileName}`;
@@ -140,7 +140,7 @@ export class BackupService {
       task.startDate = t.startDate;
       task.endDate = t.endDate;
       task.reminderDate = t.reminderDate;
-      task.repeatRule = t.repeatRule === undefined ? undefined : t.repeatRule;
+      task.repeatRule = normalizeRepeatRule(t.repeatRule);
       task.customWeekdaysRaw = t.customWeekdaysRaw;
       task.createdAt = t.createdAt === undefined ? Date.now() : t.createdAt;
       task.sortOrder = t.sortOrder === undefined ? 0 : t.sortOrder;
@@ -222,19 +222,10 @@ export class BackupService {
 
   private static async readText(uriOrPath: string): Promise<string> {
     let path = uriOrPath;
-    // 文件选择器返回的 file:// uri → 真实路径；datashare:// 直接以 uri 打开（已授权读）
+    // 文件选择器返回的 file:// uri → 真实路径
     if (path.startsWith('file://')) {
       path = new fileUri.FileUri(path).path;
     }
-    let fd = -1;
-    try {
-      const file = fs.openSync(path, fs.OpenMode.READ_ONLY);
-      fd = file.fd;
-      return await fs.readText(fd);
-    } finally {
-      if (fd >= 0) {
-        fs.closeSync(fd);
-      }
-    }
+    return await fs.readText(path);
   }
 }
