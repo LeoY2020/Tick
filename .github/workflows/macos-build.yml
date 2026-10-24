@@ -18,6 +18,8 @@ jobs:
     env:
       PROJECT: macos/Tick.xcodeproj
       SCHEME: Tick
+      # 最低支持系统：显式传入以便编译器按 macOS 14 做可用性检查（先用 27.1 SDK 编译）
+      DEPLOYMENT_TARGET: "14.0"
       # 免签名构建（CI 不配置开发者证书）
       XCARGS: >-
         CODE_SIGNING_ALLOWED=NO
@@ -42,6 +44,7 @@ jobs:
           xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
             -destination 'platform=macOS' \
             -configuration Debug \
+            MACOSX_DEPLOYMENT_TARGET="$DEPLOYMENT_TARGET" \
             $XCARGS \
             -resultBundlePath TestResults.xcresult \
             test 2>&1 | xcbeautify --renderer github-actions
@@ -52,6 +55,7 @@ jobs:
           xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
             -destination 'platform=macOS' \
             -configuration Release \
+            MACOSX_DEPLOYMENT_TARGET="$DEPLOYMENT_TARGET" \
             -derivedDataPath build \
             $XCARGS \
             build 2>&1 | xcbeautify --renderer github-actions

@@ -122,7 +122,7 @@ enum AIService {
         switch model {
         case .appleIntelligence:
             guard #available(iOS 26.0, macOS 26.0, *) else {
-                throw AIServiceError.appleIntelligenceUnavailable("需要 iOS 26 及以上系统")
+                throw AIServiceError.appleIntelligenceUnavailable("需要 macOS 26 及以上系统")
             }
             return try await onDeviceRequest(systemPrompt: systemPrompt, history: history)
         default:
